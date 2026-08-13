@@ -3,11 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/game_button.dart';
 import '../widgets/animated_game_background.dart';
 import '../widgets/animated_character.dart';
+import '../utils/sound_helper.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
 import 'lobby_screen.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   final VoidCallback? onLoginPressed;
   final VoidCallback? onSignupPressed;
   final VoidCallback? onSkipPressed;
@@ -18,6 +19,25 @@ class WelcomeScreen extends StatelessWidget {
     this.onSignupPressed,
     this.onSkipPressed,
   });
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Start sci-fi welcome screen ambient pad loop
+    startWelcomeMusic();
+  }
+
+  @override
+  void dispose() {
+    // Fade out and stop the music when welcome screen is disposed
+    stopWelcomeMusic();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,8 +113,9 @@ class WelcomeScreen extends StatelessWidget {
           width: 260.0,
           height: 48.0,
           onPressed: () {
-            if (onLoginPressed != null) {
-              onLoginPressed!();
+            stopWelcomeMusic();
+            if (widget.onLoginPressed != null) {
+              widget.onLoginPressed!();
             } else {
               Navigator.push(
                 context,
@@ -110,8 +131,9 @@ class WelcomeScreen extends StatelessWidget {
           width: 260.0,
           height: 48.0,
           onPressed: () {
-            if (onSignupPressed != null) {
-              onSignupPressed!();
+            stopWelcomeMusic();
+            if (widget.onSignupPressed != null) {
+              widget.onSignupPressed!();
             } else {
               Navigator.push(
                 context,
@@ -127,8 +149,9 @@ class WelcomeScreen extends StatelessWidget {
           width: 260.0,
           height: 48.0,
           onPressed: () {
-            if (onSkipPressed != null) {
-              onSkipPressed!();
+            stopWelcomeMusic();
+            if (widget.onSkipPressed != null) {
+              widget.onSkipPressed!();
             } else {
               Navigator.push(
                 context,

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:core_game/utils/sound_helper.dart';
+
 
 class DiceGameScreen extends StatefulWidget {
   final double balance;
@@ -130,6 +132,9 @@ class _DiceGameScreenState extends State<DiceGameScreen>
   }
 
   void _updateTargetValue(double target) {
+    if (widget.soundOn && target != _targetValue) {
+      playTick();
+    }
     final double chance = _isRollUnder ? target : 100.0 - target;
     final double payout = double.parse((98.0 / chance).toStringAsFixed(4)).clamp(1.01, 980.0);
 

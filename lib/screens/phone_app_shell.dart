@@ -8,6 +8,7 @@ import 'keno_game_screen.dart';
 import 'coin_flip_game_screen.dart';
 import 'limbo_game_screen.dart';
 import 'dice_game_screen.dart';
+import 'roulette_game_screen.dart';
 
 class PhoneAppShell extends StatefulWidget {
   const PhoneAppShell({super.key});
@@ -114,6 +115,16 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
       case 'dice':
         screenWidget = DiceGameScreen(
           key: const ValueKey('dice'),
+          balance: _balance,
+          soundOn: _soundOn,
+          musicOn: _musicOn,
+          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBackPressed: () => setState(() => _currentScreen = 'lobby'),
+        );
+        break;
+      case 'roulette':
+        screenWidget = RouletteGameScreen(
+          key: const ValueKey('roulette'),
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,
