@@ -63,9 +63,11 @@ class _ActiveBinFlash {
 class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerProviderStateMixin {
   final _betController = TextEditingController(text: '10');
   
+  int _currentTab = 0; // 0: Manual, 1: Auto, 2: Advanced
   bool _isAutoMode = false;
-  String _riskLevel = 'Medium'; // Low, Medium, High
-  int _rowCount = 8; // 8, 12, 16
+  String _gameMode = 'Nightmare'; // Regular, High, Nightmare, Lightning
+  int _rowCount = 9; // 8 to 16 rows, default 9 matching screenshot
+  bool _hyperMode = false;
 
   // Game loop ticker
   Timer? _gameTimer;
@@ -75,24 +77,69 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
   final List<double> _history = [];
   final math.Random _random = math.Random();
 
-  // Multiplier configuration mapping [Risk][Rows] -> List of multipliers
-  static const Map<String, Map<int, List<double>>> _multipliers = {
-    'Low': {
-      8: [5.6, 1.6, 1.1, 1.0, 0.5, 1.0, 1.1, 1.6, 5.6],
-      12: [10.0, 5.0, 2.0, 1.4, 1.1, 1.0, 0.5, 1.0, 1.1, 1.4, 2.0, 5.0, 10.0],
-      16: [16.0, 9.0, 2.0, 1.4, 1.3, 1.2, 1.1, 1.0, 0.5, 1.0, 1.1, 1.2, 1.3, 1.4, 2.0, 9.0, 16.0],
-    },
-    'Medium': {
-      8: [13.0, 3.0, 1.3, 0.7, 0.4, 0.7, 1.3, 3.0, 13.0],
-      12: [33.0, 11.0, 4.0, 2.0, 1.1, 0.6, 0.3, 0.6, 1.1, 2.0, 4.0, 11.0, 33.0],
-      16: [110.0, 41.0, 10.0, 5.0, 3.0, 1.5, 1.0, 0.5, 0.3, 0.5, 1.0, 1.5, 3.0, 5.0, 10.0, 41.0, 110.0],
-    },
-    'High': {
-      8: [29.0, 4.0, 1.5, 0.3, 0.2, 0.3, 1.5, 4.0, 29.0],
-      12: [99.0, 25.0, 8.0, 3.0, 1.0, 0.2, 0.2, 0.2, 1.0, 3.0, 8.0, 25.0, 99.0],
-      16: [1000.0, 130.0, 26.0, 9.0, 4.0, 2.0, 0.2, 0.2, 0.2, 0.2, 0.2, 2.0, 4.0, 9.0, 26.0, 130.0, 1000.0],
+  // Predefined and dynamic symmetrical Plinko multipliers
+  List<double> getMultipliers(String mode, int rows) {
+    // Symmetrical multipliers.
+    // Center is lowest, edges are highest.
+    final List<double> list = List.filled(rows + 1, 0.0);
+    final double center = rows / 2.0;
+    
+    double edgeValue;
+    double centerValue;
+    
+    if (mode == 'Regular') {
+      edgeValue = 5.6 + (rows - 8) * 1.5;
+      centerValue = 0.5;
+    } else if (mode == 'High') {
+      edgeValue = 13.0 + (rows - 8) * 8.0;
+      centerValue = 0.3;
+    } else if (mode == 'Nightmare') {
+      edgeValue = rows == 9 ? 100.0 : (rows == 12 ? 750.0 : 29.0 + (rows - 8) * 100.0);
+      centerValue = 0.1;
+    } else { // Lightning (extreme)
+      edgeValue = 100.0 + (rows - 8) * 250.0;
+      centerValue = 0.05;
     }
-  };
+    
+    for (int i = 0; i <= rows; i++) {
+      final double dist = (i - center).abs() / center; // 0.0 at center, 1.0 at edges
+      double val = centerValue + (edgeValue - centerValue) * math.pow(dist, 3.2);
+      
+      // Let's round to nice values:
+      if (val >= 100) {
+        val = (val / 5.0).round() * 5.0;
+      } else if (val >= 10) {
+        val = (val * 2).round() / 2.0;
+      } else if (val >= 1.0) {
+        val = (val * 10).round() / 10.0;
+      } else {
+        val = (val * 10).round() / 10.0;
+        if (val < 0.1) val = 0.1;
+      }
+      list[i] = val;
+    }
+    
+    // Exact hardcoded overrides from screenshots
+    if (mode == 'Nightmare' && rows == 9) {
+      return [100.0, 8.3, 1.3, 0.2, 0.1, 0.1, 0.2, 1.3, 8.3, 100.0];
+    }
+    if (mode == 'Nightmare' && rows == 12) {
+      return [750.0, 15.0, 5.5, 1.2, 0.5, 0.2, 0.1, 0.2, 0.5, 1.2, 5.5, 15.0, 750.0];
+    }
+    if (mode == 'Regular' && rows == 8) {
+      return [5.6, 1.6, 1.1, 1.0, 0.5, 1.0, 1.1, 1.6, 5.6];
+    }
+    if (mode == 'High' && rows == 8) {
+      return [13.0, 3.0, 1.3, 0.7, 0.4, 0.7, 1.3, 3.0, 13.0];
+    }
+    
+    // Force strict symmetry
+    for (int i = 0; i <= rows / 2; i++) {
+      list[rows - i] = list[i];
+    }
+    
+    return list;
+  }
 
   // Auto-play state
   bool _isAutoPlaying = false;
@@ -301,81 +348,92 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
       return;
     }
 
-    // Deduct bet amount
-    widget.onBalanceChanged(widget.balance - bet);
-
-    // Pick target bin randomly based on bin weights (probabilities)
-    // Low risk: center-heavy, High risk: edge-heavy
     final int binCount = _rowCount + 1;
-    final int targetBin = _pickTargetBin(binCount, _riskLevel);
+    final int targetBin = _pickTargetBin(binCount, _gameMode);
     
-    final List<double> mList = _multipliers[_riskLevel]![_rowCount]!;
+    final List<double> mList = getMultipliers(_gameMode, _rowCount);
     final double multiplier = mList[targetBin];
-    
-    final path = _calculateBallPath(_rowCount, targetBin);
-    
-    setState(() {
-      _balls.add(_PlinkoBall(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        betAmount: bet,
-        risk: _riskLevel,
-        rows: _rowCount,
-        path: path,
-        targetBin: targetBin,
-        multiplier: multiplier,
-      ));
-    });
+
+    if (_hyperMode) {
+      final double winnings = bet * multiplier;
+      final double netChange = winnings - bet;
+      widget.onBalanceChanged(widget.balance + netChange);
+
+      setState(() {
+        _history.insert(0, multiplier);
+        if (_history.length > 8) {
+          _history.removeLast();
+        }
+        _binFlashes.add(_ActiveBinFlash(index: targetBin));
+      });
+    } else {
+      widget.onBalanceChanged(widget.balance - bet);
+      
+      final path = _calculateBallPath(_rowCount, targetBin);
+      
+      setState(() {
+        _balls.add(_PlinkoBall(
+          id: DateTime.now().microsecondsSinceEpoch.toString(),
+          betAmount: bet,
+          risk: _gameMode,
+          rows: _rowCount,
+          path: path,
+          targetBin: targetBin,
+          multiplier: multiplier,
+        ));
+      });
+    }
   }
 
   int _pickTargetBin(int binCount, String risk) {
-    // We can simulate it realistically by doing N coin flips (50/50 left or right)
-    // But since players want variance, let's adjust binomial distribution weights slightly
-    // for Low vs High risk.
-    // low risk: pull towards center. High risk: push towards edges.
-    // Let's implement weighted choice!
-    final int R = binCount - 1; // rowCount
+    final int R = binCount - 1;
     
-    if (risk == 'Low') {
-      // Standard binomial tends to center, which is perfect for low risk
+    if (risk == 'Regular') {
       int col = 0;
       for (int i = 0; i < R; i++) {
         if (_random.nextDouble() < 0.5) col++;
       }
       return col;
-    } else if (risk == 'Medium') {
-      // Slighly wider than low risk
+    } else if (risk == 'High') {
       int col = 0;
       for (int i = 0; i < R; i++) {
-        // Add a small spread
         double p = 0.5;
         if (col < R / 2) {
-          p = 0.46; // push right
+          p = 0.46;
         } else if (col > R / 2) {
-          p = 0.54; // push left
+          p = 0.54;
         }
         if (_random.nextDouble() < p) col++;
       }
       return col;
-    } else {
-      // High risk: push balls heavily towards the edges!
-      // We can generate path decisions that favor extreme slots
-      // 30% chance of random binomial, 70% chance of extreme edge pull
-      if (_random.nextDouble() < 0.4) {
+    } else if (risk == 'Nightmare') {
+      if (_random.nextDouble() < 0.35) {
         int col = 0;
         for (int i = 0; i < R; i++) {
           if (_random.nextDouble() < 0.5) col++;
         }
         return col;
       } else {
-        // High risk force to edge
-        // Choose index closer to edges
         final double bias = _random.nextDouble();
         if (bias < 0.5) {
-          // left edge heavy (e.g. 0, 1, or 2)
           return _random.nextInt(3);
         } else {
-          // right edge heavy (e.g. R-2, R-1, R)
           return R - _random.nextInt(3);
+        }
+      }
+    } else { // Lightning (extreme risk)
+      if (_random.nextDouble() < 0.15) {
+        int col = 0;
+        for (int i = 0; i < R; i++) {
+          if (_random.nextDouble() < 0.5) col++;
+        }
+        return col;
+      } else {
+        final double bias = _random.nextDouble();
+        if (bias < 0.5) {
+          return _random.nextInt(2);
+        } else {
+          return R - _random.nextInt(2);
         }
       }
     }
@@ -521,7 +579,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
       ),
       child: Column(
         children: [
-          // Manual / Auto Tabs
+          // Manual / Auto / Advanced Tabs
           Container(
             height: 40.0,
             margin: const EdgeInsets.all(8.0),
@@ -531,38 +589,9 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
             ),
             child: Row(
               children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      if (_isAutoPlaying) return;
-                      setState(() => _isAutoMode = false);
-                    },
-                    child: Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: !_isAutoMode ? const Color(0xFF2C2F36) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      child: const Text('Manual', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.0)),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      if (_isAutoPlaying) return;
-                      setState(() => _isAutoMode = true);
-                    },
-                    child: Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: _isAutoMode ? const Color(0xFF2C2F36) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      child: const Text('Auto', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.0)),
-                    ),
-                  ),
-                ),
+                _buildTab('Manual', 0),
+                _buildTab('Auto', 1),
+                _buildTab('Advanced', 2, hasBadge: true),
               ],
             ),
           ),
@@ -609,105 +638,122 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                             ),
                           ),
                         ),
-                        // Half Bet Button
-                        GestureDetector(
-                          onTap: () {
-                            if (_isAutoPlaying) return;
-                            double val = double.tryParse(_betController.text) ?? 0.0;
-                            val = (val / 2.0).clamp(0.0, widget.balance);
-                            _betController.text = val.toStringAsFixed(0);
-                          },
-                          child: Container(
-                            width: 38.0,
-                            alignment: Alignment.center,
-                            decoration: const BoxDecoration(
-                              border: Border(left: BorderSide(color: Color(0xFF2C2F36), width: 1.2)),
-                            ),
-                            child: const Text('1/2', style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold)),
+                        // 1/2 Button
+                        _buildQuickAmountBtn('1/2', () {
+                          if (_isAutoPlaying) return;
+                          double val = double.tryParse(_betController.text) ?? 0.0;
+                          val = (val / 2.0).clamp(0.0, widget.balance);
+                          _betController.text = val.toStringAsFixed(0);
+                        }),
+                        // 2x Button
+                        _buildQuickAmountBtn('2x', () {
+                          if (_isAutoPlaying) return;
+                          double val = double.tryParse(_betController.text) ?? 0.0;
+                          val = (val * 2.0).clamp(0.0, widget.balance);
+                          _betController.text = val.toStringAsFixed(0);
+                        }),
+                        // Up/Down Arrows Column
+                        Container(
+                          width: 32.0,
+                          decoration: const BoxDecoration(
+                            border: Border(left: BorderSide(color: Color(0xFF2C2F36), width: 1.2)),
                           ),
-                        ),
-                        // Double Bet Button
-                        GestureDetector(
-                          onTap: () {
-                            if (_isAutoPlaying) return;
-                            double val = double.tryParse(_betController.text) ?? 0.0;
-                            val = (val * 2.0).clamp(0.0, widget.balance);
-                            _betController.text = val.toStringAsFixed(0);
-                          },
-                          child: Container(
-                            width: 38.0,
-                            alignment: Alignment.center,
-                            decoration: const BoxDecoration(
-                              border: Border(left: BorderSide(color: Color(0xFF2C2F36), width: 1.2)),
-                            ),
-                            child: const Text('2x', style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold)),
+                          child: Column(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    if (_isAutoPlaying) return;
+                                    double val = double.tryParse(_betController.text) ?? 0.0;
+                                    _betController.text = (val + 1.0).clamp(0.0, widget.balance).toStringAsFixed(0);
+                                  },
+                                  child: const Icon(Icons.keyboard_arrow_up, color: Colors.grey, size: 14.0),
+                                ),
+                              ),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    if (_isAutoPlaying) return;
+                                    double val = double.tryParse(_betController.text) ?? 0.0;
+                                    _betController.text = (val - 1.0).clamp(0.0, widget.balance).toStringAsFixed(0);
+                                  },
+                                  child: const Icon(Icons.keyboard_arrow_down, color: Colors.grey, size: 14.0),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildQuickBetPreset('10', 10.0),
+                      _buildQuickBetPreset('100', 100.0),
+                      _buildQuickBetPreset('1.0k', 1000.0),
+                      _buildQuickBetPreset('10.0k', 10000.0),
+                    ],
+                  ),
                   const SizedBox(height: 12.0),
 
-                  // Risk Level Selector
-                  const Text('Risk Level', style: TextStyle(color: Colors.grey, fontSize: 11.5, fontWeight: FontWeight.bold)),
+                  // Game Mode Selector
+                  const Text('Game Mode', style: TextStyle(color: Colors.grey, fontSize: 11.5, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6.0),
                   Container(
                     height: 38.0,
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    padding: const EdgeInsets.all(4.0),
                     decoration: BoxDecoration(
                       color: const Color(0xFF161618),
                       borderRadius: BorderRadius.circular(8.0),
-                      border: Border.all(color: const Color(0xFF2C2F36), width: 1.2),
                     ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _riskLevel,
-                        dropdownColor: const Color(0xFF1E2024),
-                        style: const TextStyle(color: Colors.white, fontSize: 13.0, fontWeight: FontWeight.bold),
-                        icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                        isExpanded: true,
-                        onChanged: _isAutoPlaying ? null : (val) {
-                          if (val != null) setState(() => _riskLevel = val);
-                        },
-                        items: ['Low', 'Medium', 'High'].map((String level) {
-                          return DropdownMenuItem<String>(
-                            value: level,
-                            child: Text(level),
-                          );
-                        }).toList(),
-                      ),
+                    child: Row(
+                      children: [
+                        _buildModePill('Regular', isSelected: _gameMode == 'Regular'),
+                        _buildModePill('High', isSelected: _gameMode == 'High'),
+                        _buildModePill('Nightmare', isSelected: _gameMode == 'Nightmare'),
+                        _buildModePill('Lightning', isSelected: _gameMode == 'Lightning', hasIcon: true),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 12.0),
 
-                  // Row Count Selector
-                  const Text('Row Count', style: TextStyle(color: Colors.grey, fontSize: 11.5, fontWeight: FontWeight.bold)),
+                  // Row Count Slider
+                  const Text('Row', style: TextStyle(color: Colors.grey, fontSize: 11.5, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6.0),
                   Container(
-                    height: 38.0,
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
                     decoration: BoxDecoration(
                       color: const Color(0xFF161618),
                       borderRadius: BorderRadius.circular(8.0),
-                      border: Border.all(color: const Color(0xFF2C2F36), width: 1.2),
                     ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int>(
-                        value: _rowCount,
-                        dropdownColor: const Color(0xFF1E2024),
-                        style: const TextStyle(color: Colors.white, fontSize: 13.0, fontWeight: FontWeight.bold),
-                        icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                        isExpanded: true,
-                        onChanged: _isAutoPlaying ? null : (val) {
-                          if (val != null) setState(() => _rowCount = val);
-                        },
-                        items: [8, 12, 16].map((int r) {
-                          return DropdownMenuItem<int>(
-                            value: r,
-                            child: Text('$r Rows'),
-                          );
-                        }).toList(),
-                      ),
+                    child: Row(
+                      children: [
+                        Text('$_rowCount', style: const TextStyle(color: Colors.white, fontSize: 12.0, fontWeight: FontWeight.bold)),
+                        Expanded(
+                          child: SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              activeTrackColor: const Color(0xFF00C853),
+                              inactiveTrackColor: const Color(0xFF2C2F36),
+                              thumbColor: Colors.white,
+                              overlayColor: const Color(0xFF00C853).withOpacity(0.2),
+                              trackHeight: 4.0,
+                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7.0),
+                            ),
+                            child: Slider(
+                              value: _rowCount.toDouble(),
+                              min: 8.0,
+                              max: 16.0,
+                              divisions: 8,
+                              onChanged: _isAutoPlaying ? null : (val) {
+                                setState(() => _rowCount = val.round());
+                              },
+                            ),
+                          ),
+                        ),
+                        const Text('16', style: TextStyle(color: Colors.grey, fontSize: 12.0, fontWeight: FontWeight.bold)),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 12.0),
@@ -790,13 +836,145 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                 child: Text(
                   _isAutoMode
                       ? (_isAutoPlaying ? 'Stop Auto' : 'Start Auto')
-                      : 'Drop Ball',
-                  style: const TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                      : 'Bet',
+                  style: const TextStyle(color: Colors.black, fontSize: 15.0, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTab(String label, int index, {bool hasBadge = false}) {
+    final bool isActive = _currentTab == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          if (_isAutoPlaying) return;
+          setState(() {
+            _currentTab = index;
+            _isAutoMode = index == 1;
+          });
+        },
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isActive ? const Color(0xFF2C2F36) : Colors.transparent,
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12.0,
+                ),
+              ),
+            ),
+            if (hasBadge)
+              Positioned(
+                top: -4.0,
+                right: 2.0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 1.0),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFD700),
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                  child: const Text(
+                    'New✦',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 6.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickAmountBtn(String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 32.0,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          border: Border(left: BorderSide(color: Color(0xFF2C2F36), width: 1.2)),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickBetPreset(String label, double amount) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          if (_isAutoPlaying) return;
+          final double val = amount.clamp(0.0, widget.balance);
+          _betController.text = val.toStringAsFixed(0);
+        },
+        child: Container(
+          height: 28.0,
+          margin: const EdgeInsets.symmetric(horizontal: 3.0),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: const Color(0xFF2C2F36).withOpacity(0.5),
+            borderRadius: BorderRadius.circular(6.0),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(color: Colors.grey, fontSize: 10.5, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModePill(String mode, {required bool isSelected, bool hasIcon = false}) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          if (_isAutoPlaying) return;
+          setState(() => _gameMode = mode);
+        },
+        child: Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF2C2F36) : Colors.transparent,
+            borderRadius: BorderRadius.circular(6.0),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (hasIcon) ...[
+                const Icon(Icons.flash_on, color: Colors.greenAccent, size: 10.0),
+                const SizedBox(width: 2.0),
+              ],
+              Text(
+                mode,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.grey,
+                  fontSize: 10.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -815,23 +993,49 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
             child: CustomPaint(
               painter: _PlinkoBoardPainter(
                 rowCount: _rowCount,
-                risk: _riskLevel,
+                risk: _gameMode,
                 balls: _balls,
                 history: _history,
                 binFlashes: _binFlashes,
                 pegHits: _pegHits,
-                multipliers: _multipliers[_riskLevel]![_rowCount]!,
+                multipliers: getMultipliers(_gameMode, _rowCount),
+                hyperMode: _hyperMode,
               ),
             ),
           ),
-          
-          // History display at the top right
+
+          // Hyper Mode toggle in top right
           Positioned(
             top: 10.0,
             right: 12.0,
             child: Row(
+              children: [
+                const Text(
+                  'Hyper Mode',
+                  style: TextStyle(color: Colors.grey, fontSize: 11.0, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 6.0),
+                Transform.scale(
+                  scale: 0.8,
+                  child: Switch(
+                    value: _hyperMode,
+                    activeColor: const Color(0xFF00C853),
+                    onChanged: (val) {
+                      setState(() => _hyperMode = val);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // History display at top left
+          Positioned(
+            top: 10.0,
+            left: 12.0,
+            child: Row(
               children: _history.map((val) => Container(
-                margin: const EdgeInsets.only(left: 4.0),
+                margin: const EdgeInsets.only(right: 4.0),
                 padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 3.0),
                 decoration: BoxDecoration(
                   color: val > 1.5
@@ -866,6 +1070,7 @@ class _PlinkoBoardPainter extends CustomPainter {
   final List<_ActiveBinFlash> binFlashes;
   final List<_ActivePegHit> pegHits;
   final List<double> multipliers;
+  final bool hyperMode;
 
   _PlinkoBoardPainter({
     required this.rowCount,
@@ -875,6 +1080,7 @@ class _PlinkoBoardPainter extends CustomPainter {
     required this.binFlashes,
     required this.pegHits,
     required this.multipliers,
+    required this.hyperMode,
   });
 
   @override
@@ -882,18 +1088,20 @@ class _PlinkoBoardPainter extends CustomPainter {
     final double cx = size.width / 2;
     
     // Peg calculations
-    final double dy = (size.height - 65.0) / rowCount;
-    // Adapt spacing to rowCount to keep it compact
+    final double dy = (size.height - 40.0) / rowCount;
     final double dx = (size.width - 40.0) / (rowCount + 3);
-    final double spacing = math.min(dx, dy * 1.15);
+    final double spacing = math.min(dx, dy * 1.25);
     final double spacingX = spacing;
-    final double spacingY = spacing / 1.15;
+    final double spacingY = spacing / 1.25;
     
-    final double startY = 32.0;
+    final double startY = 24.0;
 
     // 1. Paint bottom bins (slots)
-    final double binY = startY + rowCount * spacingY + 16.0;
-    final double binHeight = 22.0;
+    final double binY = hyperMode
+        ? size.height * 0.55
+        : startY + rowCount * spacingY + 16.0;
+        
+    final double binHeight = 26.0;
     
     for (int i = 0; i <= rowCount; i++) {
       final double binX = cx + (i + 0.5 - (rowCount + 2) / 2.0) * spacingX;
@@ -901,12 +1109,16 @@ class _PlinkoBoardPainter extends CustomPainter {
       
       // Slot color based on multiplier value
       Color binColor;
-      if (mult >= 10.0) {
+      if (mult >= 100.0) {
         binColor = const Color(0xFFFF1744); // Cyber ruby/red for high multipliers
-      } else if (mult >= 2.0) {
+      } else if (mult >= 10.0) {
         binColor = const Color(0xFFFF9100); // Orange
-      } else if (mult >= 1.0) {
+      } else if (mult >= 2.0) {
         binColor = const Color(0xFFFFD600); // Yellow
+      } else if (mult >= 1.0) {
+        binColor = const Color(0xFFFFD600); // Light Yellow
+      } else if (mult >= 0.5) {
+        binColor = const Color(0xFFC0CA33); // Lime green
       } else {
         binColor = const Color(0xFF00E5FF); // Neon cyan for values < 1x
       }
@@ -916,8 +1128,8 @@ class _PlinkoBoardPainter extends CustomPainter {
       final int flashIndex = binFlashes.indexWhere((f) => f.index == i);
       if (flashIndex != -1) {
         final flash = binFlashes[flashIndex];
-        scale = 1.0 + 0.25 * flash.intensity;
-        binColor = Color.lerp(binColor, Colors.white, flash.intensity * 0.75) ?? binColor;
+        scale = 1.0 + 0.3 * flash.intensity;
+        binColor = Color.lerp(binColor, Colors.white, flash.intensity * 0.8) ?? binColor;
       }
 
       final double cardWidth = spacingX - 3.5;
@@ -927,36 +1139,29 @@ class _PlinkoBoardPainter extends CustomPainter {
         height: binHeight * scale,
       );
 
-      final RRect roundedBin = RRect.fromRectAndRadius(binRect, const Radius.circular(4.0));
+      final RRect roundedBin = RRect.fromRectAndRadius(binRect, const Radius.circular(6.0));
       
-      // Draw background glow
-      final Paint glowPaint = Paint()
-        ..color = binColor.withOpacity(0.15)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
-      canvas.drawRRect(roundedBin, glowPaint);
-
-      // Draw slot card
-      final Paint cardPaint = Paint()
-        ..color = binColor.withOpacity(0.95)
+      // Paint bin body
+      final Paint bodyPaint = Paint()
+        ..color = binColor
         ..style = PaintingStyle.fill;
-      canvas.drawRRect(roundedBin, cardPaint);
-
-      // Draw border
+      canvas.drawRRect(roundedBin, bodyPaint);
+      
+      // Draw a thick black border matching the screenshot!
       final Paint borderPaint = Paint()
-        ..color = Colors.white.withOpacity(0.4)
+        ..color = Colors.black
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.8;
+        ..strokeWidth = 2.0;
       canvas.drawRRect(roundedBin, borderPaint);
 
-      // Draw multiplier text inside slot
-      final String label = '${mult.toStringAsFixed(mult >= 100 ? 0 : 1)}x';
+      final String label = mult % 1.0 == 0.0 ? mult.toStringAsFixed(0) : mult.toStringAsFixed(1);
       final textSpan = TextSpan(
         text: label,
         style: GoogleFonts.pressStart2p(
           textStyle: TextStyle(
-            color: mult >= 2.0 ? Colors.white : Colors.black,
-            fontSize: rowCount == 16 ? 5.2 : (rowCount == 12 ? 6.2 : 7.2),
-            fontWeight: FontWeight.bold,
+            color: Colors.black, // Always black text
+            fontSize: rowCount == 16 ? 6.0 : (rowCount == 12 ? 7.0 : 8.0),
+            fontWeight: FontWeight.w900,
           ),
         ),
       );
@@ -972,81 +1177,83 @@ class _PlinkoBoardPainter extends CustomPainter {
       );
     }
 
-    // 2. Paint Peg board
-    final Paint pegGlowPaint = Paint()
-      ..color = const Color(0xFF9E84FF).withOpacity(0.4)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+    // 2. Paint Peg board (only if not hyperMode)
+    if (!hyperMode) {
+      final Paint pegGlowPaint = Paint()
+        ..color = const Color(0xFF9E84FF).withOpacity(0.4)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
 
-    for (int r = 0; r < rowCount; r++) {
-      final int pegCount = r + 3;
-      final double py = startY + r * spacingY;
-      
-      for (int i = 0; i < pegCount; i++) {
-        final double px = cx + (i - (r + 2) / 2.0) * spacingX;
+      for (int r = 0; r < rowCount; r++) {
+        final int pegCount = r + 3;
+        final double py = startY + r * spacingY;
         
-        // Check if peg has been hit
-        final int hitIndex = pegHits.indexWhere((h) => h.row == r && h.index == i);
-        double hitIntensity = 0.0;
-        if (hitIndex != -1) {
-          hitIntensity = pegHits[hitIndex].intensity;
-        }
+        for (int i = 0; i < pegCount; i++) {
+          final double px = cx + (i - (r + 2) / 2.0) * spacingX;
+          
+          // Check if peg has been hit
+          final int hitIndex = pegHits.indexWhere((h) => h.row == r && h.index == i);
+          double hitIntensity = 0.0;
+          if (hitIndex != -1) {
+            hitIntensity = pegHits[hitIndex].intensity;
+          }
 
-        // Draw hit highlight
-        if (hitIntensity > 0) {
-          final Paint hitPaint = Paint()
-            ..color = const Color(0xFF00E5FF).withOpacity(hitIntensity * 0.8) // Glowing cyan
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
-          canvas.drawCircle(Offset(px, py), 6.0 + 4.0 * hitIntensity, hitPaint);
-        }
+          // Draw hit highlight
+          if (hitIntensity > 0) {
+            final Paint hitPaint = Paint()
+              ..color = const Color(0xFF00E5FF).withOpacity(hitIntensity * 0.8) // Glowing cyan
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
+            canvas.drawCircle(Offset(px, py), 6.0 + 4.0 * hitIntensity, hitPaint);
+          }
 
-        // Draw peg glow
-        canvas.drawCircle(Offset(px, py), 3.0, pegGlowPaint);
-        
-        // Draw peg dot
-        final Color pColor = Color.lerp(const Color(0xFFE3F2FD), const Color(0xFF00E5FF), hitIntensity) ?? const Color(0xFFE3F2FD);
-        final Paint currentPegPaint = Paint()
-          ..color = pColor
-          ..style = PaintingStyle.fill;
-        canvas.drawCircle(Offset(px, py), 2.2 + 0.8 * hitIntensity, currentPegPaint);
+          // Draw peg glow
+          canvas.drawCircle(Offset(px, py), 3.0, pegGlowPaint);
+          
+          // Draw peg dot
+          final Color pColor = Color.lerp(const Color(0xFFE3F2FD), const Color(0xFF00E5FF), hitIntensity) ?? const Color(0xFFE3F2FD);
+          final Paint currentPegPaint = Paint()
+            ..color = pColor
+            ..style = PaintingStyle.fill;
+          canvas.drawCircle(Offset(px, py), 2.2 + 0.8 * hitIntensity, currentPegPaint);
+        }
       }
     }
 
-    // 3. Paint Active Balls
-    final Paint ballPaint = Paint()
-      ..color = const Color(0xFFFFEB3B) // Cyber yellow ball
-      ..style = PaintingStyle.fill;
+    // 3. Paint Active Balls (only if not hyperMode)
+    if (!hyperMode) {
+      final Paint ballPaint = Paint()
+        ..color = const Color(0xFFFFEB3B) // Cyber yellow ball
+        ..style = PaintingStyle.fill;
 
-    for (var ball in balls) {
-      if (ball.currentFrame < ball.path.length) {
-        // Map relative coordinates to screen space
-        final Offset relativePos = ball.path[ball.currentFrame];
-        
-        // Calculate screen coordinate using normalized coordinates mapping
-        final double bxScreen = cx + relativePos.dx * spacingX;
-        
-        double byScreen;
-        if (relativePos.dy >= rowCount - 1) {
-          final double lastPegY = startY + (rowCount - 1) * spacingY;
-          final double t = ((relativePos.dy - (rowCount - 1)) / 1.55).clamp(0.0, 1.0);
-          byScreen = lastPegY + (binY - lastPegY) * t;
-        } else {
-          byScreen = startY + relativePos.dy * spacingY;
+      for (var ball in balls) {
+        if (ball.currentFrame < ball.path.length) {
+          final Offset relativePos = ball.path[ball.currentFrame];
+          
+          final double bxScreen = cx + relativePos.dx * spacingX;
+          
+          double byScreen;
+          if (relativePos.dy >= rowCount - 1) {
+            final double lastPegY = startY + (rowCount - 1) * spacingY;
+            final double t = ((relativePos.dy - (rowCount - 1)) / 1.55).clamp(0.0, 1.0);
+            byScreen = lastPegY + (binY - lastPegY) * t;
+          } else {
+            byScreen = startY + relativePos.dy * spacingY;
+          }
+          
+          // Draw ball glow
+          final Paint ballGlowPaint = Paint()
+            ..color = const Color(0xFFFFEB3B).withOpacity(0.45)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
+          canvas.drawCircle(Offset(bxScreen, byScreen), 7.5, ballGlowPaint);
+          
+          // Draw ball itself
+          canvas.drawCircle(Offset(bxScreen, byScreen), 5.0, ballPaint);
+          
+          // Highlight active trail
+          final Paint trailPaint = Paint()
+            ..color = const Color(0xFFFFEB3B).withOpacity(0.15)
+            ..style = PaintingStyle.fill;
+          canvas.drawCircle(Offset(bxScreen, byScreen), 10.0, trailPaint);
         }
-        
-        // Draw ball glow
-        final Paint ballGlowPaint = Paint()
-          ..color = const Color(0xFFFFEB3B).withOpacity(0.45)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
-        canvas.drawCircle(Offset(bxScreen, byScreen), 7.5, ballGlowPaint);
-        
-        // Draw ball itself
-        canvas.drawCircle(Offset(bxScreen, byScreen), 5.0, ballPaint);
-        
-        // Highlight active trail
-        final Paint trailPaint = Paint()
-          ..color = const Color(0xFFFFEB3B).withOpacity(0.15)
-          ..style = PaintingStyle.fill;
-        canvas.drawCircle(Offset(bxScreen, byScreen), 10.0, trailPaint);
       }
     }
   }
