@@ -615,53 +615,20 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                             ),
                           ),
                         ),
-                        // 1/2 Button
-                        _buildQuickAmountBtn('1/2', () {
+                        // - Button
+                        _buildQuickAmountBtn('-', () {
                           if (_isAutoPlaying) return;
                           double val = double.tryParse(_betController.text) ?? 0.0;
-                          val = (val / 2.0).clamp(0.0, widget.balance);
+                          val = (val - 10.0).clamp(0.0, widget.balance);
                           _betController.text = val.toStringAsFixed(0);
                         }),
-                        // 2x Button
-                        _buildQuickAmountBtn('2x', () {
+                        // + Button
+                        _buildQuickAmountBtn('+', () {
                           if (_isAutoPlaying) return;
                           double val = double.tryParse(_betController.text) ?? 0.0;
-                          val = (val * 2.0).clamp(0.0, widget.balance);
+                          val = (val + 10.0).clamp(0.0, widget.balance);
                           _betController.text = val.toStringAsFixed(0);
                         }),
-                        // Up/Down Arrows Column
-                        Container(
-                          width: 32.0,
-                          decoration: const BoxDecoration(
-                            border: Border(left: BorderSide(color: Color(0xFF2C2F36), width: 1.2)),
-                          ),
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () {
-                                    if (_isAutoPlaying) return;
-                                    SoundManager.playClick();
-                                    double val = double.tryParse(_betController.text) ?? 0.0;
-                                    _betController.text = (val + 1.0).clamp(0.0, widget.balance).toStringAsFixed(0);
-                                  },
-                                  child: const Icon(Icons.keyboard_arrow_up, color: Colors.grey, size: 14.0),
-                                ),
-                              ),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () {
-                                    if (_isAutoPlaying) return;
-                                    SoundManager.playClick();
-                                    double val = double.tryParse(_betController.text) ?? 0.0;
-                                    _betController.text = (val - 1.0).clamp(0.0, widget.balance).toStringAsFixed(0);
-                                  },
-                                  child: const Icon(Icons.keyboard_arrow_down, color: Colors.grey, size: 14.0),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                       ],
                     ),
                   ),

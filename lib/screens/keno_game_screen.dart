@@ -680,15 +680,17 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
                 // Inline multiplier buttons
                 Row(
                   children: [
-                    _buildBetActionTextButton('1/2', () {
+                    _buildBetActionTextButton('-', () {
                       if (_isDrawing || _isAutoRunning) return;
-                      final double current = double.tryParse(_betController.text) ?? 10.0;
-                      _betController.text = (current / 2).toStringAsFixed(1);
+                      final double current = double.tryParse(_betController.text) ?? 0.0;
+                      final double next = (current - 10.0).clamp(0.0, widget.balance);
+                      _betController.text = next.toStringAsFixed(0);
                     }),
-                    _buildBetActionTextButton('2x', () {
+                    _buildBetActionTextButton('+', () {
                       if (_isDrawing || _isAutoRunning) return;
-                      final double current = double.tryParse(_betController.text) ?? 10.0;
-                      _betController.text = (current * 2).toStringAsFixed(1);
+                      final double current = double.tryParse(_betController.text) ?? 0.0;
+                      final double next = (current + 10.0).clamp(0.0, widget.balance);
+                      _betController.text = next.toStringAsFixed(0);
                     }),
                   ],
                 ),

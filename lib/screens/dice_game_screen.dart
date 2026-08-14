@@ -674,24 +674,17 @@ class _DiceGameScreenState extends State<DiceGameScreen>
                 // Inline multiplier buttons
                 Row(
                   children: [
-                    _buildBetActionTextButton('1/2', () {
+                    _buildBetActionTextButton('-', () {
                       if (_isPlaying || _isAutoRunning) return;
-                      final double current = double.tryParse(_betController.text) ?? 1.0;
-                      _betController.text = (current / 2).toStringAsFixed(2);
+                      final double current = double.tryParse(_betController.text) ?? 0.0;
+                      final double next = (current - 10.0).clamp(0.0, widget.balance);
+                      _betController.text = next.toStringAsFixed(0);
                     }),
-                    _buildBetActionTextButton('2x', () {
+                    _buildBetActionTextButton('+', () {
                       if (_isPlaying || _isAutoRunning) return;
-                      final double current = double.tryParse(_betController.text) ?? 1.0;
-                      _betController.text = (current * 2).toStringAsFixed(2);
-                    }),
-                    _buildBetActionIconButton(Icons.unfold_more, () {
-                      if (_isPlaying || _isAutoRunning) return;
-                      final double current = double.tryParse(_betController.text) ?? 1.0;
-                      if (current < widget.balance) {
-                        _betController.text = widget.balance.toInt().toString();
-                      } else {
-                        _betController.text = '1.0';
-                      }
+                      final double current = double.tryParse(_betController.text) ?? 0.0;
+                      final double next = (current + 10.0).clamp(0.0, widget.balance);
+                      _betController.text = next.toStringAsFixed(0);
                     }),
                   ],
                 ),
