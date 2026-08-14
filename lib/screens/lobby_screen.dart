@@ -116,6 +116,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
       'image': 'assets/hilo_logo.png',
     },
     {
+      'title': 'Twist',
+      'image': 'assets/twist_logo.png',
+    },
+    {
       'title': 'Fruit Slash',
       'image': 'black',
     },
@@ -424,13 +428,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           final List<Map<String, String>> filteredGames = _games.where((game) {
                             if (_selectedCategory == 'All') return true;
                             if (_selectedCategory == 'Hot') {
-                              return ['Keno 12', 'Coin Flip', 'Limbo Rocket', 'Classic Dice', 'Mines'].contains(game['title']);
+                              return ['Keno 12', 'Coin Flip', 'Limbo Rocket', 'Classic Dice', 'Mines', 'Twist'].contains(game['title']);
                             }
                             if (_selectedCategory == 'Poker') {
                               return ['HiLo'].contains(game['title']);
                             }
                             if (_selectedCategory == 'Slots') {
-                              return ['Roulette Rush', 'Crash', 'Plinko', '7 Up Down', 'Fruit Slash'].contains(game['title']);
+                              return ['Roulette Rush', 'Crash', 'Plinko', '7 Up Down', 'Twist', 'Fruit Slash'].contains(game['title']);
                             }
                             return true;
                           }).toList();
@@ -482,6 +486,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                       widget.onPlayGame('plinko');
                                     } else if (game['title'] == 'Crash') {
                                       widget.onPlayGame('crash');
+                                    } else if (game['title'] == 'Twist') {
+                                      widget.onPlayGame('twist');
                                     } else {
                                       _showInfoDialog(game['title']!, 'Launching ${game['title']}! Place your bets to win big.');
                                     }

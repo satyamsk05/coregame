@@ -16,6 +16,7 @@ import 'seven_up_down_game_screen.dart';
 import 'plinko_game_screen.dart';
 import 'game_loading_screen.dart';
 import 'crash_game_screen.dart';
+import 'twist_game_screen.dart';
 
 class PhoneAppShell extends StatefulWidget {
   const PhoneAppShell({super.key});
@@ -208,6 +209,16 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
       case 'crash':
         screenWidget = CrashGameScreen(
           key: const ValueKey('crash'),
+          balance: _balance,
+          soundOn: _soundOn,
+          musicOn: _musicOn,
+          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBackPressed: () => setState(() => _currentScreen = 'lobby'),
+        );
+        break;
+      case 'twist':
+        screenWidget = TwistGameScreen(
+          key: const ValueKey('twist'),
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,

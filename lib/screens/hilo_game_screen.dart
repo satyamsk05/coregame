@@ -1044,11 +1044,16 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
         ? '${(_probHI * 100).toStringAsFixed(2)}%'
         : '${(_probLO * 100).toStringAsFixed(2)}%';
 
+    // Triangle visual centroid alignment offset:
+    // UP triangle (base at bottom) -> Centroid is lower -> Alignment(0.0, 0.25)
+    // DOWN triangle (base at top) -> Centroid is higher -> Alignment(0.0, -0.25)
+    final Alignment textAlignment = isUp ? const Alignment(0.0, 0.25) : const Alignment(0.0, -0.25);
+
     return InkWell(
       onTap: _isPlaying ? onTap : null,
       borderRadius: BorderRadius.circular(16.0),
       child: SizedBox(
-        width: 92.0,
+        width: 95.0,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -1057,45 +1062,45 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
             Text(
               isUp ? percentText : sublabel,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: _isPlaying ? Colors.white : Colors.grey[400],
+              style: const TextStyle(
+                color: Colors.white,
                 fontSize: 11.5,
                 fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 6.0),
+            const SizedBox(height: 5.0),
 
-            // Triangle shape (+10% size) with gradient fill & smooth rounded corners
+            // Triangle shape (+10% size) with visual centroid text alignment
             CustomPaint(
               painter: TrianglePainter(
                 isUp: isUp,
-                strokeColor: _isPlaying ? color : Colors.grey[600]!,
+                strokeColor: _isPlaying ? color : const Color(0xFF757575),
                 strokeWidth: 3.8,
                 cornerRadius: 11.0,
               ),
               child: Container(
                 width: 90.0,
                 height: 75.0,
-                alignment: Alignment.center,
+                alignment: textAlignment, // Perfectly centered inside triangle shape!
                 child: Text(
                   label,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 18.0,
+                    fontSize: 17.0,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.5,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 6.0),
+            const SizedBox(height: 5.0),
 
             // Bottom Label/Percent
             Text(
               isUp ? sublabel : percentText,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: _isPlaying ? Colors.white : Colors.grey[400],
+              style: const TextStyle(
+                color: Colors.white,
                 fontSize: 11.5,
                 fontWeight: FontWeight.w900,
               ),

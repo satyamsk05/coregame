@@ -61,6 +61,7 @@ flutter:
 
   assets:
     - assets/
+    - assets/twist/
     - assets/coinflip/
     - assets/mines/
     - assets/bg_video.mp4

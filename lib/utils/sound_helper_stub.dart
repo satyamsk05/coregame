@@ -1,27 +1,39 @@
+import 'package:flutter/services.dart';
+
 void playTickSound() {
-  // No-op for non-web platforms.
+  try {
+    SystemSound.play(SystemSoundType.click);
+    HapticFeedback.selectionClick();
+  } catch (_) {}
 }
 
-void startWelcomeMusicSound() {
-  // No-op for non-web platforms.
-}
+void startWelcomeMusicSound() {}
 
-void stopWelcomeMusicSound() {
-  // No-op for non-web platforms.
-}
+void stopWelcomeMusicSound() {}
 
 void playWinSound() {
-  // No-op for non-web platforms.
+  try {
+    SystemSound.play(SystemSoundType.click);
+    HapticFeedback.heavyImpact();
+  } catch (_) {}
 }
 
 void playLoseSound() {
-  // No-op for non-web platforms.
+  try {
+    HapticFeedback.vibrate();
+  } catch (_) {}
 }
 
 void playBeltHandleSound() {
-  // No-op for non-web platforms.
+  try {
+    SystemSound.play(SystemSoundType.click);
+    HapticFeedback.mediumImpact();
+  } catch (_) {}
 }
 
 void playCardPlaceSound() {
-  // No-op for non-web platforms.
+  try {
+    SystemSound.play(SystemSoundType.click);
+    HapticFeedback.lightImpact();
+  } catch (_) {}
 }
