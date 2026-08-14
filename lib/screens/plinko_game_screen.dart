@@ -666,13 +666,21 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                     ),
                   ),
                   const SizedBox(height: 8.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
                     children: [
-                      _buildQuickBetPreset('10', 10.0),
-                      _buildQuickBetPreset('100', 100.0),
-                      _buildQuickBetPreset('1.0k', 1000.0),
-                      _buildQuickBetPreset('10.0k', 10000.0),
+                      Row(
+                        children: [
+                          _buildQuickBetPreset('10', 10.0),
+                          _buildQuickBetPreset('100', 100.0),
+                        ],
+                      ),
+                      const SizedBox(height: 6.0),
+                      Row(
+                        children: [
+                          _buildQuickBetPreset('500', 500.0),
+                          _buildQuickBetPreset('1000', 1000.0),
+                        ],
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12.0),

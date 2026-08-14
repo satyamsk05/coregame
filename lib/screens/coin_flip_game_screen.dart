@@ -448,25 +448,34 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
           ),
           const SizedBox(height: 6.0),
 
-          // Flat Quick Bet buttons
-          Row(
+          // Flat Quick Bet buttons in 2x2 grid
+          Column(
             children: [
-              _buildFlatQuickBetButton('10', () {
-                if (_isFlipping) return;
-                _betController.text = '10';
-              }),
-              _buildFlatQuickBetButton('100', () {
-                if (_isFlipping) return;
-                _betController.text = '100';
-              }),
-              _buildFlatQuickBetButton('1.0k', () {
-                if (_isFlipping) return;
-                _betController.text = '1000';
-              }),
-              _buildFlatQuickBetButton('10.0k', () {
-                if (_isFlipping) return;
-                _betController.text = '10000';
-              }),
+              Row(
+                children: [
+                  _buildFlatQuickBetButton('10', () {
+                    if (_isFlipping) return;
+                    _betController.text = '10';
+                  }),
+                  _buildFlatQuickBetButton('100', () {
+                    if (_isFlipping) return;
+                    _betController.text = '100';
+                  }),
+                ],
+              ),
+              const SizedBox(height: 6.0),
+              Row(
+                children: [
+                  _buildFlatQuickBetButton('500', () {
+                    if (_isFlipping) return;
+                    _betController.text = '500';
+                  }),
+                  _buildFlatQuickBetButton('1000', () {
+                    if (_isFlipping) return;
+                    _betController.text = '1000';
+                  }),
+                ],
+              ),
             ],
           ),
           

@@ -666,9 +666,6 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
             children: [10, 50, 100, 500, 1000, 5000].map((val) {
               final isSelected = _selectedChipValue == val;
               String label = '$val';
-              if (val >= 1000) {
-                label = '${(val / 1000).toStringAsFixed(0)}k';
-              }
               return GestureDetector(
                 onTap: () {
                   setState(() {
