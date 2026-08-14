@@ -419,14 +419,7 @@ class _DiceGameScreenState extends State<DiceGameScreen>
   }
 
   void _showWinNotification(double amount, double multiplier, bool isDemo) {
-    showWinLoseToast(
-      context,
-      isWin: true,
-      title: isDemo ? 'DEMO DICE WIN!' : 'DICE TARGET HIT!',
-      message: isDemo
-          ? 'Demo Win ${multiplier.toStringAsFixed(2)}x'
-          : 'Won ₹${amount.toStringAsFixed(2)} (${multiplier.toStringAsFixed(2)}x)',
-    );
+    // Toast disabled to prevent duplicate overlay over WinOverlayCard
   }
 
   void _showErrorDialog(String title, String desc) {

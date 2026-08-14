@@ -227,7 +227,7 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
   }
 
   void _showStatusMessage({required String title, required String message, required bool isWin}) {
-    showWinLoseToast(context, isWin: isWin, title: title, message: message);
+    // Toast disabled to prevent duplicate overlay over WinOverlayCard
   }
 
   void _showDialog(String title, String content) {

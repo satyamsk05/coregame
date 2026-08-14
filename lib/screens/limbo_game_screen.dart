@@ -377,14 +377,7 @@ class _LimboGameScreenState extends State<LimboGameScreen>
   }
 
   void _showWinNotification(double amount, double multiplier, bool isDemoMode) {
-    showWinLoseToast(
-      context,
-      isWin: true,
-      title: isDemoMode ? 'DEMO TARGET HIT!' : 'TARGET REACHED!',
-      message: isDemoMode
-          ? 'Demo Payout ${multiplier.toStringAsFixed(2)}x'
-          : 'Won ₹${amount.toStringAsFixed(2)} (${multiplier.toStringAsFixed(2)}x)',
-    );
+    // Toast disabled to prevent duplicate overlay over WinOverlayCard
   }
 
   void _showErrorDialog(String title, String desc) {

@@ -362,11 +362,11 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
     final double bet = double.tryParse(_betController.text) ?? 0.0;
     
     if (bet > widget.balance) {
-      showWinLoseToast(
-        context,
-        isWin: false,
-        title: 'INSUFFICIENT BALANCE',
-        message: 'Not enough balance to place this bet.',
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Not enough balance to place this bet.'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
       _stopAutoPlay();
       return;
