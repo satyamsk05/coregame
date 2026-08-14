@@ -12,6 +12,7 @@ import 'roulette_game_screen.dart';
 import 'mines_game_screen.dart';
 import 'hilo_game_screen.dart';
 import 'seven_up_down_game_screen.dart';
+import 'plinko_game_screen.dart';
 
 class PhoneAppShell extends StatefulWidget {
   const PhoneAppShell({super.key});
@@ -158,6 +159,16 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
       case 'seven_up_down':
         screenWidget = SevenUpDownGameScreen(
           key: const ValueKey('seven_up_down'),
+          balance: _balance,
+          soundOn: _soundOn,
+          musicOn: _musicOn,
+          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBackPressed: () => setState(() => _currentScreen = 'lobby'),
+        );
+        break;
+      case 'plinko':
+        screenWidget = PlinkoGameScreen(
+          key: const ValueKey('plinko'),
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,
