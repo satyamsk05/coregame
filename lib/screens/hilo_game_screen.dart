@@ -331,7 +331,9 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           // Left Panel: Bet Controls
-                          _buildBetControls(bet, isLandscape: true),
+                          SingleChildScrollView(
+                            child: _buildBetControls(bet, isLandscape: true),
+                          ),
                           const SizedBox(width: 12.0),
                           // Right Panel: HiLo Playfield
                           Expanded(
@@ -381,9 +383,10 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
         borderRadius: BorderRadius.circular(10.0),
         border: Border.all(color: const Color(0xFF2C2F36), width: 1.5),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // Manual / Auto Tabs
           _buildTabBar(),
           const SizedBox(height: 12.0),
@@ -668,7 +671,8 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildTabBar() {
