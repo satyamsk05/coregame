@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../widgets/win_lose_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:core_game/utils/sound_helper.dart';
 
@@ -397,50 +398,13 @@ class _DiceGameScreenState extends State<DiceGameScreen>
   }
 
   void _showWinNotification(double amount, double multiplier, bool isDemo) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        content: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFF00C853), Color(0xFF00E575)]),
-            borderRadius: BorderRadius.circular(12.0),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF00C853).withValues(alpha: 0.4),
-                blurRadius: 8.0,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.stars, color: Colors.white, size: 24.0),
-              const SizedBox(width: 12.0),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      isDemo ? 'DEMO DICE TARGET REACHED!' : 'DICE TARGET REACHED!',
-                      style: const TextStyle(color: Colors.white, fontSize: 9.0, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      isDemo
-                          ? 'Demo Win Payout ${multiplier.toStringAsFixed(2)}x success'
-                          : 'Won ₹${amount.toStringAsFixed(2)} (${multiplier.toStringAsFixed(2)}x Payout)',
-                      style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w900),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        duration: const Duration(seconds: 2),
-      ),
+    showWinLoseToast(
+      context,
+      isWin: true,
+      title: isDemo ? 'DEMO DICE WIN!' : 'DICE TARGET HIT!',
+      message: isDemo
+          ? 'Demo Win ${multiplier.toStringAsFixed(2)}x'
+          : 'Won ₹${amount.toStringAsFixed(2)} (${multiplier.toStringAsFixed(2)}x)',
     );
   }
 

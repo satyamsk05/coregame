@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../widgets/win_lose_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/animated_game_background.dart';
 import '../utils/sound_manager.dart';
@@ -339,11 +340,11 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
     final double bet = double.tryParse(_betController.text) ?? 0.0;
     
     if (bet > widget.balance) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Insufficient balance to place bet.'),
-          backgroundColor: Colors.redAccent,
-        ),
+      showWinLoseToast(
+        context,
+        isWin: false,
+        title: 'INSUFFICIENT BALANCE',
+        message: 'Not enough balance to place this bet.',
       );
       _stopAutoPlay();
       return;

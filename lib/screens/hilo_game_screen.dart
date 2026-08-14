@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../widgets/win_lose_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/animated_game_background.dart';
 
@@ -219,51 +220,7 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
   }
 
   void _showStatusMessage({required String title, required String message, required bool isWin}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        content: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-          decoration: BoxDecoration(
-            gradient: isWin
-                ? const LinearGradient(colors: [Color(0xFF00C853), Color(0xFF00E575)])
-                : const LinearGradient(colors: [Color(0xFFFF1744), Color(0xFFFF5252)]),
-            borderRadius: BorderRadius.circular(12.0),
-            boxShadow: [
-              BoxShadow(
-                color: (isWin ? const Color(0xFF00C853) : const Color(0xFFFF1744)).withOpacity(0.4),
-                blurRadius: 8.0,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Icon(isWin ? Icons.stars : Icons.error_outline, color: Colors.white, size: 24.0),
-              const SizedBox(width: 12.0),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(color: Colors.white, fontSize: 10.0, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      message,
-                      style: const TextStyle(color: Colors.white, fontSize: 12.0, fontWeight: FontWeight.w900),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    showWinLoseToast(context, isWin: isWin, title: title, message: message);
   }
 
   void _showDialog(String title, String content) {
