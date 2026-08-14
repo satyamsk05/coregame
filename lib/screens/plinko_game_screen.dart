@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/animated_game_background.dart';
+import '../utils/sound_manager.dart';
 
 class PlinkoGameScreen extends StatefulWidget {
   final double balance;
@@ -640,6 +641,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                                 child: GestureDetector(
                                   onTap: () {
                                     if (_isAutoPlaying) return;
+                                    SoundManager.playClick();
                                     double val = double.tryParse(_betController.text) ?? 0.0;
                                     _betController.text = (val + 1.0).clamp(0.0, widget.balance).toStringAsFixed(0);
                                   },
@@ -650,6 +652,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                                 child: GestureDetector(
                                   onTap: () {
                                     if (_isAutoPlaying) return;
+                                    SoundManager.playClick();
                                     double val = double.tryParse(_betController.text) ?? 0.0;
                                     _betController.text = (val - 1.0).clamp(0.0, widget.balance).toStringAsFixed(0);
                                   },
@@ -759,6 +762,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                           GestureDetector(
                             onTap: () {
                               if (_isAutoPlaying) return;
+                              SoundManager.playClick();
                               setState(() => _autoBetsRemaining = 10);
                             },
                             child: Container(
@@ -769,6 +773,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                           GestureDetector(
                             onTap: () {
                               if (_isAutoPlaying) return;
+                              SoundManager.playClick();
                               setState(() => _autoBetsRemaining = 100);
                             },
                             child: Container(
@@ -794,6 +799,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
+                  SoundManager.playClick();
                   if (_isAutoMode) {
                     if (_isAutoPlaying) {
                       _stopAutoPlay();
@@ -829,6 +835,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
       child: GestureDetector(
         onTap: () {
           if (_isAutoPlaying) return;
+          SoundManager.playClick();
           setState(() {
             _currentTab = index;
             _isAutoMode = index == 1;
@@ -880,7 +887,10 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
 
   Widget _buildQuickAmountBtn(String label, VoidCallback onTap) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        SoundManager.playClick();
+        onTap();
+      },
       child: Container(
         width: 32.0,
         alignment: Alignment.center,
@@ -900,6 +910,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
       child: GestureDetector(
         onTap: () {
           if (_isAutoPlaying) return;
+          SoundManager.playClick();
           final double val = amount.clamp(0.0, widget.balance);
           _betController.text = val.toStringAsFixed(0);
         },
@@ -925,6 +936,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
       child: GestureDetector(
         onTap: () {
           if (_isAutoPlaying) return;
+          SoundManager.playClick();
           setState(() => _gameMode = mode);
         },
         child: Container(

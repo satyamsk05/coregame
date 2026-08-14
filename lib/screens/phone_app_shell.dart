@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/phone_mockup_wrapper.dart';
+import '../utils/sound_manager.dart';
 import 'welcome_screen.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
@@ -38,19 +39,31 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
   String _activeGateway = 'UmPay';
 
   @override
+  void initState() {
+    super.initState();
+    SoundManager.soundOn = _soundOn;
+  }
+
+  @override
   Widget build(BuildContext context) {
     Widget screenWidget;
     switch (_currentScreen) {
       case 'login':
         screenWidget = LoginScreen(
           key: const ValueKey('login'),
-          onBackPressed: () => setState(() => _currentScreen = 'welcome'),
+          onBackPressed: () {
+            SoundManager.playClick();
+            setState(() => _currentScreen = 'welcome');
+          },
         );
         break;
       case 'signup':
         screenWidget = SignupScreen(
           key: const ValueKey('signup'),
-          onBackPressed: () => setState(() => _currentScreen = 'welcome'),
+          onBackPressed: () {
+            SoundManager.playClick();
+            setState(() => _currentScreen = 'welcome');
+          },
         );
         break;
       case 'lobby':
@@ -67,12 +80,22 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           bankName: _bankName,
           bankAccountNumber: _bankAccountNumber,
           activeGateway: _activeGateway,
-          onLogoutPressed: () => setState(() => _currentScreen = 'welcome'),
-          onPlayGame: (gameName) => setState(() => _currentScreen = gameName),
+          onLogoutPressed: () {
+            SoundManager.playClick();
+            setState(() => _currentScreen = 'welcome');
+          },
+          onPlayGame: (gameName) {
+            SoundManager.playClick();
+            setState(() => _currentScreen = gameName);
+          },
           onBalanceChanged: (val) => setState(() => _balance = val),
           onVipLevelChanged: (val) => setState(() => _vipLevel = val),
           onTotalDepositedChanged: (val) => setState(() => _totalDeposited = val),
-          onSoundToggled: (val) => setState(() => _soundOn = val),
+          onSoundToggled: (val) {
+            setState(() => _soundOn = val);
+            SoundManager.soundOn = val;
+            SoundManager.playClick();
+          },
           onMusicToggled: (val) => setState(() => _musicOn = val),
           onActiveGatewayChanged: (val) => setState(() => _activeGateway = val),
           onBankDetailsChanged: (isAdded, holder, phone, bank, acc) {
@@ -180,9 +203,18 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
       default:
         screenWidget = WelcomeScreen(
           key: const ValueKey('welcome'),
-          onLoginPressed: () => setState(() => _currentScreen = 'login'),
-          onSignupPressed: () => setState(() => _currentScreen = 'signup'),
-          onSkipPressed: () => setState(() => _currentScreen = 'lobby'),
+          onLoginPressed: () {
+            SoundManager.playClick();
+            setState(() => _currentScreen = 'login');
+          },
+          onSignupPressed: () {
+            SoundManager.playClick();
+            setState(() => _currentScreen = 'signup');
+          },
+          onSkipPressed: () {
+            SoundManager.playClick();
+            setState(() => _currentScreen = 'lobby');
+          },
         );
         break;
     }

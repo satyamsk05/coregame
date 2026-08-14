@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/sound_manager.dart';
 
 class GameButton extends StatefulWidget {
   final String text;
@@ -73,6 +74,7 @@ class _GameButtonState extends State<GameButton> with SingleTickerProviderStateM
         onTapDown: (_) => setState(() => _isPressed = true),
         onTapUp: (_) {
           setState(() => _isPressed = false);
+          SoundManager.playClick();
           widget.onPressed();
         },
         onTapCancel: () => setState(() => _isPressed = false),

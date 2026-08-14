@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/animated_game_background.dart';
 import '../widgets/game_button.dart';
 import '../widgets/swipe_slider.dart';
+import '../utils/sound_manager.dart';
 
 class LobbyScreen extends StatefulWidget {
   final VoidCallback onLogoutPressed;
@@ -2299,7 +2300,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   Widget _buildMiniCasinoButton({required String text, required Color color, required VoidCallback onTap}) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        SoundManager.playClick();
+        onTap();
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
         decoration: BoxDecoration(
@@ -2323,7 +2327,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   Widget _buildLargeCasinoButton({required String text, required Color color, double width = 120.0, required VoidCallback onTap}) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        SoundManager.playClick();
+        onTap();
+      },
       child: Container(
         width: width,
         padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -2426,6 +2433,7 @@ class _LobbyButtonState extends State<_LobbyButton> with SingleTickerProviderSta
         onTapDown: (_) => setState(() => _isPressed = true),
         onTapUp: (_) {
           setState(() => _isPressed = false);
+          SoundManager.playClick();
           widget.onTap();
         },
         onTapCancel: () => setState(() => _isPressed = false),
