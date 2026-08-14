@@ -1087,21 +1087,23 @@ class _PlinkoBoardPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final double cx = size.width / 2;
     
-    // Peg calculations
-    final double dy = (size.height - 40.0) / rowCount;
-    final double dx = (size.width - 40.0) / (rowCount + 3);
-    final double spacing = math.min(dx, dy * 1.25);
-    final double spacingX = spacing;
-    final double spacingY = spacing / 1.25;
+    // Calculate maximum spacing to guarantee no vertical or horizontal overflow
+    final double startY = 16.0;
+    final double binHeight = 26.0;
     
-    final double startY = 24.0;
+    // Leave 20.0px padding at the bottom of the container
+    final double maxSpacingY = (size.height - startY - 20.0 - binHeight / 2 - 10.0) / rowCount;
+    final double maxSpacingX = (size.width - 32.0) / (rowCount + 2);
+    final double maxSpacingYFromWidth = maxSpacingX / 1.25;
+    
+    final double spacingY = math.min(maxSpacingY, maxSpacingYFromWidth);
+    final double spacingX = spacingY * 1.25;
 
     // 1. Paint bottom bins (slots)
     final double binY = hyperMode
         ? size.height * 0.55
         : startY + rowCount * spacingY + 16.0;
         
-    final double binHeight = 26.0;
     
     for (int i = 0; i <= rowCount; i++) {
       final double binX = cx + (i + 0.5 - (rowCount + 2) / 2.0) * spacingX;
@@ -1181,7 +1183,7 @@ class _PlinkoBoardPainter extends CustomPainter {
     if (!hyperMode) {
       final Paint pegGlowPaint = Paint()
         ..color = const Color(0xFF9E84FF).withOpacity(0.4)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
 
       for (int r = 0; r < rowCount; r++) {
         final int pegCount = r + 3;
@@ -1202,18 +1204,18 @@ class _PlinkoBoardPainter extends CustomPainter {
             final Paint hitPaint = Paint()
               ..color = const Color(0xFF00E5FF).withOpacity(hitIntensity * 0.8) // Glowing cyan
               ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
-            canvas.drawCircle(Offset(px, py), 6.0 + 4.0 * hitIntensity, hitPaint);
+            canvas.drawCircle(Offset(px, py), 10.0 + 6.0 * hitIntensity, hitPaint);
           }
 
-          // Draw peg glow
-          canvas.drawCircle(Offset(px, py), 3.0, pegGlowPaint);
+          // Draw peg glow (2x larger)
+          canvas.drawCircle(Offset(px, py), 5.5, pegGlowPaint);
           
-          // Draw peg dot
+          // Draw peg dot (2x larger)
           final Color pColor = Color.lerp(const Color(0xFFE3F2FD), const Color(0xFF00E5FF), hitIntensity) ?? const Color(0xFFE3F2FD);
           final Paint currentPegPaint = Paint()
             ..color = pColor
             ..style = PaintingStyle.fill;
-          canvas.drawCircle(Offset(px, py), 2.2 + 0.8 * hitIntensity, currentPegPaint);
+          canvas.drawCircle(Offset(px, py), 4.4 + 1.2 * hitIntensity, currentPegPaint);
         }
       }
     }
@@ -1239,20 +1241,20 @@ class _PlinkoBoardPainter extends CustomPainter {
             byScreen = startY + relativePos.dy * spacingY;
           }
           
-          // Draw ball glow
+          // Draw ball glow (proportional scale up)
           final Paint ballGlowPaint = Paint()
             ..color = const Color(0xFFFFEB3B).withOpacity(0.45)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
-          canvas.drawCircle(Offset(bxScreen, byScreen), 7.5, ballGlowPaint);
+          canvas.drawCircle(Offset(bxScreen, byScreen), 10.0, ballGlowPaint);
           
-          // Draw ball itself
-          canvas.drawCircle(Offset(bxScreen, byScreen), 5.0, ballPaint);
+          // Draw ball itself (proportional scale up)
+          canvas.drawCircle(Offset(bxScreen, byScreen), 6.5, ballPaint);
           
-          // Highlight active trail
+          // Highlight active trail (proportional scale up)
           final Paint trailPaint = Paint()
             ..color = const Color(0xFFFFEB3B).withOpacity(0.15)
             ..style = PaintingStyle.fill;
-          canvas.drawCircle(Offset(bxScreen, byScreen), 10.0, trailPaint);
+          canvas.drawCircle(Offset(bxScreen, byScreen), 13.0, trailPaint);
         }
       }
     }
