@@ -73,12 +73,19 @@ class _AnimatedGameBackgroundState extends State<AnimatedGameBackground>
           }
         }
 
-        return CustomPaint(
-          painter: _GridBackgroundPainter(
-            animationValue: _controller.value,
-            stars: widget.showStars ? _stars : const [],
-          ),
-          child: widget.child,
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _GridBackgroundPainter(
+                  animationValue: _controller.value,
+                  stars: widget.showStars ? _stars : const [],
+                ),
+              ),
+            ),
+            widget.child,
+          ],
         );
       },
     );
