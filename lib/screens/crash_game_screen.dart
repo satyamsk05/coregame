@@ -68,9 +68,6 @@ class _CrashGameScreenState extends State<CrashGameScreen>
   double _cashedOutMulti = 1.0;
   double _cashedOutAmount = 0.0;
 
-  double _cashedOutMulti = 1.0;
-  double _cashedOutAmount = 0.0;
-
   // ── history (pending entry added after crash delay) ─────────────────────
   final List<double> _history = [3.40, 1.89, 5.30, 1.12, 2.05, 12.80, 1.45];
   double? _pendingHistory;

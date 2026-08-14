@@ -313,7 +313,9 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           // Left Panel: Bet Controls
-                          _buildBetControls(bet, isLandscape: true),
+                          SingleChildScrollView(
+                            child: _buildBetControls(bet, isLandscape: true),
+                          ),
                           const SizedBox(width: 12.0),
                           // Right Panel: 5x5 Mines Playfield
                           Expanded(
