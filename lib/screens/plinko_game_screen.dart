@@ -1089,10 +1089,10 @@ class _PlinkoBoardPainter extends CustomPainter {
     
     // Calculate maximum spacing to guarantee no vertical or horizontal overflow
     final double startY = 16.0;
-    final double binHeight = 26.0;
+    final double binHeight = 32.0;
     
-    // Leave 20.0px padding at the bottom of the container
-    final double maxSpacingY = (size.height - startY - 20.0 - binHeight / 2 - 10.0) / rowCount;
+    // Leave 24.0px padding at the bottom of the container
+    final double maxSpacingY = (size.height - startY - 24.0 - binHeight / 2 - 10.0) / rowCount;
     final double maxSpacingX = (size.width - 32.0) / (rowCount + 2);
     final double maxSpacingYFromWidth = maxSpacingX / 1.25;
     
@@ -1102,8 +1102,7 @@ class _PlinkoBoardPainter extends CustomPainter {
     // 1. Paint bottom bins (slots)
     final double binY = hyperMode
         ? size.height * 0.55
-        : startY + rowCount * spacingY + 16.0;
-        
+        : startY + rowCount * spacingY + 12.0;
     
     for (int i = 0; i <= rowCount; i++) {
       final double binX = cx + (i + 0.5 - (rowCount + 2) / 2.0) * spacingX;
@@ -1135,34 +1134,77 @@ class _PlinkoBoardPainter extends CustomPainter {
       }
 
       final double cardWidth = spacingX - 3.5;
-      final Rect binRect = Rect.fromCenter(
-        center: Offset(binX, binY),
-        width: cardWidth * scale,
-        height: binHeight * scale,
-      );
 
-      final RRect roundedBin = RRect.fromRectAndRadius(binRect, const Radius.circular(6.0));
+      // Draw 3D shadow (shifted downwards by 3.5 pixels)
+      final RRect shadowBin = RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset(binX, binY + 3.0),
+          width: cardWidth * scale,
+          height: binHeight * scale,
+        ),
+        const Radius.circular(8.0),
+      );
+      final Paint shadowPaint = Paint()
+        ..color = Colors.black.withOpacity(0.8)
+        ..style = PaintingStyle.fill;
+      canvas.drawRRect(shadowBin, shadowPaint);
+
+      // Draw card body
+      final RRect frontBin = RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset(binX, binY),
+          width: cardWidth * scale,
+          height: binHeight * scale,
+        ),
+        const Radius.circular(8.0),
+      );
       
-      // Paint bin body
       final Paint bodyPaint = Paint()
         ..color = binColor
         ..style = PaintingStyle.fill;
-      canvas.drawRRect(roundedBin, bodyPaint);
+      canvas.drawRRect(frontBin, bodyPaint);
       
-      // Draw a thick black border matching the screenshot!
+      // Draw thick black border
       final Paint borderPaint = Paint()
         ..color = Colors.black
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0;
-      canvas.drawRRect(roundedBin, borderPaint);
+      canvas.drawRRect(frontBin, borderPaint);
 
       final String label = mult % 1.0 == 0.0 ? mult.toStringAsFixed(0) : mult.toStringAsFixed(1);
+      
+      // Draw multiplier text inside slot with black outline first
+      final textSpanShadow = TextSpan(
+        text: label,
+        style: GoogleFonts.pressStart2p(
+          textStyle: TextStyle(
+            fontSize: rowCount == 16 ? 5.8 : (rowCount == 12 ? 6.8 : 7.8),
+            fontWeight: FontWeight.w900,
+            foreground: Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 3.0
+              ..color = Colors.black,
+          ),
+        ),
+      );
+      
+      final textPainterShadow = TextPainter(
+        text: textSpanShadow,
+        textDirection: TextDirection.ltr,
+      );
+      textPainterShadow.layout();
+      textPainterShadow.paint(
+        canvas,
+        Offset(binX - textPainterShadow.width / 2, binY - textPainterShadow.height / 2),
+      );
+
+      // Draw white text fill on top
       final textSpan = TextSpan(
         text: label,
         style: GoogleFonts.pressStart2p(
           textStyle: TextStyle(
-            color: Colors.black, // Always black text
-            fontSize: rowCount == 16 ? 6.0 : (rowCount == 12 ? 7.0 : 8.0),
+            color: Colors.white,
+            fontSize: rowCount == 16 ? 5.8 : (rowCount == 12 ? 6.8 : 7.8),
             fontWeight: FontWeight.w900,
           ),
         ),
