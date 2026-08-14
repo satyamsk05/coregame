@@ -313,22 +313,7 @@ class _CrashGameScreenState extends State<CrashGameScreen>
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Left Column: Interactive Display Graph
-                    Expanded(
-                      flex: 5,
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: _buildDisplayArena(),
-                          ),
-                          const SizedBox(height: 10.0),
-                          _buildHistoryRow(),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16.0),
-
-                    // Right Column: Controls Panel
+                    // Left Column: Controls Panel
                     Container(
                       width: 290.0,
                       padding: const EdgeInsets.all(16.0),
@@ -366,6 +351,21 @@ class _CrashGameScreenState extends State<CrashGameScreen>
 
                           // Big Action Button
                           _buildActionButton(),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16.0),
+
+                    // Right Column: Interactive Display Graph
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        children: [
+                          _buildHistoryRow(),
+                          const SizedBox(height: 10.0),
+                          Expanded(
+                            child: _buildDisplayArena(),
+                          ),
                         ],
                       ),
                     ),
