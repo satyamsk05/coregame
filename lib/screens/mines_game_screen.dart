@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../widgets/win_lose_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/animated_game_background.dart';
+import '../utils/sound_manager.dart';
+import '../utils/sound_helper.dart' as helper;
 
 class MinesGameScreen extends StatefulWidget {
   final double balance;
@@ -32,20 +34,22 @@ class _MinesTile {
 
 class _MinesGameScreenState extends State<MinesGameScreen> {
   final _betController = TextEditingController(text: '10');
-  
+
   bool _isPlaying = false;
   bool _gameOver = false;
   int _minesCount = 4;
   int _revealedGems = 0;
   bool _isAutoMode = false; // Manual vs Auto tabs
-  
+
   List<_MinesTile> _tiles = List.generate(25, (_) => _MinesTile());
+  final List<double> _historyList = [1.96, 1.96, 0.00, 2.55, 0.00, 1.18];
   final math.Random _random = math.Random();
 
   @override
   void initState() {
     super.initState();
     _betController.addListener(() => setState(() {}));
+    SoundManager.soundOn = widget.soundOn;
   }
 
   @override
@@ -81,7 +85,7 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
 
   // Calculate current multiplier
   double get _currentMultiplier => _calculateMultiplier(_minesCount, _revealedGems);
-  
+
   // Calculate next multiplier
   double get _nextMultiplier => _calculateMultiplier(_minesCount, _revealedGems + 1);
 
@@ -105,11 +109,13 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
       widget.onBalanceChanged(widget.balance - bet);
     }
 
+    SoundManager.playClick();
+
     setState(() {
       _isPlaying = true;
       _gameOver = false;
       _revealedGems = 0;
-      
+
       // Reset tiles
       _tiles = List.generate(25, (_) => _MinesTile());
 
@@ -136,7 +142,14 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
         _tiles[index].isExploded = true;
         _gameOver = true;
         _isPlaying = false;
-        
+
+        _historyList.insert(0, 0.0);
+        if (_historyList.length > 10) {
+          _historyList.removeLast();
+        }
+
+        helper.playLose();
+
         // Reveal all tiles
         for (var tile in _tiles) {
           tile.isRevealed = true;
@@ -150,6 +163,7 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
       } else {
         // Safe! Gem found.
         _revealedGems++;
+        helper.playTick();
 
         // Check if all gems are revealed
         int maxGems = 25 - _minesCount;
@@ -158,6 +172,20 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
         }
       }
     });
+  }
+
+  void _pickRandomTile() {
+    if (!_isPlaying || _gameOver) return;
+    List<int> unrevealedIndices = [];
+    for (int i = 0; i < _tiles.length; i++) {
+      if (!_tiles[i].isRevealed) {
+        unrevealedIndices.add(i);
+      }
+    }
+    if (unrevealedIndices.isNotEmpty) {
+      final randomIndex = unrevealedIndices[_random.nextInt(unrevealedIndices.length)];
+      _revealTile(randomIndex);
+    }
   }
 
   void _cashOut() {
@@ -169,6 +197,13 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
 
     if (!isDemoMode) {
       widget.onBalanceChanged(widget.balance + winAmount);
+    }
+
+    helper.playWin();
+
+    _historyList.insert(0, _currentMultiplier);
+    if (_historyList.length > 10) {
+      _historyList.removeLast();
     }
 
     setState(() {
@@ -183,7 +218,7 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
 
     _showStatusMessage(
       title: 'CASHOUT SUCCESS!',
-      message: isDemoMode 
+      message: isDemoMode
           ? 'Demo Won ${_currentMultiplier.toStringAsFixed(2)}x!'
           : 'You won ₹${winAmount.toStringAsFixed(2)} (${_currentMultiplier.toStringAsFixed(2)}x)!',
       isWin: true,
@@ -231,7 +266,7 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header bar
+              // Header bar styled exactly like Coin Flip
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: Row(
@@ -247,7 +282,7 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
                       ),
                     ),
                     const Spacer(),
-                    // Balance Capsule
+                    // Balance Capsule (Coin Flip Style)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
                       decoration: BoxDecoration(
@@ -317,7 +352,7 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
     );
   }
 
-   Widget _buildBetControls(double bet, {required bool isLandscape}) {
+  Widget _buildBetControls(double bet, {required bool isLandscape}) {
     return Container(
       width: isLandscape ? 280.0 : null,
       margin: isLandscape ? const EdgeInsets.only(left: 16.0, top: 4.0, bottom: 12.0) : null,
@@ -327,225 +362,277 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
         borderRadius: BorderRadius.circular(10.0),
         border: Border.all(color: const Color(0xFF2C2F36), width: 1.5),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Manual / Auto Tabs
-          _buildTabBar(),
-          const SizedBox(height: 12.0),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Manual / Auto Tabs
+            _buildTabBar(),
+            const SizedBox(height: 10.0),
 
-          // Bet Amount Label
-          Row(
-            children: [
-              const Text(
-                'Amount',
-                style: TextStyle(color: Color(0xFF90A4AE), fontWeight: FontWeight.bold, fontSize: 11.0),
-              ),
-              const SizedBox(width: 4.0),
-              Icon(Icons.info_outline, color: Colors.grey[400], size: 13.0),
-            ],
-          ),
-          const SizedBox(height: 6.0),
-
-          // Amount Text Input Box
-          Container(
-            height: 38.0,
-            decoration: BoxDecoration(
-              color: const Color(0xFF181A1F),
-              borderRadius: BorderRadius.circular(4.0),
-              border: Border.all(color: const Color(0xFF2C2F36), width: 1.2),
-            ),
-            child: Row(
+            // Bet Amount Label
+            Row(
               children: [
-                // Rupees gold badge
-                Container(
-                  margin: const EdgeInsets.only(left: 6.0, right: 8.0),
-                  width: 20.0,
-                  height: 20.0,
-                  alignment: Alignment.center,
-                  decoration: const BoxDecoration(
-                    color: Colors.orange,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Text(
-                    '₹',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11.5),
-                  ),
+                const Text(
+                  'Amount',
+                  style: TextStyle(color: Color(0xFF90A4AE), fontWeight: FontWeight.bold, fontSize: 11.0),
                 ),
-                // Text input
-                Expanded(
-                  child: TextFormField(
-                    controller: _betController,
-                    enabled: !_isPlaying,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    style: const TextStyle(color: Colors.white, fontSize: 13.0, fontWeight: FontWeight.bold),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 10.0),
+                const SizedBox(width: 4.0),
+                Icon(Icons.info_outline, color: Colors.grey[400], size: 13.0),
+              ],
+            ),
+            const SizedBox(height: 6.0),
+
+            // Amount Text Input Box (Coin Flip style)
+            Container(
+              height: 38.0,
+              decoration: BoxDecoration(
+                color: const Color(0xFF181A1F),
+                borderRadius: BorderRadius.circular(4.0),
+                border: Border.all(color: const Color(0xFF2C2F36), width: 1.2),
+              ),
+              child: Row(
+                children: [
+                  // Rupees gold badge
+                  Container(
+                    margin: const EdgeInsets.only(left: 6.0, right: 8.0),
+                    width: 20.0,
+                    height: 20.0,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      color: Colors.orange,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Text(
+                      '₹',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11.5),
                     ),
                   ),
-                ),
-                // Inline multiplier actions
+                  // Text input
+                  Expanded(
+                    child: TextFormField(
+                      controller: _betController,
+                      enabled: !_isPlaying,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(color: Colors.white, fontSize: 13.0, fontWeight: FontWeight.bold),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 10.0),
+                      ),
+                    ),
+                  ),
+                  // Inline actions: 1/2 and 2x
+                  Row(
+                    children: [
+                      _buildBetActionTextButton('1/2', () {
+                        if (_isPlaying) return;
+                        final double current = double.tryParse(_betController.text) ?? 0.0;
+                        final double next = (current / 2).clamp(0.0, widget.balance);
+                        _betController.text = next.toStringAsFixed(0);
+                      }),
+                      _buildBetActionTextButton('2x', () {
+                        if (_isPlaying) return;
+                        final double current = double.tryParse(_betController.text) ?? 0.0;
+                        final double next = (current * 2).clamp(0.0, widget.balance);
+                        _betController.text = next.toStringAsFixed(0);
+                      }),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6.0),
+
+            // Flat Quick Bet buttons in 2x2 grid (Coin Flip style)
+            Column(
+              children: [
                 Row(
                   children: [
-                    _buildBetActionTextButton('-', () {
+                    _buildFlatQuickBetButton('10', () {
                       if (_isPlaying) return;
-                      final double current = double.tryParse(_betController.text) ?? 0.0;
-                      final double next = (current - 10.0).clamp(0.0, widget.balance);
-                      _betController.text = next.toStringAsFixed(0);
+                      _betController.text = '10';
                     }),
-                    _buildBetActionTextButton('+', () {
+                    _buildFlatQuickBetButton('100', () {
                       if (_isPlaying) return;
-                      final double current = double.tryParse(_betController.text) ?? 0.0;
-                      final double next = (current + 10.0).clamp(0.0, widget.balance);
-                      _betController.text = next.toStringAsFixed(0);
+                      _betController.text = '100';
+                    }),
+                  ],
+                ),
+                const SizedBox(height: 6.0),
+                Row(
+                  children: [
+                    _buildFlatQuickBetButton('500', () {
+                      if (_isPlaying) return;
+                      _betController.text = '500';
+                    }),
+                    _buildFlatQuickBetButton('1000', () {
+                      if (_isPlaying) return;
+                      _betController.text = '1000';
                     }),
                   ],
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 6.0),
+            const SizedBox(height: 10.0),
 
-          // Flat Quick Bet buttons in 2x2 grid
-          Column(
-            children: [
-              Row(
-                children: [
-                  _buildFlatQuickBetButton('10', () {
-                    if (_isPlaying) return;
-                    _betController.text = '10';
-                  }),
-                  _buildFlatQuickBetButton('100', () {
-                    if (_isPlaying) return;
-                    _betController.text = '100';
-                  }),
-                ],
-              ),
-              const SizedBox(height: 6.0),
-              Row(
-                children: [
-                  _buildFlatQuickBetButton('500', () {
-                    if (_isPlaying) return;
-                    _betController.text = '500';
-                  }),
-                  _buildFlatQuickBetButton('1000', () {
-                    if (_isPlaying) return;
-                    _betController.text = '1000';
-                  }),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12.0),
-
-          // Mines Selection Row
-          Row(
-            children: [
-              const Text(
-                'Mines',
-                style: TextStyle(color: Color(0xFF90A4AE), fontWeight: FontWeight.bold, fontSize: 11.0),
-              ),
-              const Spacer(),
-              // Custom Mines dropdown selection
-              Container(
-                height: 28.0,
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF181A1F),
-                  borderRadius: BorderRadius.circular(4.0),
-                  border: Border.all(color: const Color(0xFF2C2F36), width: 1.0),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
-                    value: _minesCount,
-                    dropdownColor: const Color(0xFF1E2024),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.0),
-                    items: List.generate(24, (index) => index + 1).map((int val) {
-                      return DropdownMenuItem<int>(
-                        value: val,
-                        child: Text('$val'),
-                      );
-                    }).toList(),
-                    onChanged: _isPlaying
-                        ? null
-                        : (newValue) {
-                            setState(() {
-                              _minesCount = newValue ?? 4;
-                            });
-                          },
-                  ),
-                ),
-              ),
-              const Text(
-                '24',
-                style: TextStyle(color: Color(0xFF90A4AE), fontSize: 11.0),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12.0),
-
-          // Play Bet / Cash Out Button
-          GestureDetector(
-            onTap: () {
-              if (_isPlaying) {
-                _cashOut();
-              } else {
-                _startGame();
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12.0),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: _isPlaying
-                    ? const Color(0xFF311B92) // Purple Cashout
-                    : const Color(0xFF00C853), // Green Bet
-                borderRadius: BorderRadius.circular(6.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: (_isPlaying ? const Color(0xFF311B92) : const Color(0xFF00C853)).withOpacity(0.3),
-                    blurRadius: 6.0,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Text(
-                _isPlaying 
-                    ? 'Cash Out (₹${(bet * _currentMultiplier).toStringAsFixed(2)})' 
-                    : 'Bet',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14.0,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10.0),
-
-          // Demo Mode notice capsule
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
-            decoration: BoxDecoration(
-              color: const Color(0xFF181A1F),
-              borderRadius: BorderRadius.circular(6.0),
-              border: Border.all(color: const Color(0xFF2C2F36), width: 1.0),
-            ),
-            child: Row(
+            // Mines Slider Label
+            Row(
               children: [
-                Icon(Icons.info_outline, color: Colors.grey[400], size: 14.0),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: Text(
-                    'Betting with 0 will enter demo mode.',
-                    style: TextStyle(color: Colors.grey[400], fontSize: 10.0, fontWeight: FontWeight.bold),
-                  ),
+                const Text(
+                  'Mines',
+                  style: TextStyle(color: Color(0xFF90A4AE), fontWeight: FontWeight.bold, fontSize: 11.0),
+                ),
+                const Spacer(),
+                Text(
+                  '$_minesCount',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.0),
                 ),
               ],
             ),
+            const SizedBox(height: 2.0),
+
+            // Custom Slider layout matching CoinFlip style
+            Row(
+              children: [
+                const Text(
+                  '1',
+                  style: TextStyle(color: Color(0xFF90A4AE), fontSize: 11.0),
+                ),
+                Expanded(
+                  child: SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      activeTrackColor: const Color(0xFF00C853),
+                      inactiveTrackColor: const Color(0xFF181A1F),
+                      thumbColor: Colors.white,
+                      overlayColor: const Color(0xFF00C853).withOpacity(0.2),
+                      trackHeight: 4.0,
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7.0),
+                    ),
+                    child: Slider(
+                      value: _minesCount.toDouble(),
+                      min: 1,
+                      max: 24,
+                      divisions: 23,
+                      onChanged: _isPlaying
+                          ? null
+                          : (val) {
+                              setState(() {
+                                _minesCount = val.toInt();
+                              });
+                            },
+                    ),
+                  ),
+                ),
+                const Text(
+                  '24',
+                  style: TextStyle(color: Color(0xFF90A4AE), fontSize: 11.0),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8.0),
+
+            // Main Play / Cash Out Button (Coin Flip Style: Green Bet / Purple Cashout with White Text)
+            GestureDetector(
+              onTap: () {
+                if (_isPlaying) {
+                  _cashOut();
+                } else {
+                  _startGame();
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _isPlaying
+                      ? const Color(0xFF311B92) // Purple Cashout (CoinFlip style)
+                      : const Color(0xFF00C853), // Green Bet (CoinFlip style)
+                  borderRadius: BorderRadius.circular(8.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (_isPlaying ? const Color(0xFF311B92) : const Color(0xFF00C853)).withOpacity(0.3),
+                      blurRadius: 6.0,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  _isPlaying
+                      ? 'Cash Out (₹${(bet * _currentMultiplier).toStringAsFixed(2)})'
+                      : 'Bet',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8.0),
+
+            // Pick a Tile Randomly button
+            if (_isPlaying) ...[
+              GestureDetector(
+                onTap: _pickRandomTile,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 9.0),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2C2F36),
+                    borderRadius: BorderRadius.circular(6.0),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.auto_awesome, color: Colors.white, size: 13.0),
+                      SizedBox(width: 6.0),
+                      Text(
+                        'Pick a Tile Randomly',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8.0),
+            ],
+
+            // Remaining Gems Info Row
+            _buildInfoRow('Remaining Gems', '${25 - _minesCount - _revealedGems}'),
+            const SizedBox(height: 6.0),
+
+            // Total Profit Info Row
+            _buildInfoRow('Total profit (${_currentMultiplier.toStringAsFixed(2)}x)', '₹${(bet * _currentMultiplier).toStringAsFixed(2)}'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 7.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFF181A1F),
+        borderRadius: BorderRadius.circular(6.0),
+        border: Border.all(color: const Color(0xFF2C2F36), width: 1.0),
+      ),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: TextStyle(color: Colors.grey[400], fontSize: 10.5, fontWeight: FontWeight.bold),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(color: Colors.white, fontSize: 11.0, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -624,21 +711,6 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
     );
   }
 
-  Widget _buildBetActionIconButton(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: 32.0,
-        height: 38.0,
-        alignment: Alignment.center,
-        decoration: const BoxDecoration(
-          border: Border(left: BorderSide(color: Color(0xFF2C2F36), width: 1.0)),
-        ),
-        child: Icon(icon, color: Colors.white, size: 16.0),
-      ),
-    );
-  }
-
   Widget _buildFlatQuickBetButton(String label, VoidCallback onTap) {
     return Expanded(
       child: Padding(
@@ -662,129 +734,510 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
     );
   }
 
+  Widget _buildHistoryBar() {
+    return SizedBox(
+      height: 24.0,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _historyList.length,
+        itemBuilder: (context, index) {
+          final val = _historyList[index];
+          final isWin = val > 1.0;
+          return Container(
+            margin: const EdgeInsets.only(right: 5.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 3.0),
+            decoration: BoxDecoration(
+              color: isWin ? const Color(0xFF00E676) : const Color(0xFF2E3138),
+              borderRadius: BorderRadius.circular(4.0),
+            ),
+            child: Text(
+              '${val.toStringAsFixed(2)}x',
+              style: TextStyle(
+                color: isWin ? Colors.black : Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 10.5,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildMinesPlayfield() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1E2024).withOpacity(0.5),
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: const Color(0xFF2C2F36), width: 2.0),
+        color: const Color(0xFF0F1115),
+        borderRadius: BorderRadius.circular(8.0),
+        image: const DecorationImage(
+          image: AssetImage('assets/mines/bg_frame.png'),
+          fit: BoxFit.cover,
+        ),
       ),
-      child: Stack(
-        children: [
-          // Multiplier Bubble indicator (top-left)
-          Positioned(
-            top: 12.0,
-            left: 12.0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
-              decoration: BoxDecoration(
-                color: const Color(0xFF00C853),
-                borderRadius: BorderRadius.circular(8.0),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Dynamic aspect-ratio math to ensure 5x5 grid NEVER overflows screen height
+          final double playfieldWidth = constraints.maxWidth;
+          final double playfieldHeight = constraints.maxHeight;
+
+          const double spacing = 4.0;
+          final double maxGridWidth = playfieldWidth * 0.90;
+          final double maxGridHeight = playfieldHeight * 0.74;
+
+          final double maxCardWidth = (maxGridWidth - (4 * spacing)) / 5;
+          final double maxCardHeight = (maxGridHeight - (4 * spacing)) / 5;
+
+          final double tileSize = math.max(10.0, math.min(maxCardWidth, maxCardHeight));
+
+          final double gridWidth = (5 * tileSize) + (4 * spacing);
+          final double gridHeight = (5 * tileSize) + (4 * spacing);
+
+          final double gridLeft = (playfieldWidth - gridWidth) / 2;
+          final double gridTop = (playfieldHeight - gridHeight) / 2;
+
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // 1. Crack Decor (Top Left of Grid)
+              Positioned(
+                left: math.max(0.0, gridLeft - 8.0),
+                top: math.max(0.0, gridTop - 6.0),
+                width: 32.0,
+                height: 12.0,
+                child: Image.asset(
+                  'assets/mines/crack_decor.png',
+                  fit: BoxFit.contain,
+                ),
               ),
-              child: Text(
-                _isPlaying 
-                    ? '${_nextMultiplier.toStringAsFixed(2)}x'
-                    : '${_calculateMultiplier(_minesCount, 1).toStringAsFixed(2)}x',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.0),
+
+              // 2. Skull Decor (Top Right of Grid)
+              Positioned(
+                right: math.max(0.0, gridLeft - 10.0),
+                top: math.max(0.0, gridTop - 16.0),
+                width: 52.0,
+                height: 24.0,
+                child: Image.asset(
+                  'assets/mines/skull_decor.png',
+                  fit: BoxFit.contain,
+                ),
               ),
-            ),
-          ),
 
-          // Main 5x5 Grid
-          Positioned.fill(
-            top: 50.0,
-            bottom: 12.0,
-            left: 12.0,
-            right: 12.0,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                const double spacing = 6.0;
-                final double availableWidth = constraints.maxWidth;
-                final double availableHeight = constraints.maxHeight;
+              // 3. Multiplier History & Next Multiplier Bar (top-left)
+              Positioned(
+                top: 8.0,
+                left: 8.0,
+                right: 8.0,
+                child: Row(
+                  children: [
+                    Expanded(child: _buildHistoryBar()),
+                    const SizedBox(width: 8.0),
+                    // Current Next Multiplier badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00C853),
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                      child: Text(
+                        '${_isPlaying ? _nextMultiplier.toStringAsFixed(2) : _calculateMultiplier(_minesCount, 1).toStringAsFixed(2)}x',
+                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 11.0),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-                final double cardWidth = (availableWidth - (4 * spacing)) / 5;
-                final double cardHeight = (availableHeight - (4 * spacing)) / 5;
-
-                // Avoid division by zero
-                final double aspectRatio = cardHeight > 0 ? (cardWidth / cardHeight) : 1.0;
-
-                return GridView.builder(
+              // 4. Main 5x5 Grid Area
+              Positioned(
+                left: gridLeft,
+                top: gridTop,
+                width: gridWidth,
+                height: gridHeight,
+                child: GridView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: 25,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 5,
                     crossAxisSpacing: spacing,
                     mainAxisSpacing: spacing,
-                    childAspectRatio: aspectRatio,
+                    childAspectRatio: 1.0,
                   ),
                   itemBuilder: (context, index) {
                     final tile = _tiles[index];
-                    return _buildTileCard(index, tile);
+                    return MinesTileWidget(
+                      key: ValueKey('tile_$index'),
+                      index: index,
+                      tile: tile,
+                      isGameOver: _gameOver,
+                      isPlaying: _isPlaying,
+                      onTap: () => _revealTile(index),
+                    );
                   },
-                );
-              },
+                ),
+              ),
+
+              // 5. Bottom Cashout Next Tile Details
+              if (_isPlaying && _revealedGems > 0)
+                Positioned(
+                  bottom: 6.0,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E2024).withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(16.0),
+                      ),
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(color: Colors.white, fontSize: 10.5, fontFamily: 'Roboto'),
+                          children: [
+                            const TextSpan(text: 'Cashout on next tile: '),
+                            TextSpan(
+                              text: '₹${((double.tryParse(_betController.text) ?? 0.0) * _nextMultiplier).toStringAsFixed(2)} ',
+                              style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+                            ),
+                            TextSpan(
+                              text: '(${_nextMultiplier.toStringAsFixed(2)}x)',
+                              style: const TextStyle(color: Color(0xFF00C853), fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // 6. Win Overlay Card Centered inside Playfield Box (Stake style overlay)
+              if (_gameOver && _revealedGems > 0)
+                Center(
+                  child: WinOverlayCard(
+                    multiplier: _currentMultiplier,
+                    winAmount: (double.tryParse(_betController.text) ?? 0.0) * _currentMultiplier,
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class MinesTileWidget extends StatefulWidget {
+  final int index;
+  final _MinesTile tile;
+  final bool isGameOver;
+  final bool isPlaying;
+  final VoidCallback onTap;
+
+  const MinesTileWidget({
+    super.key,
+    required this.index,
+    required this.tile,
+    required this.isGameOver,
+    required this.isPlaying,
+    required this.onTap,
+  });
+
+  @override
+  State<MinesTileWidget> createState() => _MinesTileWidgetState();
+}
+
+class _MinesTileWidgetState extends State<MinesTileWidget> {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        if (widget.isPlaying && !widget.tile.isRevealed && !widget.isGameOver) {
+          widget.onTap();
+        }
+      },
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        transitionBuilder: (child, animation) {
+          return AnimatedBuilder(
+            animation: animation,
+            builder: (context, child) {
+              return Transform(
+                transform: Matrix4.identity()..scale(animation.value, 1.0, 1.0),
+                alignment: Alignment.center,
+                child: child,
+              );
+            },
+            child: child,
+          );
+        },
+        child: widget.tile.isRevealed
+            ? _buildBackCard(key: const ValueKey('back'))
+            : _buildFrontCard(key: const ValueKey('front')),
+      ),
+    );
+  }
+
+  // Front card (Hidden / Unrevealed Tile - CoinFlip styled dark tile)
+  Widget _buildFrontCard({required Key key}) {
+    return Container(
+      key: key,
+      decoration: BoxDecoration(
+        color: const Color(0xFF2E3138),
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(color: const Color(0xFF42454E), width: 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.35),
+            offset: const Offset(0, 2),
+            blurRadius: 2.0,
+          ),
+        ],
+      ),
+      child: Container(
+        margin: const EdgeInsets.all(2.0),
+        decoration: BoxDecoration(
+          color: const Color(0xFF23252B),
+          borderRadius: BorderRadius.circular(6.0),
+        ),
+      ),
+    );
+  }
+
+  // Back card (Revealed Tile)
+  Widget _buildBackCard({required Key key}) {
+    final bool isMine = widget.tile.isMine;
+    final bool isExploded = widget.tile.isExploded;
+
+    if (isMine) {
+      // BOMB/MINE CARD
+      return Container(
+        key: key,
+        decoration: BoxDecoration(
+          color: isExploded ? const Color(0xFFD50000) : const Color(0xFF1E2024),
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(
+            color: isExploded ? const Color(0xFFFFEB3B) : const Color(0xFF37474F),
+            width: isExploded ? 2.0 : 1.0,
+          ),
+          boxShadow: isExploded
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFD50000).withOpacity(0.6),
+                    blurRadius: 8.0,
+                    spreadRadius: 1.0,
+                  )
+                ]
+              : null,
+        ),
+        child: Opacity(
+          opacity: widget.tile.isExploded || !widget.isGameOver ? 1.0 : 0.45,
+          child: Container(
+            padding: const EdgeInsets.all(5.0),
+            child: Image.asset(
+              'assets/mines/bomb.png',
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+      );
+    } else {
+      // GEM CARD (glowing purple square with premium diamond)
+      return Container(
+        key: key,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF8C34FF),
+              Color(0xFF5D00E6),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(color: const Color(0xFFB388FF).withOpacity(0.5), width: 1.0),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF8C34FF).withOpacity(0.4),
+              blurRadius: 6.0,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Opacity(
+          opacity: widget.isPlaying || !widget.isGameOver ? 1.0 : 0.45,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Custom painted highly detailed 3D Diamond Vector
+              const Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CustomPaint(
+                    painter: DiamondPainter(),
+                  ),
+                ),
+              ),
+              // Glow spark reflection
+              Positioned(
+                top: 4.0,
+                left: 4.0,
+                child: Icon(
+                  Icons.star,
+                  size: 10.0,
+                  color: Colors.white.withOpacity(0.85),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+}
+
+// 3D Facet Diamond Vector Painter
+class DiamondPainter extends CustomPainter {
+  const DiamondPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    final w = size.width;
+    final h = size.height;
+
+    // Define vertices for a diamond gemstone shape
+    final pTopLeft = Offset(w * 0.28, h * 0.22);
+    final pTopRight = Offset(w * 0.72, h * 0.22);
+    final pMidLeft = Offset(w * 0.1, h * 0.44);
+    final pMidRight = Offset(w * 0.9, h * 0.44);
+    final pBottom = Offset(w * 0.5, h * 0.88);
+    final pCenter = Offset(w * 0.5, h * 0.41);
+
+    void drawFacet(List<Offset> points, Color color) {
+      final path = Path()..moveTo(points[0].dx, points[0].dy);
+      for (var i = 1; i < points.length; i++) {
+        path.lineTo(points[i].dx, points[i].dy);
+      }
+      path.close();
+      canvas.drawPath(path, paint..color = color);
+    }
+
+    // Gradient faceting overlays (varying opacity levels)
+    final Color cTable = Colors.white.withOpacity(0.55);
+    final Color cLight1 = Colors.white.withOpacity(0.35);
+    final Color cLight2 = Colors.white.withOpacity(0.2);
+    final Color cDark1 = Colors.black.withOpacity(0.15);
+    final Color cDark2 = Colors.black.withOpacity(0.28);
+
+    // Facet rendering
+    drawFacet([pTopLeft, pTopRight, pCenter], cTable);
+    drawFacet([pTopLeft, pMidLeft, pCenter], cLight1);
+    drawFacet([pTopRight, pMidRight, pCenter], cLight2);
+    drawFacet([pMidLeft, pBottom, pCenter], cDark1);
+    drawFacet([pMidRight, pBottom, pCenter], cDark2);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Win Overlay Card Widget (Centered in Game Playfield Arena)
+// ─────────────────────────────────────────────────────────────────────────────
+class WinOverlayCard extends StatelessWidget {
+  final double multiplier;
+  final double winAmount;
+
+  const WinOverlayCard({
+    super.key,
+    required this.multiplier,
+    required this.winAmount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 190.0,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E2024).withOpacity(0.96),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: const Color(0xFF2C2F36), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.55),
+            blurRadius: 18.0,
+            spreadRadius: 2.0,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Top Multiplier with sparkle icons (✦ 1.96x ✦)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.auto_awesome, color: Color(0xFF00E676), size: 14.0),
+              const SizedBox(width: 6.0),
+              Text(
+                '${multiplier.toStringAsFixed(2)}x',
+                style: GoogleFonts.robotoMono(
+                  textStyle: const TextStyle(
+                    color: Color(0xFF00E676),
+                    fontSize: 26.0,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6.0),
+              const Icon(Icons.auto_awesome, color: Color(0xFF00E676), size: 14.0),
+            ],
+          ),
+          const SizedBox(height: 10.0),
+
+          // Bottom Win Amount Container with Gold Rupees Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+            decoration: BoxDecoration(
+              color: const Color(0xFF14161B),
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  winAmount.toStringAsFixed(2),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 6.0),
+                Container(
+                  width: 17.0,
+                  height: 17.0,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: Colors.orange,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Text(
+                    '₹',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 10.0,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-
-  Widget _buildTileCard(int index, _MinesTile tile) {
-    final bool isRevealed = tile.isRevealed;
-    final bool isMine = tile.isMine;
-    final bool isExploded = tile.isExploded;
-
-    Color cardBgColor;
-    Widget cardChild;
-
-    if (!isRevealed) {
-      cardBgColor = const Color(0xFF2E3138);
-      cardChild = const SizedBox();
-    } else {
-      if (isMine) {
-        cardBgColor = isExploded ? const Color(0xFFFF1744) : const Color(0xFFC62828).withOpacity(0.65);
-        cardChild = Icon(
-          isExploded ? Icons.whatshot : Icons.dangerous,
-          color: Colors.white,
-          size: 22.0,
-        );
-      } else {
-        cardBgColor = const Color(0xFF00E5FF).withOpacity(0.8);
-        cardChild = const Icon(
-          Icons.diamond,
-          color: Colors.white,
-          size: 22.0,
-        );
-      }
-    }
-
-    return GestureDetector(
-      onTap: () => _revealTile(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        decoration: BoxDecoration(
-          color: cardBgColor,
-          borderRadius: BorderRadius.circular(10.0),
-          border: Border.all(
-            color: isExploded 
-                ? const Color(0xFFFFD54F) 
-                : (isRevealed ? Colors.white.withOpacity(0.4) : const Color(0xFF424242)),
-            width: isExploded ? 2.5 : 1.5,
-          ),
-          boxShadow: [
-            if (!isRevealed)
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                offset: const Offset(0, 2),
-                blurRadius: 2.0,
-              ),
-          ],
-        ),
-        child: Center(
-          child: cardChild,
-        ),
-      ),
-    );
-  }
 }
+

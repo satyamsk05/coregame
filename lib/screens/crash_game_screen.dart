@@ -64,6 +64,9 @@ class _CrashGameScreenState extends State<CrashGameScreen>
   bool _cashedOut   = false;
   bool _autoEnabled = false;
 
+  double _cashedOutMulti = 1.0;
+  double _cashedOutAmount = 0.0;
+
   // ── history (pending entry added after crash delay) ─────────────────────
   final List<double> _history = [3.40, 1.89, 5.30, 1.12, 2.05, 12.80, 1.45];
   double? _pendingHistory;
@@ -229,7 +232,9 @@ class _CrashGameScreenState extends State<CrashGameScreen>
   void _cashOut() {
     if (!_hasBet || _cashedOut || _state != CrashState.flying) return;
     final double bet = double.tryParse(_betCtrl.text) ?? 10.0;
-    widget.onBalanceChanged(widget.balance + bet * _multi);
+    _cashedOutMulti = _multi;
+    _cashedOutAmount = bet * _multi;
+    widget.onBalanceChanged(widget.balance + _cashedOutAmount);
     SoundManager.playClick();
     setState(() => _cashedOut = true);
   }
@@ -259,9 +264,6 @@ class _CrashGameScreenState extends State<CrashGameScreen>
               onBack: widget.onBackPressed,
               accentColor: accentColor,
             ),
-
-            // ── HISTORY ────────────────────────────────────────────────
-            _HistoryBar(history: _history),
 
             // ── CHART (fills remaining space) ──────────────────────────
             Expanded(
@@ -334,6 +336,23 @@ class _CrashGameScreenState extends State<CrashGameScreen>
                                 ),
                                 // Centre HUD
                                 Center(child: _buildHud(accentColor)),
+
+                                // History Bar inside top of Chart Arena
+                                Positioned(
+                                  top: 8.0,
+                                  left: 8.0,
+                                  right: 8.0,
+                                  child: _HistoryBar(history: _history),
+                                ),
+
+                                // Win Overlay Card in center of Chart Arena when cashed out
+                                if (_cashedOut)
+                                  Center(
+                                    child: WinOverlayCard(
+                                      multiplier: _state == CrashState.crashed ? _crashedAt : _multi,
+                                      winAmount: (double.tryParse(_betCtrl.text) ?? 10.0) * (_state == CrashState.crashed ? _crashedAt : _multi),
+                                    ),
+                                  ),
                               ],
                             ),
                           );
@@ -996,7 +1015,106 @@ class _ChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _ChartPainter old) =>
-      old.progress != progress || old.state != state ||
-      old.particles.length != particles.length || old.multi != multi;
+  bool shouldRepaint(covariant _ChartPainter oldDelegate) => true;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Win Overlay Card Widget (Centered in Game Playfield Arena)
+// ─────────────────────────────────────────────────────────────────────────────
+class WinOverlayCard extends StatelessWidget {
+  final double multiplier;
+  final double winAmount;
+
+  const WinOverlayCard({
+    super.key,
+    required this.multiplier,
+    required this.winAmount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 190.0,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E2024).withOpacity(0.96),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: const Color(0xFF2C2F36), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.55),
+            blurRadius: 18.0,
+            spreadRadius: 2.0,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Top Multiplier with sparkle icons (✦ 1.96x ✦)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.auto_awesome, color: Color(0xFF00E676), size: 14.0),
+              const SizedBox(width: 6.0),
+              Text(
+                '${multiplier.toStringAsFixed(2)}x',
+                style: GoogleFonts.robotoMono(
+                  textStyle: const TextStyle(
+                    color: Color(0xFF00E676),
+                    fontSize: 26.0,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6.0),
+              const Icon(Icons.auto_awesome, color: Color(0xFF00E676), size: 14.0),
+            ],
+          ),
+          const SizedBox(height: 10.0),
+
+          // Bottom Win Amount Container with Gold Rupees Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+            decoration: BoxDecoration(
+              color: const Color(0xFF14161B),
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  winAmount.toStringAsFixed(2),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 6.0),
+                Container(
+                  width: 17.0,
+                  height: 17.0,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: Colors.orange,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Text(
+                    '₹',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 10.0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

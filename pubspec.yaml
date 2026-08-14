@@ -62,6 +62,7 @@ flutter:
   assets:
     - assets/
     - assets/coinflip/
+    - assets/mines/
     - assets/bg_video.mp4
 
   # An image asset can refer to one or more resolution-specific "variants", see
