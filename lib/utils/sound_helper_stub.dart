@@ -17,3 +17,7 @@ void playWinSound() {
 void playLoseSound() {
   // No-op for non-web platforms.
 }
+
+void playBeltHandleSound() {
+  // No-op for non-web platforms.
+}

@@ -224,3 +224,47 @@ void playLoseSound() {
     // Fail silently
   }
 }
+
+void playBeltHandleSound() {
+  try {
+    _eval('''
+      (function() {
+        try {
+          var audioCtx = window._audioCtx || (window._audioCtx = new (window.AudioContext || window.webkitAudioContext)());
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+          var now = audioCtx.currentTime;
+          
+          // Mechanical ratchet click 1
+          var osc1 = audioCtx.createOscillator();
+          var gain1 = audioCtx.createGain();
+          osc1.type = 'square';
+          osc1.frequency.setValueAtTime(340, now);
+          osc1.frequency.exponentialRampToValueAtTime(75, now + 0.045);
+          gain1.gain.setValueAtTime(0.14, now);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+          osc1.connect(gain1);
+          gain1.connect(audioCtx.destination);
+          osc1.start(now);
+          osc1.stop(now + 0.045);
+
+          // Mechanical belt latch release 2 (delay 60ms)
+          var osc2 = audioCtx.createOscillator();
+          var gain2 = audioCtx.createGain();
+          osc2.type = 'triangle';
+          osc2.frequency.setValueAtTime(460, now + 0.06);
+          osc2.frequency.exponentialRampToValueAtTime(110, now + 0.115);
+          gain2.gain.setValueAtTime(0.16, now + 0.06);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.115);
+          osc2.connect(gain2);
+          gain2.connect(audioCtx.destination);
+          osc2.start(now + 0.06);
+          osc2.stop(now + 0.115);
+        } catch (e) {
+          console.error(e);
+        }
+      })();
+    ''');
+  } catch (e) {
+    // Fail silently
+  }
+}

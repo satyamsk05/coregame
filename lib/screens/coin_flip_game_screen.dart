@@ -5,6 +5,7 @@ import '../widgets/win_lose_toast.dart';
 import '../widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/animated_game_background.dart';
+import '../utils/sound_manager.dart';
 
 class CoinFlipGameScreen extends StatefulWidget {
   final double balance;
@@ -131,6 +132,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
   }
 
   void _triggerFlip() {
+    SoundManager.playBeltHandle();
     setState(() {
       _isFlipping = true;
       _animationController.forward(from: 0.0);

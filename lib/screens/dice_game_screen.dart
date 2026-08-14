@@ -5,6 +5,7 @@ import '../widgets/win_lose_toast.dart';
 import '../widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:core_game/utils/sound_helper.dart';
+import '../utils/sound_manager.dart';
 
 
 class DiceGameScreen extends StatefulWidget {
@@ -283,6 +284,7 @@ class _DiceGameScreenState extends State<DiceGameScreen>
       _hasRolled = true;
       _statusText = isDemo ? 'DEMO ROLL IN PROGRESS...' : 'ROLL IN PROGRESS...';
     });
+    SoundManager.playBeltHandle();
 
     final double finalRoll = _random.nextDouble() * 100.0;
     _rollController.forward(from: 0.0);

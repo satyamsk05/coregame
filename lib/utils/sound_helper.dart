@@ -20,3 +20,7 @@ void playWin() {
 void playLose() {
   playLoseSound();
 }
+
+void playBeltHandle() {
+  playBeltHandleSound();
+}

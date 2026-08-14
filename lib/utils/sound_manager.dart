@@ -15,4 +15,10 @@ class SoundManager {
       }
     }
   }
+
+  static void playBeltHandle() {
+    if (soundOn) {
+      helper.playBeltHandle();
+    }
+  }
 }
