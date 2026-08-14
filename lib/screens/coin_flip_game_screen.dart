@@ -361,7 +361,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
         color: const Color(0xFF1E2024),
-        borderRadius: BorderRadius.circular(10.0),
+        borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: const Color(0xFF2C2F36), width: 1.5),
       ),
       child: Column(
@@ -385,7 +385,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
             height: 38.0,
             decoration: BoxDecoration(
               color: const Color(0xFF181A1F),
-              borderRadius: BorderRadius.circular(6.0),
+              borderRadius: BorderRadius.circular(12.0),
               border: Border.all(color: const Color(0xFF2C2F36), width: 1.2),
             ),
             child: Row(
@@ -491,7 +491,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
                       padding: const EdgeInsets.symmetric(vertical: 10.5, horizontal: 6.0),
                       decoration: BoxDecoration(
                         color: const Color(0xFF2C2F36),
-                        borderRadius: BorderRadius.circular(6.0),
+                        borderRadius: BorderRadius.circular(12.0),
                         border: Border.all(
                           color: _isHeadsSelected ? const Color(0xFFFFD700) : Colors.transparent,
                           width: 1.5,
@@ -532,7 +532,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
                       padding: const EdgeInsets.symmetric(vertical: 10.5, horizontal: 6.0),
                       decoration: BoxDecoration(
                         color: const Color(0xFF2C2F36),
-                        borderRadius: BorderRadius.circular(6.0),
+                        borderRadius: BorderRadius.circular(12.0),
                         border: Border.all(
                           color: !_isHeadsSelected ? const Color(0xFFECEFF1) : Colors.transparent,
                           width: 1.5,
@@ -580,7 +580,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
                 color: _isPlaying
                     ? const Color(0xFF311B92) // Purple Cashout
                     : const Color(0xFF00C853), // Green Bet
-                borderRadius: BorderRadius.circular(6.0),
+                borderRadius: BorderRadius.circular(12.0),
                 boxShadow: [
                   BoxShadow(
                     color: (_isPlaying ? const Color(0xFF311B92) : const Color(0xFF00C853)).withOpacity(0.3),
@@ -609,7 +609,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
             padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
             decoration: BoxDecoration(
               color: const Color(0xFF181A1F),
-              borderRadius: BorderRadius.circular(6.0),
+              borderRadius: BorderRadius.circular(10.0),
               border: Border.all(color: const Color(0xFF2C2F36), width: 1.0),
             ),
             child: Row(
@@ -676,7 +676,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: const Color(0xFF2E3138),
-              borderRadius: BorderRadius.circular(4.0),
+              borderRadius: BorderRadius.circular(10.0),
             ),
             child: Text(
               label,

@@ -562,7 +562,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
             margin: const EdgeInsets.all(8.0),
             decoration: BoxDecoration(
               color: const Color(0xFF161618),
-              borderRadius: BorderRadius.circular(8.0),
+              borderRadius: BorderRadius.circular(12.0),
             ),
             child: Row(
               children: [
@@ -594,7 +594,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                     height: 42.0,
                     decoration: BoxDecoration(
                       color: const Color(0xFF161618),
-                      borderRadius: BorderRadius.circular(8.0),
+                      borderRadius: BorderRadius.circular(12.0),
                       border: Border.all(color: const Color(0xFF2C2F36), width: 1.2),
                     ),
                     child: Row(
@@ -685,7 +685,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                     padding: const EdgeInsets.all(4.0),
                     decoration: BoxDecoration(
                       color: const Color(0xFF161618),
-                      borderRadius: BorderRadius.circular(8.0),
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
                     child: Row(
                       children: [
@@ -705,7 +705,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                     padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
                     decoration: BoxDecoration(
                       color: const Color(0xFF161618),
-                      borderRadius: BorderRadius.circular(8.0),
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
                     child: Row(
                       children: [
@@ -745,7 +745,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                       height: 38.0,
                       decoration: BoxDecoration(
                         color: const Color(0xFF161618),
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: BorderRadius.circular(12.0),
                         border: Border.all(color: const Color(0xFF2C2F36), width: 1.2),
                       ),
                       child: Row(
@@ -812,7 +812,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _isAutoPlaying ? Colors.redAccent : const Color(0xFF00C853),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
                   elevation: 4.0,
                 ),
                 child: Text(
@@ -848,7 +848,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: isActive ? const Color(0xFF2C2F36) : Colors.transparent,
-                borderRadius: BorderRadius.circular(8.0),
+                borderRadius: BorderRadius.circular(12.0),
               ),
               child: Text(
                 label,
@@ -920,7 +920,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: const Color(0xFF2C2F36).withOpacity(0.5),
-            borderRadius: BorderRadius.circular(6.0),
+            borderRadius: BorderRadius.circular(10.0),
           ),
           child: Text(
             label,
@@ -943,7 +943,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: isSelected ? const Color(0xFF2C2F36) : Colors.transparent,
-            borderRadius: BorderRadius.circular(6.0),
+            borderRadius: BorderRadius.circular(10.0),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
