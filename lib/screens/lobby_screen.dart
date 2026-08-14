@@ -113,7 +113,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     },
     {
       'title': 'HiLo',
-      'image': 'black',
+      'image': 'assets/hilo_logo.png',
     },
     {
       'title': 'Fruit Slash',
