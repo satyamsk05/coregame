@@ -270,51 +270,51 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF161618),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: _isPlaying ? null : widget.onBackPressed,
-                  ),
-                  Text(
-                    'MINES MULTIPLIER',
-                    style: GoogleFonts.alfaSlabOne(
-                      textStyle: const TextStyle(color: Colors.white, fontSize: 16.0, letterSpacing: 0.5),
+      body: AnimatedGameBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Header bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: _isPlaying ? null : widget.onBackPressed,
                     ),
-                  ),
-                  const Spacer(),
-                  // Balance Capsule
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E2024),
-                      borderRadius: BorderRadius.circular(20.0),
-                      border: Border.all(color: const Color(0xFF37474F), width: 1.5),
+                    Text(
+                      'MINES MULTIPLIER',
+                      style: GoogleFonts.alfaSlabOne(
+                        textStyle: const TextStyle(color: Colors.white, fontSize: 16.0, letterSpacing: 0.5),
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.monetization_on, color: Color(0xFFFFD700), size: 16.0),
-                        const SizedBox(width: 6.0),
-                        Text(
-                          '₹${widget.balance.toStringAsFixed(2)}',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12.5),
-                        ),
-                      ],
+                    const Spacer(),
+                    // Balance Capsule
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E2024),
+                        borderRadius: BorderRadius.circular(20.0),
+                        border: Border.all(color: const Color(0xFF37474F), width: 1.5),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.monetization_on, color: Color(0xFFFFD700), size: 16.0),
+                          const SizedBox(width: 6.0),
+                          Text(
+                            '₹${widget.balance.toStringAsFixed(2)}',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12.5),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            // Main Split Panel
-            Expanded(
-              child: AnimatedGameBackground(
+              // Main Split Panel
+              Expanded(
                 child: isLandscape
                     ? Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -353,8 +353,8 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
                         ],
                       ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
