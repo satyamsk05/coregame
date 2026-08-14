@@ -8,7 +8,7 @@ class AnimatedGameBackground extends StatefulWidget {
   const AnimatedGameBackground({
     super.key,
     required this.child,
-    this.showStars = true,
+    this.showStars = false,
   });
 
   @override

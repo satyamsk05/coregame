@@ -70,39 +70,53 @@ class _LobbyScreenState extends State<LobbyScreen> {
   String get _bankAccountNumber => widget.bankAccountNumber;
   String get _activeGateway => widget.activeGateway;
 
+  String _selectedCategory = 'All';
+
   // Games list metadata matching the files in "assets/"
   final List<Map<String, String>> _games = [
     {
       'title': 'Keno 12',
-      'image': 'assets/Glossy Golden Keno 12 Game Icon.png',
+      'image': 'assets/file_00000000563482119a9594084f1f194c.png',
     },
     {
       'title': 'Coin Flip',
-      'image': 'assets/Golden Coin Flip Arcade Poster.png',
+      'image': 'assets/file_0000000004908211b393b98d4a502080.png',
     },
     {
       'title': 'Limbo Rocket',
-      'image': 'assets/LIMBO 500x Rocket Game Card.png',
-    },
-    {
-      'title': 'Fruit Slash',
-      'image': 'assets/Neon Fruit Slash Game Poster.png',
-    },
-    {
-      'title': 'Roulette Rush',
-      'image': 'assets/Roulette Rush_ Neon Casino Showdown.png',
-    },
-    {
-      'title': 'Dragon Slots',
-      'image': 'assets/image-gen-1(3).png',
-    },
-    {
-      'title': 'Tiger Fortune',
-      'image': 'assets/image-gen-1(4).png',
+      'image': 'assets/file_000000004f48821189f8d507b9ab2857.png',
     },
     {
       'title': 'Classic Dice',
-      'image': 'assets/image-gen-1(5).png',
+      'image': 'assets/file_0000000075348208b1ffe9f8fcf2385b.png',
+    },
+    {
+      'title': 'Mines',
+      'image': 'assets/file_00000000eb388211a7196e8362206f0c.png',
+    },
+    {
+      'title': 'Roulette Rush',
+      'image': 'assets/file_0000000043b882118581e6c2651cc980.png',
+    },
+    {
+      'title': 'Crash',
+      'image': 'assets/file_0000000059c88211addea865bde5ea3d.png',
+    },
+    {
+      'title': 'Plinko',
+      'image': 'assets/file_00000000be94821189dc5d6696cf5925.png',
+    },
+    {
+      'title': '7 Up Down',
+      'image': 'assets/file_00000000bf5482119cfaa6800c38c2c1.png',
+    },
+    {
+      'title': 'HiLo',
+      'image': 'black',
+    },
+    {
+      'title': 'Fruit Slash',
+      'image': 'black',
     },
   ];
 
@@ -171,7 +185,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
     final double screenHeight = MediaQuery.of(context).size.height;
     // Calculate the best height for the game cards dynamically to prevent any overflow on small devices
-    final double gridHeight = (screenHeight - (paddingVertical * 2) - 124.0).clamp(160.0, 245.0);
+    final double gridHeight = (screenHeight - (paddingVertical * 2) - 80.0).clamp(180.0, 290.0);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -380,65 +394,160 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   ),
                 ),
 
-                // 6. Horizontal Game Cards List (2x2 Grid Layout)
+                // 5.5 Category Sidebar (Screenshot 1)
                 Positioned(
                   top: 50.0,
-                  bottom: 74.0,
+                  bottom: 48.0,
                   left: 8.0,
-                  right: 8.0,
+                  width: 135.0,
                   child: Center(
                     child: SizedBox(
                       height: gridHeight,
-                      child: GridView.builder(
-                        scrollDirection: Axis.horizontal,
-                        shrinkWrap: true,
-                        itemCount: _games.length,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 1,
-                          mainAxisSpacing: 16.0,
-                          childAspectRatio: 1.25, // Vertical card aspect ratio (height / width)
-                        ),
-                        itemBuilder: (context, index) {
-                          final game = _games[index];
-                          return GestureDetector(
-                            onTap: () {
-                              if (game['title'] == 'Keno 12') {
-                                widget.onPlayGame('keno');
-                              } else if (game['title'] == 'Coin Flip') {
-                                widget.onPlayGame('coin_flip');
-                              } else if (game['title'] == 'Limbo Rocket') {
-                                widget.onPlayGame('limbo');
-                              } else if (game['title'] == 'Classic Dice') {
-                                widget.onPlayGame('dice');
-                              } else if (game['title'] == 'Roulette Rush') {
-                                widget.onPlayGame('roulette');
-                              } else {
-                                _showInfoDialog(game['title']!, 'Launching ${game['title']}! Place your bets to win big.');
-                              }
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF160E45),
-                                borderRadius: BorderRadius.circular(12.0),
-                                border: Border.all(color: const Color(0xFF9E84FF), width: 1.5),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
-                                    blurRadius: 6.0,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10.0),
-                                child: Image.asset(
-                                  game['image']!,
-                                  fit: BoxFit.fill, // Display the full poster image without distortion or cropping!
+                      child: _buildCategorySidebar(),
+                    ),
+                  ),
+                ),
+
+                // 6. Horizontal Game Cards List (2x2 Grid Layout)
+                Positioned(
+                  top: 50.0,
+                  bottom: 48.0,
+                  left: 150.0,
+                  right: 8.0,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(
+                      height: gridHeight,
+                      child: Builder(
+                        builder: (context) {
+                          final List<Map<String, String>> filteredGames = _games.where((game) {
+                            if (_selectedCategory == 'All') return true;
+                            if (_selectedCategory == 'Hot') {
+                              return ['Keno 12', 'Coin Flip', 'Limbo Rocket', 'Classic Dice', 'Mines'].contains(game['title']);
+                            }
+                            if (_selectedCategory == 'Poker') {
+                              return ['HiLo'].contains(game['title']);
+                            }
+                            if (_selectedCategory == 'Slots') {
+                              return ['Roulette Rush', 'Crash', 'Plinko', '7 Up Down', 'Fruit Slash'].contains(game['title']);
+                            }
+                            return true;
+                          }).toList();
+
+                          Widget gridContent;
+                          if (filteredGames.isEmpty) {
+                            gridContent = Center(
+                              key: ValueKey('empty_$_selectedCategory'),
+                              child: Text(
+                                'No Games Found',
+                                style: GoogleFonts.pressStart2p(
+                                  textStyle: const TextStyle(color: Colors.grey, fontSize: 8.0),
                                 ),
                               ),
-                            ),
+                            );
+                          } else {
+                            gridContent = GridView.builder(
+                              key: ValueKey(_selectedCategory),
+                              scrollDirection: Axis.horizontal,
+                              shrinkWrap: true,
+                              itemCount: filteredGames.length,
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 12.0,
+                                crossAxisSpacing: 12.0,
+                                childAspectRatio: 1.0, // Perfect square cards
+                              ),
+                              itemBuilder: (context, index) {
+                                final game = filteredGames[index];
+                                return GestureDetector(
+                                  onTap: () {
+                                    if (game['title'] == 'Keno 12') {
+                                      widget.onPlayGame('keno');
+                                    } else if (game['title'] == 'Coin Flip') {
+                                      widget.onPlayGame('coin_flip');
+                                    } else if (game['title'] == 'Limbo Rocket') {
+                                      widget.onPlayGame('limbo');
+                                    } else if (game['title'] == 'Classic Dice') {
+                                      widget.onPlayGame('dice');
+                                    } else if (game['title'] == 'Mines') {
+                                      widget.onPlayGame('mines');
+                                    } else if (game['title'] == 'HiLo') {
+                                      widget.onPlayGame('hilo');
+                                    } else if (game['title'] == '7 Up Down') {
+                                      widget.onPlayGame('seven_up_down');
+                                    } else if (game['title'] == 'Roulette Rush') {
+                                      widget.onPlayGame('roulette');
+                                    } else {
+                                      _showInfoDialog(game['title']!, 'Launching ${game['title']}! Place your bets to win big.');
+                                    }
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF160E45),
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      border: Border.all(color: const Color(0xFF9E84FF), width: 1.5),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.3),
+                                          blurRadius: 6.0,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                      child: game['image'] == 'black'
+                                          ? Container(
+                                              color: const Color(0xFF0D0A1B),
+                                              alignment: Alignment.center,
+                                              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                                              child: Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  const Icon(Icons.videogame_asset, color: Color(0xFF9E84FF), size: 28.0),
+                                                  const SizedBox(height: 6.0),
+                                                  Text(
+                                                    game['title']!.toUpperCase(),
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.pressStart2p(
+                                                      textStyle: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 8.0,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                          : Image.asset(
+                                              game['image']!,
+                                              fit: BoxFit.fill,
+                                            ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          }
+
+                          return TweenAnimationBuilder<double>(
+                            key: ValueKey(_selectedCategory),
+                            tween: Tween<double>(begin: 0.0, end: 1.0),
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, value, child) {
+                              return Opacity(
+                                opacity: value,
+                                child: Transform.translate(
+                                  offset: Offset(-40.0 * (1.0 - value), 0.0), // Slides in smoothly from left by 40 pixels!
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: gridContent,
                           );
-                        },
+                        }
                       ),
                     ),
                   ),
@@ -446,6 +555,163 @@ class _LobbyScreenState extends State<LobbyScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // ==================== SIDEBAR COMPONENT HELPERS ====================
+
+  Widget _buildCategorySidebar() {
+    return Container(
+      width: 135.0,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F0736).withOpacity(0.95),
+        borderRadius: BorderRadius.circular(16.0),
+        border: Border.all(color: const Color(0xFF9E84FF), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 8.0,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // 1. Sort Header (glowing card suit theme)
+          _buildSortHeader(),
+          
+          const Divider(color: Color(0xFF322878), height: 1.0),
+          
+          // 2. Tabs List
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 12.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  _buildSidebarTab(
+                    id: 'Hot',
+                    label: 'Hot Game',
+                    icon: Icons.local_fire_department,
+                    iconColor: Colors.amber,
+                  ),
+                  const SizedBox(height: 8.0),
+                  _buildSidebarTab(
+                    id: 'Poker',
+                    label: 'Poker Game',
+                    icon: Icons.style,
+                    iconColor: Colors.red[300]!,
+                  ),
+                  const SizedBox(height: 8.0),
+                  _buildSidebarTab(
+                    id: 'Slots',
+                    label: 'Slots Game',
+                    icon: Icons.casino,
+                    iconColor: Colors.cyan[300]!,
+                  ),
+                  const SizedBox(height: 8.0),
+                  _buildSidebarTab(
+                    id: 'All',
+                    label: 'All Game',
+                    icon: Icons.grid_view,
+                    iconColor: Colors.purple[300]!,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSortHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      alignment: Alignment.center,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.favorite, color: Colors.cyanAccent, size: 10.0),
+          const SizedBox(width: 4.0),
+          Text(
+            'S',
+            style: GoogleFonts.pressStart2p(
+              textStyle: const TextStyle(color: Colors.white, fontSize: 13.0, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const Icon(Icons.favorite, color: Colors.pink, size: 13.0),
+          Text(
+            'rt',
+            style: GoogleFonts.pressStart2p(
+              textStyle: const TextStyle(color: Colors.white, fontSize: 13.0, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 4.0),
+          const Icon(Icons.star, color: Colors.pinkAccent, size: 10.0),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarTab({
+    required String id,
+    required String label,
+    required IconData icon,
+    required Color iconColor,
+  }) {
+    final bool isSelected = _selectedCategory == id;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedCategory = id;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 38.0,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [Color(0xFF8E24AA), Color(0xFFD81B60)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isSelected ? null : const Color(0xFF160E45).withOpacity(0.4),
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(
+            color: isSelected ? Colors.white.withOpacity(0.4) : Colors.transparent,
+            width: 1.0,
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : iconColor,
+              size: 16.0,
+            ),
+            const SizedBox(width: 8.0),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 10.5,
+                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
       ),
     );

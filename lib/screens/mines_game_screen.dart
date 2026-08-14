@@ -1,17 +1,16 @@
-import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/animated_game_background.dart';
 
-class CoinFlipGameScreen extends StatefulWidget {
+class MinesGameScreen extends StatefulWidget {
   final double balance;
   final bool soundOn;
   final bool musicOn;
   final ValueChanged<double> onBalanceChanged;
   final VoidCallback onBackPressed;
 
-  const CoinFlipGameScreen({
+  const MinesGameScreen({
     super.key,
     required this.balance,
     required this.soundOn,
@@ -21,77 +20,72 @@ class CoinFlipGameScreen extends StatefulWidget {
   });
 
   @override
-  State<CoinFlipGameScreen> createState() => _CoinFlipGameScreenState();
+  State<MinesGameScreen> createState() => _MinesGameScreenState();
 }
 
-class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTickerProviderStateMixin {
+class _MinesTile {
+  bool isMine = false;
+  bool isRevealed = false;
+  bool isExploded = false;
+}
+
+class _MinesGameScreenState extends State<MinesGameScreen> {
   final _betController = TextEditingController(text: '10');
   
   bool _isPlaying = false;
-  bool _isAutoMode = false;
-  bool _isHeadsSelected = true; // true = Heads (Gold), false = Tails (Silver)
+  bool _gameOver = false;
+  int _minesCount = 4;
+  int _revealedGems = 0;
+  bool _isAutoMode = false; // Manual vs Auto tabs
   
-  int _streak = 0;
-  bool _isFlipping = false;
-  bool _lastOutcomeHeads = true; // Displays the coin face when not flipping
-  
-  late AnimationController _animationController;
-  late Animation<double> _rotationAnimation;
-  late Animation<double> _heightAnimation;
-  
-  final List<double> _history = [];
+  List<_MinesTile> _tiles = List.generate(25, (_) => _MinesTile());
   final math.Random _random = math.Random();
 
   @override
   void initState() {
     super.initState();
     _betController.addListener(() => setState(() {}));
-    
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    );
-
-    _rotationAnimation = Tween<double>(begin: 0.0, end: 8 * math.pi).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOutQuad),
-    );
-
-    _heightAnimation = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 1.6).chain(CurveTween(curve: Curves.easeOutQuad)),
-        weight: 50,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.6, end: 1.0).chain(CurveTween(curve: Curves.easeInQuad)),
-        weight: 50,
-      ),
-    ]).animate(_animationController);
-
-    _animationController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _finishFlip();
-      }
-    });
   }
 
   @override
   void dispose() {
     _betController.dispose();
-    _animationController.dispose();
     super.dispose();
   }
 
-  // Multiplier math: 1.96^S (where S is streak)
-  double _getStreakMultiplier(int streak) {
-    if (streak == 0) return 1.0;
-    return double.parse(math.pow(1.96, streak).toStringAsFixed(2));
+  // Combination formula (nCr)
+  double _nCr(int n, int r) {
+    if (r < 0 || r > n) return 0.0;
+    if (r == 0 || r == n) return 1.0;
+    double val = 1.0;
+    for (int i = 1; i <= r; i++) {
+      val = val * (n - r + i) / i;
+    }
+    return val;
   }
 
-  double get _currentMultiplier => _getStreakMultiplier(_streak);
-  double get _nextMultiplier => _getStreakMultiplier(_streak + 1);
+  // Calculate Stake/BC.Game style multiplier
+  double _calculateMultiplier(int totalMines, int gems) {
+    if (gems == 0) return 1.0;
+    if (gems > 25 - totalMines) return 0.0;
+
+    double totalCombinations = _nCr(25, gems);
+    double safeCombinations = _nCr(25 - totalMines, gems);
+    if (safeCombinations == 0) return 0.0;
+
+    // Payout = 0.99 (house edge) * (total / safe)
+    double result = 0.99 * (totalCombinations / safeCombinations);
+    return double.parse(result.toStringAsFixed(2));
+  }
+
+  // Calculate current multiplier
+  double get _currentMultiplier => _calculateMultiplier(_minesCount, _revealedGems);
+  
+  // Calculate next multiplier
+  double get _nextMultiplier => _calculateMultiplier(_minesCount, _revealedGems + 1);
 
   void _startGame() {
-    if (_isFlipping) return;
+    if (_isPlaying) return;
 
     final double bet = double.tryParse(_betController.text) ?? 0.0;
     final bool isDemoMode = bet <= 0.0;
@@ -101,65 +95,72 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
       return;
     }
 
-    if (!isDemoMode && !_isPlaying) {
-      // Deduct bet amount on first flip of the round
+    if (_minesCount < 1 || _minesCount > 24) {
+      _showDialog('INVALID MINES', 'Please select between 1 and 24 mines.');
+      return;
+    }
+
+    if (!isDemoMode) {
       widget.onBalanceChanged(widget.balance - bet);
     }
 
-    _triggerFlip();
-  }
-
-  void _triggerFlip() {
     setState(() {
-      _isFlipping = true;
-      _animationController.forward(from: 0.0);
+      _isPlaying = true;
+      _gameOver = false;
+      _revealedGems = 0;
+      
+      // Reset tiles
+      _tiles = List.generate(25, (_) => _MinesTile());
+
+      // Place mines randomly
+      int minesPlaced = 0;
+      while (minesPlaced < _minesCount) {
+        int index = _random.nextInt(25);
+        if (!_tiles[index].isMine) {
+          _tiles[index].isMine = true;
+          minesPlaced++;
+        }
+      }
     });
   }
 
-  void _finishFlip() {
-    // 50% probability outcome
-    final bool flippedHeads = _random.nextBool();
-    final bool isWin = flippedHeads == _isHeadsSelected;
-
-    final double bet = double.tryParse(_betController.text) ?? 0.0;
-    final bool isDemoMode = bet <= 0.0;
+  void _revealTile(int index) {
+    if (!_isPlaying || _tiles[index].isRevealed || _gameOver) return;
 
     setState(() {
-      _isFlipping = false;
-      _lastOutcomeHeads = flippedHeads;
+      _tiles[index].isRevealed = true;
 
-      if (isWin) {
-        _streak++;
-        _isPlaying = true;
-        _history.add(1.96);
-        if (_history.length > 5) {
-          _history.removeAt(0);
-        }
-        
-        // Auto cashout if streak reaches 10 to prevent infinite payout issues
-        if (_streak >= 10) {
-          _cashOut();
-        }
-      } else {
-        // Lose round
+      if (_tiles[index].isMine) {
+        // Exploded! Game Over.
+        _tiles[index].isExploded = true;
+        _gameOver = true;
         _isPlaying = false;
-        _streak = 0;
-        _history.add(0.00);
-        if (_history.length > 5) {
-          _history.removeAt(0);
+        
+        // Reveal all tiles
+        for (var tile in _tiles) {
+          tile.isRevealed = true;
         }
 
         _showStatusMessage(
-          title: 'LOSE!',
-          message: 'Coin flipped ${flippedHeads ? "HEADS" : "TAILS"}! Bet forfeited.',
+          title: 'BOOM!',
+          message: 'You hit a mine! Bet forfeited.',
           isWin: false,
         );
+      } else {
+        // Safe! Gem found.
+        _revealedGems++;
+
+        // Check if all gems are revealed
+        int maxGems = 25 - _minesCount;
+        if (_revealedGems == maxGems) {
+          _cashOut();
+        }
       }
     });
   }
 
   void _cashOut() {
-    if (!_isPlaying || _streak == 0) return;
+    if (!_isPlaying || _revealedGems == 0) return;
 
     final double bet = double.tryParse(_betController.text) ?? 0.0;
     final bool isDemoMode = bet <= 0.0;
@@ -169,6 +170,16 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
       widget.onBalanceChanged(widget.balance + winAmount);
     }
 
+    setState(() {
+      _isPlaying = false;
+      _gameOver = true;
+
+      // Reveal all tiles to show mines/gems positions
+      for (var tile in _tiles) {
+        tile.isRevealed = true;
+      }
+    });
+
     _showStatusMessage(
       title: 'CASHOUT SUCCESS!',
       message: isDemoMode 
@@ -176,11 +187,6 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
           : 'You won ₹${winAmount.toStringAsFixed(2)} (${_currentMultiplier.toStringAsFixed(2)}x)!',
       isWin: true,
     );
-
-    setState(() {
-      _isPlaying = false;
-      _streak = 0;
-    });
   }
 
   void _showStatusMessage({required String title, required String message, required bool isWin}) {
@@ -274,10 +280,10 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: _isFlipping ? null : widget.onBackPressed,
+                    onPressed: _isPlaying ? null : widget.onBackPressed,
                   ),
                   Text(
-                    'COIN FLIP',
+                    'MINES MULTIPLIER',
                     style: GoogleFonts.alfaSlabOne(
                       textStyle: const TextStyle(color: Colors.white, fontSize: 16.0, letterSpacing: 0.5),
                     ),
@@ -316,11 +322,11 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
                           // Left Panel: Bet Controls
                           _buildBetControls(bet, isLandscape: true),
                           const SizedBox(width: 12.0),
-                          // Right Panel: Coin Flip Playfield
+                          // Right Panel: 5x5 Mines Playfield
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.only(right: 16.0, bottom: 12.0),
-                              child: _buildCoinPlayfield(),
+                              child: _buildMinesPlayfield(),
                             ),
                           ),
                         ],
@@ -332,7 +338,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
                             flex: 5,
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                              child: _buildCoinPlayfield(),
+                              child: _buildMinesPlayfield(),
                             ),
                           ),
                           const SizedBox(height: 12.0),
@@ -354,7 +360,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
     );
   }
 
-  Widget _buildBetControls(double bet, {required bool isLandscape}) {
+   Widget _buildBetControls(double bet, {required bool isLandscape}) {
     return Container(
       width: isLandscape ? 280.0 : null,
       margin: isLandscape ? const EdgeInsets.only(left: 16.0, top: 4.0, bottom: 12.0) : null,
@@ -367,6 +373,10 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Manual / Auto Tabs
+          _buildTabBar(),
+          const SizedBox(height: 12.0),
+
           // Bet Amount Label
           Row(
             children: [
@@ -385,7 +395,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
             height: 38.0,
             decoration: BoxDecoration(
               color: const Color(0xFF181A1F),
-              borderRadius: BorderRadius.circular(6.0),
+              borderRadius: BorderRadius.circular(4.0),
               border: Border.all(color: const Color(0xFF2C2F36), width: 1.2),
             ),
             child: Row(
@@ -409,7 +419,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
                 Expanded(
                   child: TextFormField(
                     controller: _betController,
-                    enabled: !_isFlipping,
+                    enabled: !_isPlaying,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     style: const TextStyle(color: Colors.white, fontSize: 13.0, fontWeight: FontWeight.bold),
                     decoration: const InputDecoration(
@@ -423,17 +433,17 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
                 Row(
                   children: [
                     _buildBetActionTextButton('1/2', () {
-                      if (_isFlipping) return;
+                      if (_isPlaying) return;
                       final double current = double.tryParse(_betController.text) ?? 1.0;
                       _betController.text = (current / 2).toStringAsFixed(1);
                     }),
                     _buildBetActionTextButton('2x', () {
-                      if (_isFlipping) return;
+                      if (_isPlaying) return;
                       final double current = double.tryParse(_betController.text) ?? 1.0;
                       _betController.text = (current * 2).toStringAsFixed(1);
                     }),
                     _buildBetActionIconButton(Icons.unfold_more, () {
-                      if (_isFlipping) return;
+                      if (_isPlaying) return;
                       final double current = double.tryParse(_betController.text) ?? 1.0;
                       if (current < widget.balance) {
                         _betController.text = widget.balance.toInt().toString();
@@ -452,121 +462,74 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
           Row(
             children: [
               _buildFlatQuickBetButton('10', () {
-                if (_isFlipping) return;
+                if (_isPlaying) return;
                 _betController.text = '10';
               }),
               _buildFlatQuickBetButton('100', () {
-                if (_isFlipping) return;
+                if (_isPlaying) return;
                 _betController.text = '100';
               }),
               _buildFlatQuickBetButton('1.0k', () {
-                if (_isFlipping) return;
+                if (_isPlaying) return;
                 _betController.text = '1000';
               }),
               _buildFlatQuickBetButton('10.0k', () {
-                if (_isFlipping) return;
+                if (_isPlaying) return;
                 _betController.text = '10000';
               }),
             ],
           ),
-          
-          if (isLandscape) const Spacer(),
-          if (!isLandscape) const SizedBox(height: 12.0),
+          const SizedBox(height: 12.0),
 
-          // Heads / Tails Selection Cards (Choice Selection)
+          // Mines Selection Row
           Row(
             children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 6.0),
-                  child: InkWell(
-                    onTap: () {
-                      if (_isFlipping) return;
-                      setState(() => _isHeadsSelected = true);
-                      if (_isPlaying) {
-                        _startGame(); // Directly trigger flip in active game
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10.5, horizontal: 6.0),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2C2F36),
-                        borderRadius: BorderRadius.circular(6.0),
-                        border: Border.all(
-                          color: _isHeadsSelected ? const Color(0xFFFFD700) : Colors.transparent,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/coinflip/Figure.png',
-                            width: 19.0,
-                            height: 19.0,
-                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.circle, color: Color(0xFFFFD700), size: 19.0),
-                          ),
-                          const SizedBox(width: 6.0),
-                          const Text(
-                            'Bet Heads',
-                            style: TextStyle(color: Colors.white, fontSize: 12.0, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
+              const Text(
+                'Mines',
+                style: TextStyle(color: Color(0xFF90A4AE), fontWeight: FontWeight.bold, fontSize: 11.0),
+              ),
+              const Spacer(),
+              // Custom Mines dropdown selection
+              Container(
+                height: 28.0,
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF181A1F),
+                  borderRadius: BorderRadius.circular(4.0),
+                  border: Border.all(color: const Color(0xFF2C2F36), width: 1.0),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: _minesCount,
+                    dropdownColor: const Color(0xFF1E2024),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.0),
+                    items: List.generate(24, (index) => index + 1).map((int val) {
+                      return DropdownMenuItem<int>(
+                        value: val,
+                        child: Text('$val'),
+                      );
+                    }).toList(),
+                    onChanged: _isPlaying
+                        ? null
+                        : (newValue) {
+                            setState(() {
+                              _minesCount = newValue ?? 4;
+                            });
+                          },
                   ),
                 ),
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 6.0),
-                  child: InkWell(
-                    onTap: () {
-                      if (_isFlipping) return;
-                      setState(() => _isHeadsSelected = false);
-                      if (_isPlaying) {
-                        _startGame(); // Directly trigger flip in active game
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10.5, horizontal: 6.0),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2C2F36),
-                        borderRadius: BorderRadius.circular(6.0),
-                        border: Border.all(
-                          color: !_isHeadsSelected ? const Color(0xFFECEFF1) : Colors.transparent,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/coinflip/Container.png',
-                            width: 19.0,
-                            height: 19.0,
-                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.circle, color: Color(0xFFECEFF1), size: 19.0),
-                          ),
-                          const SizedBox(width: 6.0),
-                          const Text(
-                            'Bet Tails',
-                            style: TextStyle(color: Colors.white, fontSize: 12.0, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              const Text(
+                '24',
+                style: TextStyle(color: Color(0xFF90A4AE), fontSize: 11.0),
               ),
             ],
           ),
-          
           const SizedBox(height: 12.0),
 
           // Play Bet / Cash Out Button
           GestureDetector(
             onTap: () {
-              if (_isFlipping) return;
               if (_isPlaying) {
                 _cashOut();
               } else {
@@ -630,7 +593,59 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
     );
   }
 
-
+  Widget _buildTabBar() {
+    return Container(
+      height: 32.0,
+      decoration: BoxDecoration(
+        color: const Color(0xFF181A1F),
+        borderRadius: BorderRadius.circular(20.0),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _isAutoMode = false),
+              child: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: !_isAutoMode ? const Color(0xFF2E3138) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20.0),
+                ),
+                child: Text(
+                  'Manual',
+                  style: TextStyle(
+                    color: !_isAutoMode ? Colors.white : Colors.grey[400],
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _isAutoMode = true),
+              child: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _isAutoMode ? const Color(0xFF2E3138) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20.0),
+                ),
+                child: Text(
+                  'Auto',
+                  style: TextStyle(
+                    color: _isAutoMode ? Colors.white : Colors.grey[400],
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildBetActionTextButton(String label, VoidCallback onTap) {
     return InkWell(
@@ -676,7 +691,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: const Color(0xFF2E3138),
-              borderRadius: BorderRadius.circular(4.0),
+              borderRadius: BorderRadius.circular(2.0),
             ),
             child: Text(
               label,
@@ -688,94 +703,67 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
     );
   }
 
-  Widget _buildCoinPlayfield() {
+  Widget _buildMinesPlayfield() {
     return Container(
       decoration: BoxDecoration(
+        color: const Color(0xFF1E2024).withOpacity(0.5),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: const Color(0xFF2C2F36), width: 2.0),
-        image: const DecorationImage(
-          image: AssetImage('assets/coinflip/bg.png'),
-          fit: BoxFit.cover,
-        ),
       ),
       child: Stack(
         children: [
-          // 1. History badges (top)
+          // Multiplier Bubble indicator (top-left)
           Positioned(
-            top: 10.0,
+            top: 12.0,
             left: 12.0,
-            right: 12.0,
-            child: Row(
-              children: [
-                if (_history.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF181A1F),
-                      borderRadius: BorderRadius.circular(6.0),
-                    ),
-                    child: const Text(
-                      'No Spins',
-                      style: TextStyle(color: Colors.grey, fontSize: 10.5, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ..._history.map((val) => Container(
-                      margin: const EdgeInsets.only(right: 6.0),
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
-                      decoration: BoxDecoration(
-                        color: val > 1.0 ? const Color(0xFF00C853) : const Color(0xFFFF1744),
-                        borderRadius: BorderRadius.circular(6.0),
-                      ),
-                      child: Text(
-                        '${val.toStringAsFixed(2)}x',
-                        style: const TextStyle(color: Colors.white, fontSize: 11.0, fontWeight: FontWeight.bold),
-                      ),
-                    )),
-                const Spacer(),
-                if (_isPlaying)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF311B92),
-                      borderRadius: BorderRadius.circular(6.0),
-                    ),
-                    child: Text(
-                      'Payout: ${_currentMultiplier.toStringAsFixed(2)}x',
-                      style: const TextStyle(color: Colors.white, fontSize: 11.0, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-              ],
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+              decoration: BoxDecoration(
+                color: const Color(0xFF00C853),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Text(
+                _isPlaying 
+                    ? '${_nextMultiplier.toStringAsFixed(2)}x'
+                    : '${_calculateMultiplier(_minesCount, 1).toStringAsFixed(2)}x',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.0),
+              ),
             ),
           ),
 
-          // 2. Playfield center cards and 3D coin
-          Positioned(
-            top: 45.0,
+          // Main 5x5 Grid
+          Positioned.fill(
+            top: 50.0,
             bottom: 12.0,
             left: 12.0,
             right: 12.0,
-            child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Series Card (Left)
-                  _buildStatsDisplayCard(
-                    title: 'Series',
-                    value: '$_streak',
-                  ),
-                  const SizedBox(width: 20.0),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                const double spacing = 6.0;
+                final double availableWidth = constraints.maxWidth;
+                final double availableHeight = constraints.maxHeight;
 
-                  // Center 3D Flipping Coin
-                  _buildAnimatedCoinWidget(),
+                final double cardWidth = (availableWidth - (4 * spacing)) / 5;
+                final double cardHeight = (availableHeight - (4 * spacing)) / 5;
 
-                  const SizedBox(width: 20.0),
-                  // Multiply Card (Right)
-                  _buildStatsDisplayCard(
-                    title: 'Multiply',
-                    value: 'x${_currentMultiplier.toStringAsFixed(2)}',
+                // Avoid division by zero
+                final double aspectRatio = cardHeight > 0 ? (cardWidth / cardHeight) : 1.0;
+
+                return GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 25,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 5,
+                    crossAxisSpacing: spacing,
+                    mainAxisSpacing: spacing,
+                    childAspectRatio: aspectRatio,
                   ),
-                ],
-              ),
+                  itemBuilder: (context, index) {
+                    final tile = _tiles[index];
+                    return _buildTileCard(index, tile);
+                  },
+                );
+              },
             ),
           ),
         ],
@@ -783,109 +771,61 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
     );
   }
 
-  Widget _buildStatsDisplayCard({required String title, required String value}) {
-    return Container(
-      width: 75.0,
-      height: 120.0,
-      decoration: BoxDecoration(
-        color: const Color(0xFF2C2F36).withOpacity(0.9),
-        borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.5),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Center(
-              child: Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 10.0,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildTileCard(int index, _MinesTile tile) {
+    final bool isRevealed = tile.isRevealed;
+    final bool isMine = tile.isMine;
+    final bool isExploded = tile.isExploded;
 
-  Widget _buildAnimatedCoinWidget() {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        final double rotationVal = _rotationAnimation.value;
-        final double scaleVal = _heightAnimation.value;
+    Color cardBgColor;
+    Widget cardChild;
 
-        // 3D perspective Y-axis rotation
-        final matrix = Matrix4.identity()
-          ..setEntry(3, 2, 0.0018) // perspective factor
-          ..rotateY(rotationVal);
-
-        final bool isHeadsShowing = math.cos(rotationVal) >= 0.0;
-        final bool showHeadsFace = _isFlipping ? isHeadsShowing : _lastOutcomeHeads;
-
-        return Transform(
-          transform: matrix,
-          alignment: Alignment.center,
-          child: Transform.scale(
-            scale: scaleVal,
-            child: Container(
-              width: 120.0,
-              height: 120.0,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
-                    blurRadius: 12.0 * scaleVal,
-                    offset: Offset(0, 8 * scaleVal),
-                  ),
-                ],
-              ),
-              child: Image.asset(
-                showHeadsFace ? 'assets/coinflip/Figure.png' : 'assets/coinflip/Container.png',
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  // Fallback vector drawing if assets fails to load
-                  return Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: showHeadsFace 
-                            ? [const Color(0xFFFFEE58), const Color(0xFFF57F17)]
-                            : [const Color(0xFFECEFF1), const Color(0xFF78909C)],
-                      ),
-                      border: Border.all(
-                        color: showHeadsFace ? const Color(0xFFFFD700) : const Color(0xFFB0BEC5),
-                        width: 5.0,
-                      ),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        showHeadsFace ? Icons.star : Icons.circle,
-                        color: Colors.white,
-                        size: 40.0,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
+    if (!isRevealed) {
+      cardBgColor = const Color(0xFF2E3138);
+      cardChild = const SizedBox();
+    } else {
+      if (isMine) {
+        cardBgColor = isExploded ? const Color(0xFFFF1744) : const Color(0xFFC62828).withOpacity(0.65);
+        cardChild = Icon(
+          isExploded ? Icons.whatshot : Icons.dangerous,
+          color: Colors.white,
+          size: 22.0,
         );
-      },
+      } else {
+        cardBgColor = const Color(0xFF00E5FF).withOpacity(0.8);
+        cardChild = const Icon(
+          Icons.diamond,
+          color: Colors.white,
+          size: 22.0,
+        );
+      }
+    }
+
+    return GestureDetector(
+      onTap: () => _revealTile(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        decoration: BoxDecoration(
+          color: cardBgColor,
+          borderRadius: BorderRadius.circular(10.0),
+          border: Border.all(
+            color: isExploded 
+                ? const Color(0xFFFFD54F) 
+                : (isRevealed ? Colors.white.withOpacity(0.4) : const Color(0xFF424242)),
+            width: isExploded ? 2.5 : 1.5,
+          ),
+          boxShadow: [
+            if (!isRevealed)
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                offset: const Offset(0, 2),
+                blurRadius: 2.0,
+              ),
+          ],
+        ),
+        child: Center(
+          child: cardChild,
+        ),
+      ),
     );
   }
 }

@@ -27,7 +27,32 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
   final Set<int> _selectedNumbers = {};
   final List<int> _drawnNumbers = [];
   bool _isDrawing = false;
-  double _betAmount = 1.0;
+  
+  final _betController = TextEditingController(text: '10.0');
+  
+  // Auto Bet and Tab States
+  String _selectedTab = 'Manual'; // 'Manual', 'Auto', 'Advanced'
+  bool _isAutoRunning = false;
+  int _autoBetCountRemaining = 0;
+  final _autoBetCountController = TextEditingController(text: '0'); // 0 = infinite
+  
+  bool _onWinIncrease = false;
+  double _onWinIncreasePct = 0.0;
+  final _onWinIncreaseController = TextEditingController(text: '0');
+  
+  bool _onLossIncrease = false;
+  double _onLossIncreasePct = 0.0;
+  final _onLossIncreaseController = TextEditingController(text: '0');
+  
+  double _baseBetAmount = 10.0;
+  double _accumulatedProfitLoss = 0.0;
+  
+  final _stopProfitController = TextEditingController(text: '0');
+  final _stopLossController = TextEditingController(text: '0');
+  
+  String _selectedStrategy = 'Martingale'; // Martingale, Paroli
+  double _strategyMultiplier = 2.0;
+
   int _hitsCount = 0;
   double _winAmount = 0.0;
   bool _showWinOverlay = false;
@@ -59,6 +84,12 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
   void dispose() {
     _drawTimer?.cancel();
     _animationController.dispose();
+    _betController.dispose();
+    _autoBetCountController.dispose();
+    _onWinIncreaseController.dispose();
+    _onLossIncreaseController.dispose();
+    _stopProfitController.dispose();
+    _stopLossController.dispose();
     super.dispose();
   }
 
@@ -150,13 +181,18 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
   void _startDrawing() {
     if (_isDrawing || _selectedNumbers.isEmpty) return;
 
-    if (widget.balance < _betAmount) {
+    final double bet = double.tryParse(_betController.text) ?? 10.0;
+
+    if (widget.balance < bet) {
       _showErrorDialog('INSUFFICIENT BALANCE', 'Please recharge from the shop in the lobby.');
+      setState(() {
+        _isAutoRunning = false;
+      });
       return;
     }
 
     // Deduct bet amount
-    widget.onBalanceChanged(widget.balance - _betAmount);
+    widget.onBalanceChanged(widget.balance - bet);
 
     setState(() {
       _isDrawing = true;
@@ -192,9 +228,10 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
   }
 
   void _finishDrawing() {
+    final double bet = double.tryParse(_betController.text) ?? 10.0;
     final payTable = getPayTable(_selectedNumbers.length);
     final multiplier = payTable[_hitsCount] ?? 0.0;
-    final totalWin = _betAmount * multiplier;
+    final totalWin = bet * multiplier;
 
     setState(() {
       _isDrawing = false;
@@ -207,6 +244,72 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
         _statusText = 'HITS: $_hitsCount! BETTER LUCK NEXT TIME!';
       }
     });
+
+    if (_isAutoRunning) {
+      final bool isWin = totalWin > 0;
+      final double profitLoss = isWin ? (bet * (multiplier - 1)) : -bet;
+      _accumulatedProfitLoss += profitLoss;
+
+      double nextBet = double.tryParse(_betController.text) ?? _baseBetAmount;
+
+      if (_selectedTab == 'Advanced') {
+        if (_selectedStrategy == 'Martingale') {
+          if (isWin) {
+            nextBet = _baseBetAmount;
+          } else {
+            nextBet = nextBet * 2;
+          }
+        } else if (_selectedStrategy == 'Paroli') {
+          if (isWin) {
+            nextBet = nextBet * 2;
+          } else {
+            nextBet = _baseBetAmount;
+          }
+        }
+      } else {
+        if (isWin) {
+          if (_onWinIncrease && _onWinIncreasePct > 0) {
+            nextBet = nextBet * (1 + _onWinIncreasePct / 100);
+          } else {
+            nextBet = _baseBetAmount;
+          }
+        } else {
+          if (_onLossIncrease && _onLossIncreasePct > 0) {
+            nextBet = nextBet * (1 + _onLossIncreasePct / 100);
+          } else {
+            nextBet = _baseBetAmount;
+          }
+        }
+      }
+
+      final double stopProfit = double.tryParse(_stopProfitController.text) ?? 0.0;
+      final double stopLoss = double.tryParse(_stopLossController.text) ?? 0.0;
+
+      bool shouldStop = false;
+      if (stopProfit > 0 && _accumulatedProfitLoss >= stopProfit) shouldStop = true;
+      if (stopLoss > 0 && _accumulatedProfitLoss <= -stopLoss) shouldStop = true;
+
+      if (_autoBetCountRemaining > 0) {
+        _autoBetCountRemaining--;
+        _autoBetCountController.text = _autoBetCountRemaining.toString();
+        if (_autoBetCountRemaining == 0) shouldStop = true;
+      }
+
+      if (widget.balance < nextBet) shouldStop = true;
+
+      if (shouldStop) {
+        setState(() {
+          _isAutoRunning = false;
+        });
+      } else {
+        _betController.text = nextBet.toStringAsFixed(2);
+        Future.delayed(const Duration(milliseconds: 1000), () {
+          if (mounted && _isAutoRunning) {
+            _startDrawing();
+          }
+        });
+      }
+    }
   }
 
   void _triggerWinAnimation(double amount) {
@@ -475,142 +578,490 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
     );
   }
 
+  void _toggleAutoBet() {
+    if (_isAutoRunning) {
+      setState(() {
+        _isAutoRunning = false;
+      });
+    } else {
+      if (_selectedNumbers.isEmpty) {
+        _showErrorDialog('NO SPOTS SELECTED', 'Please select at least 1 number to start auto bet.');
+        return;
+      }
+      final double bet = double.tryParse(_betController.text) ?? 0.0;
+      if (bet <= 0.0) {
+        _showErrorDialog('INVALID BET', 'Auto bet requires a bet amount greater than 0.');
+        return;
+      }
+      setState(() {
+        _isAutoRunning = true;
+        _baseBetAmount = bet;
+        _accumulatedProfitLoss = 0.0;
+        _autoBetCountRemaining = int.tryParse(_autoBetCountController.text) ?? 0;
+        _onWinIncreasePct = double.tryParse(_onWinIncreaseController.text) ?? 0.0;
+        _onWinIncrease = _onWinIncreasePct > 0;
+        _onLossIncreasePct = double.tryParse(_onLossIncreaseController.text) ?? 0.0;
+        _onLossIncrease = _onLossIncreasePct > 0;
+      });
+      _startDrawing();
+    }
+  }
+
   Widget _buildLeftControlsPanel(Map<int, double> payTable) {
+    final double bet = double.tryParse(_betController.text) ?? 0.0;
+
     return Container(
-      width: 200.0,
-      padding: const EdgeInsets.all(8.0),
+      width: 280.0,
+      padding: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
-        color: const Color(0xFF160E45).withOpacity(0.85),
+        color: const Color(0xFF1E1B30).withOpacity(0.9),
         borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: const Color(0xFF9E84FF), width: 1.5),
+        border: Border.all(color: const Color(0xFF3F356B), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Bet display
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F0736),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  'BET AMOUNT',
-                  style: TextStyle(color: Color(0xFF9E84FF), fontSize: 8.0, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  '₹${_betAmount.toStringAsFixed(2)}',
-                  style: GoogleFonts.alfaSlabOne(color: const Color(0xFFFFD700), fontSize: 13.0),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6.0),
+          // Tabs: Manual / Auto / Advanced
+          _buildTabBar(),
+          const SizedBox(height: 8.0),
 
-          // Presets Grid
-          Expanded(
-            flex: 2,
-            child: GridView.count(
-              crossAxisCount: 3,
-              crossAxisSpacing: 4.0,
-              mainAxisSpacing: 4.0,
-              childAspectRatio: 1.5,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _buildPresetButton('MIN', () => setState(() => _betAmount = 0.5)),
-                _buildPresetButton('1.0', () => setState(() => _betAmount = 1.0)),
-                _buildPresetButton('5.0', () => setState(() => _betAmount = 5.0)),
-                _buildPresetButton('10', () => setState(() => _betAmount = 10.0)),
-                _buildPresetButton('x2', () {
-                  setState(() {
-                    _betAmount = (_betAmount * 2).clamp(0.5, 500.0);
-                  });
-                }),
-                _buildPresetButton('/2', () {
-                  setState(() {
-                    _betAmount = (_betAmount / 2).clamp(0.5, 500.0);
-                  });
-                }),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6.0),
-
-          // Dynamic Paytable header
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 2.0),
-            alignment: Alignment.center,
-            color: const Color(0xFF2C1B6E),
-            child: Text(
-              _selectedNumbers.isEmpty ? 'PAYOUTS' : '${_selectedNumbers.length} SPOTS PAYOUTS',
-              style: const TextStyle(color: Colors.white, fontSize: 8.0, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(height: 4.0),
-
-          // Paytable contents list
-          Expanded(
-            flex: 5,
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F0736),
-                borderRadius: BorderRadius.circular(8.0),
+          // Bet Input Label
+          Row(
+            children: [
+              const Text(
+                'Amount',
+                style: TextStyle(color: Color(0xFF90A4AE), fontWeight: FontWeight.bold, fontSize: 11.0),
               ),
-              child: _selectedNumbers.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Select spots to\nview paytable',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey, fontSize: 9.0, height: 1.3),
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(4.0),
-                      itemCount: payTable.length,
-                      itemBuilder: (context, index) {
-                        final hits = payTable.keys.elementAt(index);
-                        final mult = payTable[hits]!;
-                        final bool isHighlighted = _drawnNumbers.isNotEmpty && _hitsCount == hits;
-                        final winEst = _betAmount * mult;
+              const SizedBox(width: 4.0),
+              Icon(Icons.info_outline, color: Colors.grey[400], size: 13.0),
+            ],
+          ),
+          const SizedBox(height: 6.0),
 
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 3.5),
-                          margin: const EdgeInsets.only(bottom: 2.0),
-                          decoration: BoxDecoration(
-                            color: isHighlighted ? const Color(0xFF00C853).withOpacity(0.3) : Colors.transparent,
-                            borderRadius: BorderRadius.circular(4.0),
-                            border: isHighlighted ? Border.all(color: const Color(0xFF00C853), width: 1.0) : null,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Custom Bet Amount input container
+          Container(
+            height: 38.0,
+            decoration: BoxDecoration(
+              color: const Color(0xFF131124),
+              borderRadius: BorderRadius.circular(6.0),
+              border: Border.all(color: const Color(0xFF3F356B), width: 1.2),
+            ),
+            child: Row(
+              children: [
+                // Circular Rupees Badge
+                Container(
+                  margin: const EdgeInsets.only(left: 6.0, right: 8.0),
+                  width: 20.0,
+                  height: 20.0,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: Colors.orange,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Text(
+                    '₹',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11.5),
+                  ),
+                ),
+                // Field
+                Expanded(
+                  child: TextFormField(
+                    controller: _betController,
+                    enabled: !_isDrawing && !_isAutoRunning,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    style: const TextStyle(color: Colors.white, fontSize: 13.0, fontWeight: FontWeight.bold),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 10.0),
+                    ),
+                  ),
+                ),
+                // Inline multiplier buttons
+                Row(
+                  children: [
+                    _buildBetActionTextButton('1/2', () {
+                      if (_isDrawing || _isAutoRunning) return;
+                      final double current = double.tryParse(_betController.text) ?? 10.0;
+                      _betController.text = (current / 2).toStringAsFixed(1);
+                    }),
+                    _buildBetActionTextButton('2x', () {
+                      if (_isDrawing || _isAutoRunning) return;
+                      final double current = double.tryParse(_betController.text) ?? 10.0;
+                      _betController.text = (current * 2).toStringAsFixed(1);
+                    }),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6.0),
+
+          // Flat Quick Bet Buttons
+          Row(
+            children: [
+              _buildFlatQuickBetButton('10', () {
+                if (_isDrawing || _isAutoRunning) return;
+                _betController.text = '10';
+              }),
+              _buildFlatQuickBetButton('100', () {
+                if (_isDrawing || _isAutoRunning) return;
+                _betController.text = '100';
+              }),
+              _buildFlatQuickBetButton('1.0k', () {
+                if (_isDrawing || _isAutoRunning) return;
+                _betController.text = '1000';
+              }),
+              _buildFlatQuickBetButton('10.0k', () {
+                if (_isDrawing || _isAutoRunning) return;
+                _betController.text = '10000';
+              }),
+            ],
+          ),
+          const SizedBox(height: 10.0),
+
+          if (_selectedTab == 'Manual') ...[
+            // Dynamic Paytable header
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2C1B6E),
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              child: Text(
+                _selectedNumbers.isEmpty ? 'PAYOUTS' : '${_selectedNumbers.length} SPOTS PAYOUTS',
+                style: const TextStyle(color: Colors.white, fontSize: 8.0, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 4.0),
+
+            // Paytable contents list
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF131124),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: _selectedNumbers.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Select spots to\nview paytable',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey, fontSize: 9.0, height: 1.3),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(4.0),
+                        itemCount: payTable.length,
+                        itemBuilder: (context, index) {
+                          final hits = payTable.keys.elementAt(index);
+                          final mult = payTable[hits]!;
+                          final bool isHighlighted = _drawnNumbers.isNotEmpty && _hitsCount == hits;
+                          final winEst = bet * mult;
+
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 3.5),
+                            margin: const EdgeInsets.only(bottom: 2.0),
+                            decoration: BoxDecoration(
+                              color: isHighlighted ? const Color(0xFF00C853).withOpacity(0.3) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(4.0),
+                              border: isHighlighted ? Border.all(color: const Color(0xFF00C853), width: 1.0) : null,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '$hits Hits:',
+                                  style: TextStyle(
+                                    color: isHighlighted ? const Color(0xFF00C853) : Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 9.0,
+                                  ),
+                                ),
+                                Text(
+                                  '${mult.toStringAsFixed(0)}x (₹${winEst.toStringAsFixed(1)})',
+                                  style: TextStyle(
+                                    color: isHighlighted ? Colors.white : const Color(0xFFFFD700),
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 9.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ),
+          ] else if (_selectedTab == 'Auto') ...[
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Number of Bets
+                    const Text(
+                      'Number of Bets (0 for infinite)',
+                      style: TextStyle(color: Color(0xFF90A4AE), fontWeight: FontWeight.bold, fontSize: 10.0),
+                    ),
+                    const SizedBox(height: 4.0),
+                    _buildCustomInputRow(_autoBetCountController),
+                    const SizedBox(height: 8.0),
+
+                    // On Win / On Loss Percent increase
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                '$hits Hits:',
-                                style: TextStyle(
-                                  color: isHighlighted ? const Color(0xFF00C853) : Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 9.0,
-                                ),
-                              ),
-                              Text(
-                                '${mult.toStringAsFixed(0)}x (₹${winEst.toStringAsFixed(1)})',
-                                style: TextStyle(
-                                  color: isHighlighted ? Colors.white : const Color(0xFFFFD700),
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 9.0,
-                                ),
-                              ),
+                              const Text('On Win Increase %', style: TextStyle(color: Color(0xFF90A4AE), fontSize: 9.0, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 4.0),
+                              _buildCustomInputRow(_onWinIncreaseController),
                             ],
                           ),
-                        );
-                      },
+                        ),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('On Loss Increase %', style: TextStyle(color: Color(0xFF90A4AE), fontSize: 9.0, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 4.0),
+                              _buildCustomInputRow(_onLossIncreaseController),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 8.0),
+
+                    // Stop Profit / Stop Loss
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Stop on Profit', style: TextStyle(color: Color(0xFF90A4AE), fontSize: 9.0, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 4.0),
+                              _buildCustomInputRow(_stopProfitController),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Stop on Loss', style: TextStyle(color: Color(0xFF90A4AE), fontSize: 9.0, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 4.0),
+                              _buildCustomInputRow(_stopLossController),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12.0),
+
+                    // Start Auto Bet Button
+                    GestureDetector(
+                      onTap: _toggleAutoBet,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 11.0),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: _isAutoRunning ? const Color(0xFFFF3D00) : const Color(0xFF00C853),
+                          borderRadius: BorderRadius.circular(6.0),
+                        ),
+                        child: Text(
+                          _isAutoRunning ? 'Stop Autobet' : 'Start Autobet',
+                          style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ] else if (_selectedTab == 'Advanced') ...[
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Strategy Selection
+                    const Text(
+                      'Select Strategy',
+                      style: TextStyle(color: Color(0xFF90A4AE), fontWeight: FontWeight.bold, fontSize: 10.0),
+                    ),
+                    const SizedBox(height: 4.0),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF131124),
+                        borderRadius: BorderRadius.circular(6.0),
+                        border: Border.all(color: const Color(0xFF3F356B)),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedStrategy,
+                          dropdownColor: const Color(0xFF1E1B30),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.0),
+                          items: ['Martingale', 'Paroli'].map((String val) {
+                            return DropdownMenuItem<String>(
+                              value: val,
+                              child: Text(val),
+                            );
+                          }).toList(),
+                          onChanged: (newValue) {
+                            if (_isAutoRunning) return;
+                            setState(() {
+                              _selectedStrategy = newValue ?? 'Martingale';
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12.0),
+
+                    // Start Strategy Button
+                    GestureDetector(
+                      onTap: _toggleAutoBet,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 11.0),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: _isAutoRunning ? const Color(0xFFFF3D00) : const Color(0xFF3F51B5),
+                          borderRadius: BorderRadius.circular(6.0),
+                        ),
+                        child: Text(
+                          _isAutoRunning ? 'Stop Strategy' : 'Run Strategy',
+                          style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBetActionTextButton(String label, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: const TextStyle(color: Colors.grey, fontSize: 10.0, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFlatQuickBetButton(String label, VoidCallback onTap) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2.0),
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 6.0),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1F1B3C),
+              borderRadius: BorderRadius.circular(4.0),
+              border: Border.all(color: const Color(0xFF3F356B), width: 1.0),
+            ),
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.white, fontSize: 9.0, fontWeight: FontWeight.bold),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomInputRow(TextEditingController controller) {
+    return Container(
+      height: 34.0,
+      decoration: BoxDecoration(
+        color: const Color(0xFF131124),
+        borderRadius: BorderRadius.circular(6.0),
+        border: Border.all(color: const Color(0xFF3F356B)),
+      ),
+      child: TextFormField(
+        controller: controller,
+        enabled: !_isAutoRunning,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        style: const TextStyle(color: Colors.white, fontSize: 12.0, fontWeight: FontWeight.bold),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12.0),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Color(0xFF3F356B), width: 1.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          _buildTabButton('Manual', _selectedTab == 'Manual'),
+          _buildTabButton('Auto', _selectedTab == 'Auto'),
+          _buildTabButton('Advanced', _selectedTab == 'Advanced'),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTabButton(String label, bool isActive) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          if (_isAutoRunning || _isDrawing) return;
+          setState(() {
+            _selectedTab = label;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          decoration: BoxDecoration(
+            border: isActive
+                ? const Border(
+                    bottom: BorderSide(color: Color(0xFF00C853), width: 2.0),
+                  )
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: isActive ? Colors.white : Colors.grey,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12.0,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -946,25 +1397,25 @@ class _KenoNumberButtonState extends State<_KenoNumberButton> {
 
     switch (widget.state) {
       case _KenoCellState.selected:
-        topColor = const Color(0xFFFFD700);
-        bottomColor = const Color(0xFFC7A000);
+        topColor = const Color(0xFF00E5FF);
+        bottomColor = const Color(0xFF00838F);
         textColor = Colors.black;
         break;
       case _KenoCellState.drawnMiss:
-        topColor = const Color(0xFFFF3355);
-        bottomColor = const Color(0xFFB31B32);
-        textColor = Colors.white;
+        topColor = const Color(0xFFFF5252).withOpacity(0.4);
+        bottomColor = const Color(0xFFB71C1C).withOpacity(0.4);
+        textColor = Colors.white70;
         break;
       case _KenoCellState.hit:
         topColor = const Color(0xFF00C853);
-        bottomColor = const Color(0xFF0D5E30);
+        bottomColor = const Color(0xFF1B5E20);
         textColor = Colors.white;
         break;
       case _KenoCellState.normal:
       default:
-        topColor = const Color(0xFF332677);
-        bottomColor = const Color(0xFF22184F);
-        textColor = Colors.white;
+        topColor = const Color(0xFF160E45).withOpacity(0.6);
+        bottomColor = const Color(0xFF0D0630);
+        textColor = Colors.white70;
         break;
     }
 
@@ -1009,10 +1460,10 @@ class _KenoNumberButtonState extends State<_KenoNumberButton> {
                   color: topColor,
                   borderRadius: BorderRadius.circular(6.0),
                   border: widget.state == _KenoCellState.selected
-                      ? Border.all(color: Colors.white, width: 0.8)
+                      ? Border.all(color: Colors.white, width: 1.0)
                       : widget.state == _KenoCellState.hit
-                          ? Border.all(color: const Color(0xFFFFD700), width: 1.0)
-                          : null,
+                          ? Border.all(color: const Color(0xFFFFD700), width: 1.2)
+                          : Border.all(color: const Color(0xFF3F356B), width: 0.8),
                 ),
                 child: Text(
                   '${widget.number}',

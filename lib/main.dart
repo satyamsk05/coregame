@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,6 +18,17 @@ void main() {
   });
 }
 
+class MyCustomScrollBehavior extends MaterialScrollBehavior {
+  const MyCustomScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+      };
+}
+
 class CoreGameApp extends StatelessWidget {
   const CoreGameApp({super.key});
 
@@ -25,6 +37,7 @@ class CoreGameApp extends StatelessWidget {
     return MaterialApp(
       title: 'CORE Game',
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const MyCustomScrollBehavior(),
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(

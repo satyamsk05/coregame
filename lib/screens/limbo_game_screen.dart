@@ -43,6 +43,29 @@ class _LimboGameScreenState extends State<LimboGameScreen>
   final _targetController = TextEditingController(text: '2.00');
   final _winChanceController = TextEditingController(text: '49.50');
 
+  // Auto Bet and Tab States
+  String _selectedTab = 'Manual'; // 'Manual', 'Auto', 'Advanced'
+  bool _isAutoRunning = false;
+  int _autoBetCountRemaining = 0;
+  final _autoBetCountController = TextEditingController(text: '0'); // 0 = infinite
+  
+  bool _onWinIncrease = false;
+  double _onWinIncreasePct = 0.0;
+  final _onWinIncreaseController = TextEditingController(text: '0');
+  
+  bool _onLossIncrease = false;
+  double _onLossIncreasePct = 0.0;
+  final _onLossIncreaseController = TextEditingController(text: '0');
+  
+  double _baseBetAmount = 1.0;
+  double _accumulatedProfitLoss = 0.0;
+  
+  final _stopProfitController = TextEditingController(text: '0');
+  final _stopLossController = TextEditingController(text: '0');
+  
+  String _selectedStrategy = 'Martingale'; // Martingale, Paroli
+  double _strategyMultiplier = 2.0;
+
   final FocusNode _targetFocusNode = FocusNode();
   final FocusNode _winChanceFocusNode = FocusNode();
 
@@ -130,6 +153,13 @@ class _LimboGameScreenState extends State<LimboGameScreen>
     _winChanceController.dispose();
     _targetFocusNode.dispose();
     _winChanceFocusNode.dispose();
+    
+    _autoBetCountController.dispose();
+    _onWinIncreaseController.dispose();
+    _onLossIncreaseController.dispose();
+    _stopProfitController.dispose();
+    _stopLossController.dispose();
+    
     super.dispose();
   }
 
@@ -245,7 +275,7 @@ class _LimboGameScreenState extends State<LimboGameScreen>
     }
 
     Future.delayed(const Duration(milliseconds: 2200), () {
-      if (mounted && !_isPlaying) {
+      if (mounted) {
         setState(() {
           _isCrashed = false;
           _currentMultiplier = 1.00;
@@ -253,6 +283,72 @@ class _LimboGameScreenState extends State<LimboGameScreen>
           _statusText = 'Game result will be displayed';
         });
         _launchController.reset();
+
+        if (_isAutoRunning) {
+          final bool isWin = playerWon;
+          final double profitLoss = isWin ? (bet * (target - 1)) : -bet;
+          _accumulatedProfitLoss += profitLoss;
+
+          double nextBet = double.tryParse(_betController.text) ?? _baseBetAmount;
+
+          if (_selectedTab == 'Advanced') {
+            if (_selectedStrategy == 'Martingale') {
+              if (isWin) {
+                nextBet = _baseBetAmount;
+              } else {
+                nextBet = nextBet * 2;
+              }
+            } else if (_selectedStrategy == 'Paroli') {
+              if (isWin) {
+                nextBet = nextBet * 2;
+              } else {
+                nextBet = _baseBetAmount;
+              }
+            }
+          } else {
+            if (isWin) {
+              if (_onWinIncrease && _onWinIncreasePct > 0) {
+                nextBet = nextBet * (1 + _onWinIncreasePct / 100);
+              } else {
+                nextBet = _baseBetAmount;
+              }
+            } else {
+              if (_onLossIncrease && _onLossIncreasePct > 0) {
+                nextBet = nextBet * (1 + _onLossIncreasePct / 100);
+              } else {
+                nextBet = _baseBetAmount;
+              }
+            }
+          }
+
+          final double stopProfit = double.tryParse(_stopProfitController.text) ?? 0.0;
+          final double stopLoss = double.tryParse(_stopLossController.text) ?? 0.0;
+
+          bool shouldStop = false;
+          if (stopProfit > 0 && _accumulatedProfitLoss >= stopProfit) shouldStop = true;
+          if (stopLoss > 0 && _accumulatedProfitLoss <= -stopLoss) shouldStop = true;
+
+          if (_autoBetCountRemaining > 0) {
+            _autoBetCountRemaining--;
+            _autoBetCountController.text = _autoBetCountRemaining.toString();
+            if (_autoBetCountRemaining == 0) shouldStop = true;
+          }
+
+          if (widget.balance < nextBet) shouldStop = true;
+
+          if (shouldStop) {
+            setState(() {
+              _isAutoRunning = false;
+            });
+          } else {
+            _betController.text = nextBet.toStringAsFixed(2);
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (mounted && _isAutoRunning) {
+                _playGame();
+              }
+            });
+          }
+        }
         _explosionController.reset();
       }
     });
@@ -387,48 +483,42 @@ class _LimboGameScreenState extends State<LimboGameScreen>
             // Game Playfield Split Layout
             Expanded(
               child: isLandscape
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Left Column: Bet Controls
-                        Expanded(
-                          flex: 3,
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                            child: _buildBetControlsCard(bet),
-                          ),
-                        ),
-                        // Right Column: Rocket Animation Canvas
-                        Expanded(
-                          flex: 4,
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 16.0, bottom: 12.0),
-                            child: _buildRocketCanvasView(),
-                          ),
-                        ),
-                      ],
-                    )
-                  : Column(
-                      children: [
-                        // Top Section: Rocket Viewport
-                        Expanded(
-                          flex: 5,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                            child: _buildRocketCanvasView(),
-                          ),
-                        ),
-                        const SizedBox(height: 12.0),
-                        // Bottom Section: Bet Controls
-                        Expanded(
-                          flex: 4,
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                            child: _buildBetControlsCard(bet),
-                          ),
-                        ),
-                      ],
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Left Column: Bet Controls
+                    _buildBetControlsCard(bet, isLandscape: true),
+                    const SizedBox(width: 12.0),
+                    // Right Column: Rocket Animation Canvas
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 16.0, bottom: 12.0),
+                        child: _buildRocketCanvasView(),
+                      ),
                     ),
+                  ],
+                )
+              : Column(
+                  children: [
+                    // Top Section: Rocket Viewport
+                    Expanded(
+                      flex: 5,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: _buildRocketCanvasView(),
+                      ),
+                    ),
+                    const SizedBox(height: 12.0),
+                    // Bottom Section: Bet Controls
+                    Expanded(
+                      flex: 4,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: _buildBetControlsCard(bet, isLandscape: false),
+                      ),
+                    ),
+                  ],
+                ),
             ),
           ],
         ),
@@ -436,12 +526,39 @@ class _LimboGameScreenState extends State<LimboGameScreen>
     );
   }
 
-  Widget _buildBetControlsCard(double bet) {
+  void _toggleAutoBet() {
+    if (_isAutoRunning) {
+      setState(() {
+        _isAutoRunning = false;
+      });
+    } else {
+      final double bet = double.tryParse(_betController.text) ?? 0.0;
+      if (bet <= 0.0) {
+        _showErrorDialog('INVALID BET', 'Auto bet requires a bet amount greater than 0.');
+        return;
+      }
+      setState(() {
+        _isAutoRunning = true;
+        _baseBetAmount = bet;
+        _accumulatedProfitLoss = 0.0;
+        _autoBetCountRemaining = int.tryParse(_autoBetCountController.text) ?? 0;
+        _onWinIncreasePct = double.tryParse(_onWinIncreaseController.text) ?? 0.0;
+        _onWinIncrease = _onWinIncreasePct > 0;
+        _onLossIncreasePct = double.tryParse(_onLossIncreaseController.text) ?? 0.0;
+        _onLossIncrease = _onLossIncreasePct > 0;
+      });
+      _playGame();
+    }
+  }
+
+  Widget _buildBetControlsCard(double bet, {required bool isLandscape}) {
     return Container(
+      width: isLandscape ? 280.0 : null,
+      margin: isLandscape ? const EdgeInsets.only(left: 16.0, top: 4.0, bottom: 12.0) : null,
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
         color: const Color(0xFF1E2024),
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(10.0),
         border: Border.all(color: const Color(0xFF2C2F36), width: 1.5),
       ),
       child: Column(
@@ -477,7 +594,7 @@ class _LimboGameScreenState extends State<LimboGameScreen>
             height: 38.0,
             decoration: BoxDecoration(
               color: const Color(0xFF181A1F),
-              borderRadius: BorderRadius.circular(6.0),
+              borderRadius: BorderRadius.circular(4.0),
               border: Border.all(color: const Color(0xFF2C2F36), width: 1.2),
             ),
             child: Row(
@@ -501,12 +618,13 @@ class _LimboGameScreenState extends State<LimboGameScreen>
                 Expanded(
                   child: TextFormField(
                     controller: _betController,
-                    enabled: !_isPlaying,
+                    enabled: !_isPlaying && !_isAutoRunning,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     style: const TextStyle(color: Colors.white, fontSize: 13.0, fontWeight: FontWeight.bold),
                     decoration: const InputDecoration(
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 12.0),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 10.0),
                     ),
                   ),
                 ),
@@ -514,17 +632,17 @@ class _LimboGameScreenState extends State<LimboGameScreen>
                 Row(
                   children: [
                     _buildBetActionTextButton('1/2', () {
-                      if (_isPlaying) return;
+                      if (_isPlaying || _isAutoRunning) return;
                       final double current = double.tryParse(_betController.text) ?? 1.0;
                       _betController.text = (current / 2).toStringAsFixed(1);
                     }),
                     _buildBetActionTextButton('2x', () {
-                      if (_isPlaying) return;
+                      if (_isPlaying || _isAutoRunning) return;
                       final double current = double.tryParse(_betController.text) ?? 1.0;
                       _betController.text = (current * 2).toStringAsFixed(1);
                     }),
                     _buildBetActionIconButton(Icons.unfold_more, () {
-                      if (_isPlaying) return;
+                      if (_isPlaying || _isAutoRunning) return;
                       final double current = double.tryParse(_betController.text) ?? 1.0;
                       if (current < widget.balance) {
                         _betController.text = widget.balance.toInt().toString();
@@ -543,46 +661,187 @@ class _LimboGameScreenState extends State<LimboGameScreen>
           Row(
             children: [
               _buildFlatQuickBetButton('10', () {
-                if (_isPlaying) return;
+                if (_isPlaying || _isAutoRunning) return;
                 _betController.text = '10';
               }),
               _buildFlatQuickBetButton('100', () {
-                if (_isPlaying) return;
+                if (_isPlaying || _isAutoRunning) return;
                 _betController.text = '100';
               }),
               _buildFlatQuickBetButton('1.0k', () {
-                if (_isPlaying) return;
+                if (_isPlaying || _isAutoRunning) return;
                 _betController.text = '1000';
               }),
               _buildFlatQuickBetButton('10.0k', () {
-                if (_isPlaying) return;
+                if (_isPlaying || _isAutoRunning) return;
                 _betController.text = '10000';
               }),
             ],
           ),
           const SizedBox(height: 12.0),
 
-          // Play Bet Button
-          GestureDetector(
-            onTap: _isPlaying ? null : _playGame,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 11.0),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: _isPlaying ? const Color(0xFF5E5E6E) : const Color(0xFF00C853),
-                borderRadius: BorderRadius.circular(6.0),
-              ),
-              child: Text(
-                _isPlaying ? 'LAUNCHING...' : 'Bet',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
+          if (_selectedTab == 'Manual') ...[
+            if (isLandscape) const Spacer(),
+            if (!isLandscape) const SizedBox(height: 12.0),
+
+            // Play Bet Button
+            GestureDetector(
+              onTap: _isPlaying ? null : _playGame,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 11.0),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _isPlaying ? const Color(0xFF5E5E6E) : const Color(0xFF00C853),
+                  borderRadius: BorderRadius.circular(6.0),
+                ),
+                child: Text(
+                  _isPlaying ? 'LAUNCHING...' : 'Bet',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
             ),
-          ),
+          ] else if (_selectedTab == 'Auto') ...[
+            // Number of Bets
+            const Text(
+              'Number of Bets (0 for infinite)',
+              style: TextStyle(color: Color(0xFF90A4AE), fontWeight: FontWeight.bold, fontSize: 10.0),
+            ),
+            const SizedBox(height: 4.0),
+            _buildCustomInputRow(_autoBetCountController),
+            const SizedBox(height: 8.0),
+
+            // On Win / On Loss Percent increase
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('On Win Increase %', style: TextStyle(color: Color(0xFF90A4AE), fontSize: 9.0, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4.0),
+                      _buildCustomInputRow(_onWinIncreaseController),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('On Loss Increase %', style: TextStyle(color: Color(0xFF90A4AE), fontSize: 9.0, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4.0),
+                      _buildCustomInputRow(_onLossIncreaseController),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8.0),
+
+            // Stop Profit / Stop Loss
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Stop on Profit', style: TextStyle(color: Color(0xFF90A4AE), fontSize: 9.0, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4.0),
+                      _buildCustomInputRow(_stopProfitController),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Stop on Loss', style: TextStyle(color: Color(0xFF90A4AE), fontSize: 9.0, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4.0),
+                      _buildCustomInputRow(_stopLossController),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (isLandscape) const Spacer(),
+            if (!isLandscape) const SizedBox(height: 12.0),
+
+            // Start Auto Bet Button
+            GestureDetector(
+              onTap: _toggleAutoBet,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 11.0),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _isAutoRunning ? const Color(0xFFFF3D00) : const Color(0xFF00C853),
+                  borderRadius: BorderRadius.circular(6.0),
+                ),
+                child: Text(
+                  _isAutoRunning ? 'Stop Autobet' : 'Start Autobet',
+                  style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ] else if (_selectedTab == 'Advanced') ...[
+            // Strategy Selection
+            const Text(
+              'Select Strategy',
+              style: TextStyle(color: Color(0xFF90A4AE), fontWeight: FontWeight.bold, fontSize: 10.0),
+            ),
+            const SizedBox(height: 4.0),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              decoration: BoxDecoration(
+                color: const Color(0xFF181A1F),
+                borderRadius: BorderRadius.circular(6.0),
+                border: Border.all(color: const Color(0xFF2C2F36)),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedStrategy,
+                  dropdownColor: const Color(0xFF1E2024),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.0),
+                  items: ['Martingale', 'Paroli'].map((String val) {
+                    return DropdownMenuItem<String>(
+                      value: val,
+                      child: Text(val),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    if (_isAutoRunning) return;
+                    setState(() {
+                      _selectedStrategy = newValue ?? 'Martingale';
+                    });
+                  },
+                ),
+              ),
+            ),
+            if (isLandscape) const Spacer(),
+            if (!isLandscape) const SizedBox(height: 12.0),
+
+            // Start Strategy Button
+            GestureDetector(
+              onTap: _toggleAutoBet,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 11.0),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _isAutoRunning ? const Color(0xFFFF3D00) : const Color(0xFF3F51B5),
+                  borderRadius: BorderRadius.circular(6.0),
+                ),
+                child: Text(
+                  _isAutoRunning ? 'Stop Strategy' : 'Run Strategy',
+                  style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 10.0),
 
           // Demo Mode notice capsule
@@ -611,6 +870,28 @@ class _LimboGameScreenState extends State<LimboGameScreen>
     );
   }
 
+  Widget _buildCustomInputRow(TextEditingController controller) {
+    return Container(
+      height: 34.0,
+      decoration: BoxDecoration(
+        color: const Color(0xFF181A1F),
+        borderRadius: BorderRadius.circular(6.0),
+        border: Border.all(color: const Color(0xFF2C2F36)),
+      ),
+      child: TextFormField(
+        controller: controller,
+        enabled: !_isAutoRunning,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        style: const TextStyle(color: Colors.white, fontSize: 12.0, fontWeight: FontWeight.bold),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTabBar() {
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
@@ -621,51 +902,45 @@ class _LimboGameScreenState extends State<LimboGameScreen>
       ),
       child: Row(
         children: [
-          _buildTabButton('Manual', true),
-          _buildTabButton('Auto', false),
-          _buildTabButton('Advanced', false, showNewBadge: true),
+          _buildTabButton('Manual', _selectedTab == 'Manual'),
+          _buildTabButton('Auto', _selectedTab == 'Auto'),
+          _buildTabButton('Advanced', _selectedTab == 'Advanced'),
         ],
       ),
     );
   }
 
-  Widget _buildTabButton(String label, bool isActive, {bool showNewBadge = false}) {
+  Widget _buildTabButton(String label, bool isActive) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        decoration: BoxDecoration(
-          border: isActive
-              ? const Border(
-                  bottom: BorderSide(color: Color(0xFF00C853), width: 2.0),
-                )
-              : null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? Colors.white : Colors.grey,
-                fontWeight: FontWeight.bold,
-                fontSize: 12.0,
-              ),
-            ),
-            if (showNewBadge) ...[
-              const SizedBox(width: 4.0),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 1.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFD700),
-                  borderRadius: BorderRadius.circular(4.0),
-                ),
-                child: const Text(
-                  'New',
-                  style: TextStyle(color: Colors.black, fontSize: 8.0, fontWeight: FontWeight.bold),
+      child: GestureDetector(
+        onTap: () {
+          if (_isAutoRunning || _isPlaying) return;
+          setState(() {
+            _selectedTab = label;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          decoration: BoxDecoration(
+            border: isActive
+                ? const Border(
+                    bottom: BorderSide(color: Color(0xFF00C853), width: 2.0),
+                  )
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: isActive ? Colors.white : Colors.grey,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12.0,
                 ),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -710,15 +985,15 @@ class _LimboGameScreenState extends State<LimboGameScreen>
         onTap: onTap,
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 2.0),
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          padding: const EdgeInsets.symmetric(vertical: 10.0),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: const Color(0xFF2C2F36),
-            borderRadius: BorderRadius.circular(4.0),
+            borderRadius: BorderRadius.circular(2.0),
           ),
           child: Text(
             label,
-            style: const TextStyle(color: Colors.white, fontSize: 11.0, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
           ),
         ),
       ),
