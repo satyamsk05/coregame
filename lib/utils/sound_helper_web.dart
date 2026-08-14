@@ -268,3 +268,57 @@ void playBeltHandleSound() {
     // Fail silently
   }
 }
+
+void playCardPlaceSound() {
+  try {
+    _eval('''
+      (function() {
+        try {
+          var audioCtx = window._audioCtx || (window._audioCtx = new (window.AudioContext || window.webkitAudioContext)());
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+          var now = audioCtx.currentTime;
+
+          // 1. Friction swish sound (short noise burst through bandpass filter)
+          var bufferSize = audioCtx.sampleRate * 0.04;
+          var buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+          var output = buffer.getChannelData(0);
+          for (var i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+          }
+          var noise = audioCtx.createBufferSource();
+          noise.buffer = buffer;
+          var filter = audioCtx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(1200, now);
+          filter.Q.setValueAtTime(1.5, now);
+          
+          var noiseGain = audioCtx.createGain();
+          noiseGain.gain.setValueAtTime(0.08, now);
+          noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+          
+          noise.connect(filter);
+          filter.connect(noiseGain);
+          noiseGain.connect(audioCtx.destination);
+          noise.start(now);
+
+          // 2. Card snap/slap impact tone on felt
+          var osc = audioCtx.createOscillator();
+          var oscGain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(520, now + 0.01);
+          osc.frequency.exponentialRampToValueAtTime(120, now + 0.05);
+          oscGain.gain.setValueAtTime(0.18, now + 0.01);
+          oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+          osc.connect(oscGain);
+          oscGain.connect(audioCtx.destination);
+          osc.start(now + 0.01);
+          osc.stop(now + 0.05);
+        } catch (e) {
+          console.error(e);
+        }
+      })();
+    ''');
+  } catch (e) {
+    // Fail silently
+  }
+}

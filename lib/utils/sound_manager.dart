@@ -21,4 +21,10 @@ class SoundManager {
       helper.playBeltHandle();
     }
   }
+
+  static void playCardPlace() {
+    if (soundOn) {
+      helper.playCardPlace();
+    }
+  }
 }

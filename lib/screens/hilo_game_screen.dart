@@ -5,6 +5,7 @@ import '../widgets/win_lose_toast.dart';
 import '../widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/animated_game_background.dart';
+import '../utils/sound_manager.dart';
 
 class PlayingCard {
   final int rank; // 1 (Ace) to 13 (King)
@@ -164,10 +165,13 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
       _currentMultiplier = 1.0;
       _correctGuesses = 0;
     });
+    SoundManager.playCardPlace();
   }
 
   void _makeGuess(bool isHI) {
     if (!_isPlaying) return;
+
+    SoundManager.playCardPlace();
 
     final double bet = double.tryParse(_betController.text) ?? 0.0;
     final bool isDemoMode = bet <= 0.0;

@@ -24,3 +24,7 @@ void playLose() {
 void playBeltHandle() {
   playBeltHandleSound();
 }
+
+void playCardPlace() {
+  playCardPlaceSound();
+}

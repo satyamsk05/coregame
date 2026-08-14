@@ -21,3 +21,7 @@ void playLoseSound() {
 void playBeltHandleSound() {
   // No-op for non-web platforms.
 }
+
+void playCardPlaceSound() {
+  // No-op for non-web platforms.
+}
