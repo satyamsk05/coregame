@@ -386,57 +386,33 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
   }
 
   int _pickTargetBin(int binCount, String risk) {
-    final int R = binCount - 1;
+    final int R = binCount - 1; // rowCount
     
+    // Run the step-by-step random walk simulation
+    int currentCol = 1; // Start at center peg of row 0
+    double repulsion;
     if (risk == 'Regular') {
-      int col = 0;
-      for (int i = 0; i < R; i++) {
-        if (_random.nextDouble() < 0.5) col++;
-      }
-      return col;
+      repulsion = -0.18; // Attractive force towards center
     } else if (risk == 'High') {
-      int col = 0;
-      for (int i = 0; i < R; i++) {
-        double p = 0.5;
-        if (col < R / 2) {
-          p = 0.46;
-        } else if (col > R / 2) {
-          p = 0.54;
-        }
-        if (_random.nextDouble() < p) col++;
-      }
-      return col;
+      repulsion = 0.05;  // Mild repulsion/spread
     } else if (risk == 'Nightmare') {
-      if (_random.nextDouble() < 0.35) {
-        int col = 0;
-        for (int i = 0; i < R; i++) {
-          if (_random.nextDouble() < 0.5) col++;
-        }
-        return col;
-      } else {
-        final double bias = _random.nextDouble();
-        if (bias < 0.5) {
-          return _random.nextInt(3);
-        } else {
-          return R - _random.nextInt(3);
-        }
-      }
-    } else { // Lightning (extreme risk)
-      if (_random.nextDouble() < 0.15) {
-        int col = 0;
-        for (int i = 0; i < R; i++) {
-          if (_random.nextDouble() < 0.5) col++;
-        }
-        return col;
-      } else {
-        final double bias = _random.nextDouble();
-        if (bias < 0.5) {
-          return _random.nextInt(2);
-        } else {
-          return R - _random.nextInt(2);
-        }
+      repulsion = 0.18;  // Strong repulsion
+    } else { // Lightning
+      repulsion = 0.28;  // Extreme repulsion
+    }
+    
+    for (int r = 1; r < R; r++) {
+      final double offset = currentCol - (r + 1) / 2.0;
+      double p = 0.5 + repulsion * offset;
+      p = p.clamp(0.08, 0.92); // Keep some natural randomness
+      if (_random.nextDouble() < p) {
+        currentCol++;
       }
     }
+    
+    // 50/50 final slide into one of the two bins directly below
+    int targetBin = _random.nextDouble() < 0.5 ? (currentCol - 1) : currentCol;
+    return targetBin.clamp(0, R);
   }
 
   void _startAutoPlay() {
