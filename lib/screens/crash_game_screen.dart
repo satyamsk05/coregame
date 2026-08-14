@@ -4,6 +4,23 @@ import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../utils/sound_manager.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Data model
+// ─────────────────────────────────────────────────────────────────────────────
+enum CrashState { countdown, flying, crashed }
+
+class _Particle {
+  double fx, fy, vx, vy, sz, alpha;
+  _Particle({
+    required this.fx, required this.fy,
+    required this.vx, required this.vy,
+    required this.sz, required this.alpha,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Widget
+// ─────────────────────────────────────────────────────────────────────────────
 class CrashGameScreen extends StatefulWidget {
   final double balance;
   final bool soundOn;
@@ -24,230 +41,179 @@ class CrashGameScreen extends StatefulWidget {
   State<CrashGameScreen> createState() => _CrashGameScreenState();
 }
 
-enum CrashState { countdown, flying, crashed }
-
-class _Particle {
-  double x, y, vx, vy, size, alpha;
-  _Particle({
-    required this.x, required this.y,
-    required this.vx, required this.vy,
-    required this.size, required this.alpha,
-  });
-}
-
+// ─────────────────────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────────────────────
 class _CrashGameScreenState extends State<CrashGameScreen>
     with TickerProviderStateMixin {
-  final _betController = TextEditingController(text: '100');
-  final _autoCashoutController = TextEditingController(text: '2.00');
 
-  CrashState _gameState = CrashState.countdown;
+  // ── game state ──────────────────────────────────────────────────────────
+  CrashState _state = CrashState.countdown;
+  double _countdown   = 5.0;
+  double _crashDelay  = 4.0;
+  double _elapsed     = 0.0;       // seconds since flight began
+  double _multi       = 1.00;      // current multiplier
+  double _crashPoint  = 2.00;      // randomised crash target
+  double _crashedAt   = 1.00;      // frozen multi when crashed
 
-  // Countdown
-  double _countdownSeconds = 5.0;
+  // ── bet / cashout ───────────────────────────────────────────────────────
+  final _betCtrl = TextEditingController(text: '100');
+  final _autoCashoutCtrl = TextEditingController(text: '2.00');
+  bool _betQueued   = false;
+  bool _hasBet      = false;
+  bool _cashedOut   = false;
+  bool _autoEnabled = false;
 
-  // Flight
-  double _currentMultiplier = 1.00;
-  double _crashPoint = 2.00;
-  double _crashedAtMultiplier = 1.00;
-
-  // Time-based trace: 0.0 → 1.0 over FLIGHT_DURATION seconds
-  // The visual trace uses elapsed flight time, independent of multiplier.
-  double _flightElapsed = 0.0;
-  static const double _flightDuration = 12.0; // seconds to reach end of canvas
-
-  // Post-crash delay before next round
-  double _crashedDelay = 4.0;
-  // Value to add to history only once, after crash overlay is shown
-  double? _pendingHistoryEntry;
-
-  // Bet state
-  bool _hasPlacedBet = false;
-  bool _betQueued = false;
-  bool _hasCashedOut = false;
-  bool _isAutoCashoutEnabled = false;
-
-  // History (initially empty-looking, will fill with rounds)
+  // ── history (pending entry added after crash delay) ─────────────────────
   final List<double> _history = [3.40, 1.89, 5.30, 1.12, 2.05, 12.80, 1.45];
+  double? _pendingHistory;
 
-  // Particles attached to the tip of the trace line
+  // ── particles ───────────────────────────────────────────────────────────
   final List<_Particle> _particles = [];
-  final math.Random _rng = math.Random();
+  final _rng = math.Random();
 
-  // Ticker — fires every frame for smooth animation
-  Ticker? _ticker; // from flutter/scheduler.dart
+  // ── animation ───────────────────────────────────────────────────────────
+  static const double _vizDuration = 14.0; // secs for trace to reach canvas right edge
+  Ticker? _ticker;
   Duration _lastTick = Duration.zero;
+  late AnimationController _pulseCtrl;
+  late AnimationController _flashCtrl;   // crash flash overlay
 
-  late AnimationController _pulseAnim;
+  double get _traceProgress =>
+      _state == CrashState.countdown ? 0.0 : (_elapsed / _vizDuration).clamp(0.0, 1.0);
 
+  // ─────────────────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
+    _pulseCtrl = AnimationController(vsync: this,
+        duration: const Duration(milliseconds: 700),
+        lowerBound: 0.92, upperBound: 1.08)
+      ..repeat(reverse: true);
 
-    _pulseAnim = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-      lowerBound: 0.93,
-      upperBound: 1.07,
-    );
+    _flashCtrl = AnimationController(vsync: this,
+        duration: const Duration(milliseconds: 600));
 
-    // Use a Ticker (frame-by-frame) instead of a Timer so animation is smooth
     _ticker = createTicker(_onTick)..start();
   }
 
   @override
   void dispose() {
     _ticker?.dispose();
-    _pulseAnim.dispose();
-    _betController.dispose();
-    _autoCashoutController.dispose();
+    _pulseCtrl.dispose();
+    _flashCtrl.dispose();
+    _betCtrl.dispose();
+    _autoCashoutCtrl.dispose();
     super.dispose();
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
   void _onTick(Duration elapsed) {
     if (!mounted) return;
-
-    // Calculate delta in seconds since last frame
     final double dt = _lastTick == Duration.zero
         ? 0.0
         : (elapsed - _lastTick).inMicroseconds / 1e6;
     _lastTick = elapsed;
 
     setState(() {
-      switch (_gameState) {
+      switch (_state) {
         case CrashState.countdown:
-          _countdownSeconds = (_countdownSeconds - dt).clamp(0.0, 100.0);
-          if (_countdownSeconds <= 0.0) _beginFlight();
+          _countdown = (_countdown - dt).clamp(0.0, 99.0);
+          if (_countdown <= 0.0) _beginFlight();
           break;
 
         case CrashState.flying:
-          _flightElapsed += dt;
-
-          // Multiplier grows exponentially with time
-          _currentMultiplier = _exponentialMultiplier(_flightElapsed);
-
-          // Spawn particles at current tip
+          _elapsed += dt;
+          _multi = math.pow(math.e, 0.231 * _elapsed).toDouble();
           _spawnParticles();
-
-          // Fade existing particles
-          for (var p in _particles) {
-            p.x += p.vx;
-            p.y += p.vy;
-            p.alpha = (p.alpha - dt * 2.5).clamp(0.0, 1.0);
-          }
-          _particles.removeWhere((p) => p.alpha <= 0.0);
-
+          _fadeParticles(dt);
           // Auto cashout
-          if (_isAutoCashoutEnabled && _hasPlacedBet && !_hasCashedOut) {
-            final double target =
-                double.tryParse(_autoCashoutController.text) ?? 2.0;
-            if (_currentMultiplier >= target) _cashOut();
+          if (_autoEnabled && _hasBet && !_cashedOut) {
+            final t = double.tryParse(_autoCashoutCtrl.text) ?? 2.0;
+            if (_multi >= t) _cashOut();
           }
-
-          // Check crash
-          if (_currentMultiplier >= _crashPoint) _triggerCrash();
+          if (_multi >= _crashPoint) _triggerCrash();
           break;
 
         case CrashState.crashed:
-          // Particles still fade during crashed state
-          for (var p in _particles) {
-            p.alpha = (p.alpha - dt * 3.0).clamp(0.0, 1.0);
-          }
-          _particles.removeWhere((p) => p.alpha <= 0.0);
-
-          _crashedDelay = (_crashedDelay - dt).clamp(0.0, 100.0);
-          if (_crashedDelay <= 0.0) _beginCountdown();
+          _fadeParticles(dt);
+          _crashDelay = (_crashDelay - dt).clamp(0.0, 99.0);
+          if (_crashDelay <= 0.0) _beginCountdown();
           break;
       }
     });
   }
 
-  // Exponential multiplier that starts at 1.0 and accelerates
-  double _exponentialMultiplier(double t) {
-    // Starts at 1.0, roughly doubles every 3 seconds
-    return math.pow(math.e, 0.231 * t).toDouble();
+  void _spawnParticles() {
+    final double prog = _traceProgress;
+    // fractional coords – painter will scale to canvas
+    final double fx = prog;
+    final double fy = 1.0 - math.pow(prog, 0.55);
+    for (int i = 0; i < 3; i++) {
+      _particles.add(_Particle(
+        fx: fx, fy: fy,
+        vx: (_rng.nextDouble() - 0.6) * 0.009,
+        vy: (_rng.nextDouble() - 0.3) * 0.007,
+        sz: _rng.nextDouble() * 0.014 + 0.004,
+        alpha: 1.0,
+      ));
+    }
+    if (_particles.length > 120) _particles.removeRange(0, 20);
+  }
+
+  void _fadeParticles(double dt) {
+    for (var p in _particles) {
+      p.fx += p.vx;
+      p.fy += p.vy;
+      p.alpha = (p.alpha - dt * 2.8).clamp(0.0, 1.0);
+    }
+    _particles.removeWhere((p) => p.alpha <= 0.0);
   }
 
   void _beginFlight() {
-    // Generate crash point using a house-edge curve
     final double r = _rng.nextDouble();
-    if (r < 0.08) {
-      _crashPoint = 1.00 + _rng.nextDouble() * 0.10;
-    } else if (r < 0.60) {
-      _crashPoint = 1.10 + _rng.nextDouble() * 1.40;
-    } else if (r < 0.88) {
-      _crashPoint = 2.50 + _rng.nextDouble() * 7.50;
-    } else if (r < 0.97) {
-      _crashPoint = 10.0 + _rng.nextDouble() * 40.0;
-    } else {
-      _crashPoint = 50.0 + _rng.nextDouble() * 449.0;
-    }
+    if (r < 0.08)       _crashPoint = 1.00 + _rng.nextDouble() * 0.10;
+    else if (r < 0.60)  _crashPoint = 1.10 + _rng.nextDouble() * 1.40;
+    else if (r < 0.88)  _crashPoint = 2.50 + _rng.nextDouble() * 7.50;
+    else if (r < 0.97)  _crashPoint = 10.0 + _rng.nextDouble() * 40.0;
+    else                _crashPoint = 50.0 + _rng.nextDouble() * 449.0;
 
-    _gameState = CrashState.flying;
-    _currentMultiplier = 1.00;
-    _flightElapsed = 0.0;
-    _particles.clear();
-    _hasCashedOut = false;
-    _hasPlacedBet = _betQueued;
+    _state     = CrashState.flying;
+    _multi     = 1.00;
+    _elapsed   = 0.0;
+    _cashedOut = false;
+    _hasBet    = _betQueued;
     _betQueued = false;
-    _pulseAnim.repeat(reverse: true);
+    _particles.clear();
+    _flashCtrl.reset();
   }
 
   void _triggerCrash() {
-    _crashedAtMultiplier = _currentMultiplier;
-    _pendingHistoryEntry = double.parse(_currentMultiplier.toStringAsFixed(2));
-    _pulseAnim.stop();
-    _gameState = CrashState.crashed;
-    _crashedDelay = 4.0;
-    _hasPlacedBet = false;
+    _crashedAt      = _multi;
+    _pendingHistory = double.parse(_multi.toStringAsFixed(2));
+    _state          = CrashState.crashed;
+    _crashDelay     = 4.0;
+    _hasBet         = false;
+    _flashCtrl.forward();
     SoundManager.playClick();
   }
 
   void _beginCountdown() {
-    // Add to history now (so it appears AFTER the crashed overlay)
-    if (_pendingHistoryEntry != null) {
-      _history.insert(0, _pendingHistoryEntry!);
-      if (_history.length > 10) _history.removeLast();
-      _pendingHistoryEntry = null;
+    if (_pendingHistory != null) {
+      _history.insert(0, _pendingHistory!);
+      if (_history.length > 12) _history.removeLast();
+      _pendingHistory = null;
     }
-
-    _gameState = CrashState.countdown;
-    _countdownSeconds = 5.0;
-    _flightElapsed = 0.0;
+    _state     = CrashState.countdown;
+    _countdown = 5.0;
+    _elapsed   = 0.0;
     _particles.clear();
+    _flashCtrl.reset();
   }
-
-  // Spawn glowing particles at the current tip position
-  void _spawnParticles() {
-    // We'll pass size-relative coords through a GlobalKey approach is complex,
-    // so we use normalised [0–1] coords and let the painter resolve them.
-    // Instead, spawn directly in fractional space and let painter scale.
-    final double prog = _traceProgress;
-    // Fractional tip x,y (will be multiplied by canvas size in painter)
-    final double fx = prog;
-    final double fy = 1.0 - math.sin(prog * math.pi / 2);
-    for (int i = 0; i < 2; i++) {
-      _particles.add(_Particle(
-        x: fx,
-        y: fy,
-        vx: (_rng.nextDouble() - 0.7) * 0.008,
-        vy: (_rng.nextDouble() - 0.5) * 0.006,
-        size: _rng.nextDouble() * 0.012 + 0.004,
-        alpha: 1.0,
-      ));
-    }
-  }
-
-  // Visual trace progress: time-based, goes 0→1 over _flightDuration seconds
-  double get _traceProgress {
-    if (_gameState == CrashState.countdown) return 0.0;
-    return (_flightElapsed / _flightDuration).clamp(0.0, 1.0);
-  }
-
-  // ─── Actions ──────────────────────────────────────────────────────────────
 
   void _placeBet() {
-    if (_betQueued || _hasPlacedBet || _gameState != CrashState.countdown) return;
-    final double bet = double.tryParse(_betController.text) ?? 10.0;
+    if (_betQueued || _hasBet || _state != CrashState.countdown) return;
+    final double bet = double.tryParse(_betCtrl.text) ?? 10.0;
     if (bet <= 0.0 || bet > widget.balance) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Invalid bet or insufficient balance!'),
@@ -261,42 +227,117 @@ class _CrashGameScreenState extends State<CrashGameScreen>
   }
 
   void _cashOut() {
-    if (!_hasPlacedBet || _hasCashedOut || _gameState != CrashState.flying) return;
-    final double bet = double.tryParse(_betController.text) ?? 10.0;
-    widget.onBalanceChanged(widget.balance + bet * _currentMultiplier);
+    if (!_hasBet || _cashedOut || _state != CrashState.flying) return;
+    final double bet = double.tryParse(_betCtrl.text) ?? 10.0;
+    widget.onBalanceChanged(widget.balance + bet * _multi);
     SoundManager.playClick();
-    setState(() => _hasCashedOut = true);
+    setState(() => _cashedOut = true);
   }
 
-  // ─── Build ────────────────────────────────────────────────────────────────
-
+  // ─────────────────────────────────────────────────────────────────────────
+  // BUILD
+  // ─────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final isCrashed  = _state == CrashState.crashed;
+    final isFlying   = _state == CrashState.flying;
+
+    final Color accentColor = isCrashed
+        ? const Color(0xFFFF4560)
+        : isFlying && _cashedOut
+            ? const Color(0xFF00E396)
+            : const Color(0xFF00D2FF);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0E),
+      backgroundColor: const Color(0xFF080B10),
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(),
+            // ── TOP BAR ────────────────────────────────────────────────
+            _TopBar(
+              balance: widget.balance,
+              onBack: widget.onBackPressed,
+              accentColor: accentColor,
+            ),
+
+            // ── HISTORY ────────────────────────────────────────────────
+            _HistoryBar(history: _history),
+
+            // ── CHART (fills remaining space) ──────────────────────────
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // ── Left: Bet Panel ──────────────────────────────────
-                    _buildBetPanel(),
-                    const SizedBox(width: 14.0),
+                    // Bet panel
+                    _BetPanel(
+                      state: _state,
+                      betCtrl: _betCtrl,
+                      autoCashoutCtrl: _autoCashoutCtrl,
+                      balance: widget.balance,
+                      betQueued: _betQueued,
+                      hasBet: _hasBet,
+                      cashedOut: _cashedOut,
+                      autoEnabled: _autoEnabled,
+                      currentMulti: _multi,
+                      accentColor: accentColor,
+                      onAutoToggle: (v) => setState(() => _autoEnabled = v),
+                      onAdjust: (delta) {
+                        if (_state != CrashState.countdown) return;
+                        final v = (double.tryParse(_betCtrl.text) ?? 0.0) + delta;
+                        _betCtrl.text = v.clamp(0.0, widget.balance).toStringAsFixed(0);
+                      },
+                      onPreset: (val) {
+                        if (_state != CrashState.countdown) return;
+                        _betCtrl.text = val;
+                      },
+                      onPlaceBet: _placeBet,
+                      onCashOut: _cashOut,
+                    ),
+                    const SizedBox(width: 12),
 
-                    // ── Right: History + Arena ───────────────────────────
+                    // Chart arena
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildHistoryRow(),
-                          const SizedBox(height: 8.0),
-                          Expanded(child: _buildArena()),
-                        ],
+                      child: AnimatedBuilder(
+                        animation: _flashCtrl,
+                        builder: (_, __) {
+                          return Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isCrashed
+                                    ? const Color(0xFFFF4560).withOpacity(0.4 * (1 - _flashCtrl.value))
+                                    : const Color(0xFF1A2033),
+                                width: 1.2,
+                              ),
+                              color: Color.lerp(
+                                const Color(0xFF0C101A),
+                                const Color(0xFF2A0510),
+                                isCrashed ? _flashCtrl.value * 0.35 : 0.0,
+                              ),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                // Grid + curve
+                                CustomPaint(
+                                  painter: _ChartPainter(
+                                    state: _state,
+                                    progress: _traceProgress,
+                                    particles: _particles,
+                                    accentColor: accentColor,
+                                    multi: _multi,
+                                    crashedAt: _crashedAt,
+                                  ),
+                                ),
+                                // Centre HUD
+                                Center(child: _buildHud(accentColor)),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -309,72 +350,209 @@ class _CrashGameScreenState extends State<CrashGameScreen>
     );
   }
 
-  // ─── Header ───────────────────────────────────────────────────────────────
+  Widget _buildHud(Color accent) {
+    switch (_state) {
+      case CrashState.countdown:
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('STARTING IN',
+                style: GoogleFonts.robotoMono(
+                    textStyle: TextStyle(
+                        color: Colors.white.withOpacity(0.45),
+                        fontSize: 10, fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5))),
+            const SizedBox(height: 4),
+            Text(_countdown.toStringAsFixed(1),
+                style: GoogleFonts.robotoMono(
+                    textStyle: const TextStyle(
+                        color: Color(0xFF00D2FF),
+                        fontSize: 56, fontWeight: FontWeight.w900))),
+            Text('seconds',
+                style: TextStyle(
+                    color: Colors.white.withOpacity(0.35), fontSize: 10)),
+          ],
+        );
 
-  Widget _buildHeader() {
+      case CrashState.flying:
+        return ScaleTransition(
+          scale: _pulseCtrl,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('${_multi.toStringAsFixed(2)}×',
+                  style: GoogleFonts.robotoMono(
+                      textStyle: TextStyle(
+                          color: accent,
+                          fontSize: 58, fontWeight: FontWeight.w900,
+                          shadows: [
+                            Shadow(color: accent.withOpacity(0.6), blurRadius: 18),
+                          ]))),
+              if (_cashedOut)
+                Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00E396).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFF00E396), width: 1),
+                  ),
+                  child: Text('CASHED OUT ✓',
+                      style: const TextStyle(
+                          color: Color(0xFF00E396),
+                          fontSize: 11, fontWeight: FontWeight.w900)),
+                ),
+            ],
+          ),
+        );
+
+      case CrashState.crashed:
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('CRASHED',
+                style: GoogleFonts.robotoMono(
+                    textStyle: const TextStyle(
+                        color: Color(0xFFFF4560),
+                        fontSize: 13, fontWeight: FontWeight.w900,
+                        letterSpacing: 2))),
+            const SizedBox(height: 2),
+            Text('@  ${_crashedAt.toStringAsFixed(2)}×',
+                style: GoogleFonts.robotoMono(
+                    textStyle: const TextStyle(
+                        color: Color(0xFFFF4560),
+                        fontSize: 46, fontWeight: FontWeight.w900,
+                        shadows: [
+                          Shadow(
+                              color: Color(0xAAFF4560), blurRadius: 20)
+                        ]))),
+          ],
+        );
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Top Bar
+// ─────────────────────────────────────────────────────────────────────────────
+class _TopBar extends StatelessWidget {
+  final double balance;
+  final VoidCallback onBack;
+  final Color accentColor;
+  const _TopBar({required this.balance, required this.onBack, required this.accentColor});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-      color: const Color(0xFF0A0A0E),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: const BoxDecoration(
+        color: Color(0xFF080B10),
+        border: Border(bottom: BorderSide(color: Color(0xFF141825), width: 1)),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           GestureDetector(
-            onTap: widget.onBackPressed,
-            child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18.0),
+            onTap: onBack,
+            child: Container(
+              width: 32, height: 32,
+              decoration: BoxDecoration(
+                color: const Color(0xFF141825),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.arrow_back_ios_new,
+                  color: Colors.white54, size: 14),
+            ),
           ),
-          Text('CRASH MULTIPLIER',
-              style: GoogleFonts.roboto(
-                textStyle: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14.0,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.0,
-                ),
-              )),
-          Text(
-            '₹${widget.balance.toStringAsFixed(2)}',
-            style: const TextStyle(
-              color: Color(0xFF00E5FF), fontSize: 14.0, fontWeight: FontWeight.bold),
+          const SizedBox(width: 12),
+          Text('CRASH', style: GoogleFonts.robotoMono(
+              textStyle: const TextStyle(
+                  color: Colors.white, fontSize: 14,
+                  fontWeight: FontWeight.w900, letterSpacing: 2))),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFF00D2FF).withOpacity(0.12),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFF00D2FF).withOpacity(0.3)),
+            ),
+            child: const Text('999×',
+                style: TextStyle(color: Color(0xFF00D2FF), fontSize: 10,
+                    fontWeight: FontWeight.bold)),
+          ),
+          const Spacer(),
+          // Balance chip
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF141825),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: accentColor.withOpacity(0.3), width: 1),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.account_balance_wallet_outlined,
+                    color: accentColor, size: 13),
+                const SizedBox(width: 5),
+                Text('₹${balance.toStringAsFixed(2)}',
+                    style: TextStyle(
+                        color: accentColor, fontSize: 13,
+                        fontWeight: FontWeight.bold)),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  // ─── History Row ──────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// History bar
+// ─────────────────────────────────────────────────────────────────────────────
+class _HistoryBar extends StatelessWidget {
+  final List<double> history;
+  const _HistoryBar({required this.history});
 
-  Widget _buildHistoryRow() {
-    return SizedBox(
-      height: 26.0,
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 34,
+      color: const Color(0xFF0C101A),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          Text('History:',
-              style: GoogleFonts.roboto(
+          Text('HISTORY',
+              style: GoogleFonts.robotoMono(
                   textStyle: const TextStyle(
-                      color: Color(0xFF8A8A93),
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.bold))),
-          const SizedBox(width: 6.0),
+                      color: Color(0xFF3A4460),
+                      fontSize: 8, fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2))),
+          const SizedBox(width: 8),
           Expanded(
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: _history.length,
-              itemBuilder: (context, i) {
-                final v = _history[i];
+              itemCount: history.length,
+              itemBuilder: (_, i) {
+                final v = history[i];
                 final high = v >= 2.0;
-                final color = high ? const Color(0xFF00C853) : const Color(0xFFFF5252);
+                final mega = v >= 10.0;
+                Color c = high
+                    ? (mega ? const Color(0xFFFFB800) : const Color(0xFF00E396))
+                    : const Color(0xFFFF4560);
                 return Container(
-                  margin: const EdgeInsets.only(right: 6.0),
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 3.0),
+                  margin: const EdgeInsets.only(right: 5, top: 4, bottom: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(10.0),
-                    border: Border.all(color: color, width: 1.0),
+                    color: c.withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: c.withOpacity(0.5), width: 0.8),
                   ),
-                  child: Text('${v.toStringAsFixed(2)}x',
+                  alignment: Alignment.center,
+                  child: Text('${v.toStringAsFixed(2)}×',
                       style: TextStyle(
-                          color: color,
-                          fontSize: 9.0,
+                          color: c, fontSize: 9,
                           fontWeight: FontWeight.bold)),
                 );
               },
@@ -384,527 +562,441 @@ class _CrashGameScreenState extends State<CrashGameScreen>
       ),
     );
   }
+}
 
-  // ─── Arena ────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Bet panel (left column)
+// ─────────────────────────────────────────────────────────────────────────────
+class _BetPanel extends StatelessWidget {
+  final CrashState state;
+  final TextEditingController betCtrl;
+  final TextEditingController autoCashoutCtrl;
+  final double balance;
+  final bool betQueued, hasBet, cashedOut, autoEnabled;
+  final double currentMulti;
+  final Color accentColor;
+  final ValueChanged<bool> onAutoToggle;
+  final ValueChanged<double> onAdjust;
+  final ValueChanged<String> onPreset;
+  final VoidCallback onPlaceBet;
+  final VoidCallback onCashOut;
 
-  Widget _buildArena() {
+  const _BetPanel({
+    required this.state, required this.betCtrl, required this.autoCashoutCtrl,
+    required this.balance, required this.betQueued, required this.hasBet,
+    required this.cashedOut, required this.autoEnabled, required this.currentMulti,
+    required this.accentColor, required this.onAutoToggle, required this.onAdjust,
+    required this.onPreset, required this.onPlaceBet, required this.onCashOut,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool locked = state != CrashState.countdown;
+
     return Container(
+      width: 250,
       decoration: BoxDecoration(
-        color: const Color(0xFF0D0D12),
-        borderRadius: BorderRadius.circular(14.0),
-        border: Border.all(color: const Color(0xFF1E1E26), width: 1.0),
+        color: const Color(0xFF0C101A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF141825), width: 1),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Animated trace canvas
-          CustomPaint(
-            painter: _ArenaPainter(
-              state: _gameState,
-              progress: _traceProgress,
-              particles: _particles,
-              multiplier: _currentMultiplier,
-            ),
-          ),
-
-          // Central overlay
-          Center(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: _buildCenterOverlay(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCenterOverlay() {
-    switch (_gameState) {
-      case CrashState.countdown:
-        return Column(
-          key: const ValueKey('countdown'),
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('NEXT ROUND IN',
-                style: GoogleFonts.roboto(
-                    textStyle: const TextStyle(
-                        color: Color(0xFF8A8A93),
-                        fontSize: 11.0,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.4))),
-            const SizedBox(height: 6.0),
-            Text('${_countdownSeconds.toStringAsFixed(1)}s',
-                style: GoogleFonts.roboto(
-                    textStyle: const TextStyle(
-                        color: Color(0xFF00E5FF),
-                        fontSize: 44.0,
-                        fontWeight: FontWeight.w900))),
-          ],
-        );
-
-      case CrashState.flying:
-        return ScaleTransition(
-          scale: _pulseAnim,
-          child: Text(
-            '${_currentMultiplier.toStringAsFixed(2)}x',
-            key: const ValueKey('flying'),
-            style: GoogleFonts.roboto(
-                textStyle: TextStyle(
-                    color: _hasCashedOut
-                        ? const Color(0xFF00C853)
-                        : Colors.white,
-                    fontSize: 52.0,
-                    fontWeight: FontWeight.w900)),
-          ),
-        );
-
-      case CrashState.crashed:
-        return Column(
-          key: const ValueKey('crashed'),
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('CRASHED',
-                style: GoogleFonts.roboto(
-                    textStyle: const TextStyle(
-                        color: Color(0xFFFF5252),
-                        fontSize: 15.0,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5))),
-            const SizedBox(height: 4.0),
-            Text('@ ${_crashedAtMultiplier.toStringAsFixed(2)}x',
-                style: GoogleFonts.roboto(
-                    textStyle: const TextStyle(
-                        color: Color(0xFFFF5252),
-                        fontSize: 42.0,
-                        fontWeight: FontWeight.w900))),
-          ],
-        );
-    }
-  }
-
-  // ─── Bet Panel ────────────────────────────────────────────────────────────
-
-  Widget _buildBetPanel() {
-    return Container(
-      width: 280.0,
-      padding: const EdgeInsets.all(14.0),
-      decoration: BoxDecoration(
-        color: const Color(0xFF13131A),
-        borderRadius: BorderRadius.circular(14.0),
-        border: Border.all(color: const Color(0xFF1E1E26), width: 1.0),
-      ),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('BET AMOUNT',
-              style: TextStyle(
-                  color: Color(0xFF8A8A93),
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5)),
-          const SizedBox(height: 6.0),
-          _buildBetInput(),
-          const SizedBox(height: 10.0),
-          _buildPresets(),
-          const SizedBox(height: 14.0),
-          _buildAutoCashout(),
-          const Spacer(),
-          _buildActionButton(),
-        ],
-      ),
-    );
-  }
+          // Label
+          Text('BET AMOUNT',
+              style: GoogleFonts.robotoMono(
+                  textStyle: const TextStyle(
+                      color: Color(0xFF3A4460), fontSize: 9,
+                      fontWeight: FontWeight.bold, letterSpacing: 1.2))),
+          const SizedBox(height: 8),
 
-  Widget _buildBetInput() {
-    final bool locked = _gameState != CrashState.countdown;
-    return Container(
-      height: 42.0,
-      decoration: BoxDecoration(
-        color: const Color(0xFF0A0A0E),
-        borderRadius: BorderRadius.circular(10.0),
-        border: Border.all(color: const Color(0xFF1E1E26), width: 1.2),
-      ),
-      child: Row(
-        children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10.0),
-            child: Text('₹',
-                style: TextStyle(
-                    color: Color(0xFF00E5FF),
-                    fontSize: 14.0,
-                    fontWeight: FontWeight.bold)),
-          ),
-          Expanded(
-            child: TextField(
-              controller: _betController,
-              enabled: !locked,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold),
-              decoration: const InputDecoration(
-                  border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero),
-            ),
-          ),
-          _adjBtn('-', () {
-            if (locked) return;
-            final v = (double.tryParse(_betController.text) ?? 0.0) - 10.0;
-            _betController.text = v.clamp(0.0, widget.balance).toStringAsFixed(0);
-          }),
-          _adjBtn('+', () {
-            if (locked) return;
-            final v = (double.tryParse(_betController.text) ?? 0.0) + 10.0;
-            _betController.text = v.clamp(0.0, widget.balance).toStringAsFixed(0);
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _adjBtn(String label, VoidCallback onTap) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-          decoration: const BoxDecoration(
-              border: Border(left: BorderSide(color: Color(0xFF1E1E26), width: 1.2))),
-          child: Text(label,
-              style: const TextStyle(
-                  color: Colors.grey, fontSize: 13.0, fontWeight: FontWeight.bold)),
-        ),
-      );
-
-  Widget _buildPresets() {
-    return Column(
-      children: [
-        Row(children: [
-          _presetBtn('10', '10'),
-          const SizedBox(width: 6.0),
-          _presetBtn('100', '100'),
-        ]),
-        const SizedBox(height: 6.0),
-        Row(children: [
-          _presetBtn('500', '500'),
-          const SizedBox(width: 6.0),
-          _presetBtn('1000', '1000'),
-        ]),
-      ],
-    );
-  }
-
-  Widget _presetBtn(String label, String value) => Expanded(
-        child: GestureDetector(
-          onTap: () {
-            if (_gameState != CrashState.countdown) return;
-            _betController.text = value;
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A22),
-              borderRadius: BorderRadius.circular(8.0),
-              border: Border.all(color: const Color(0xFF2A2A34), width: 1.0),
-            ),
-            child: Text(label,
-                style: const TextStyle(
-                    color: Colors.white, fontSize: 12.0, fontWeight: FontWeight.bold)),
-          ),
-        ),
-      );
-
-  Widget _buildAutoCashout() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('AUTO CASHOUT',
-                style: TextStyle(
-                    color: Color(0xFF8A8A93),
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5)),
-            SizedBox(
-              height: 24.0,
-              child: Switch(
-                value: _isAutoCashoutEnabled,
-                onChanged: (v) => setState(() => _isAutoCashoutEnabled = v),
-                activeColor: const Color(0xFF00E5FF),
-                activeTrackColor: const Color(0xFF1E1E26),
-                inactiveThumbColor: Colors.grey,
-                inactiveTrackColor: Colors.black26,
-              ),
-            ),
-          ],
-        ),
-        if (_isAutoCashoutEnabled) ...[
-          const SizedBox(height: 6.0),
+          // Input row
           Container(
-            height: 38.0,
+            height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFF0A0A0E),
-              borderRadius: BorderRadius.circular(10.0),
-              border: Border.all(color: const Color(0xFF1E1E26), width: 1.2),
+              color: const Color(0xFF080B10),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFF1A2033), width: 1.2),
             ),
             child: Row(
               children: [
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10.0),
-                  child: Text('x',
-                      style: TextStyle(
-                          color: Color(0xFF00E5FF),
-                          fontSize: 13.0,
-                          fontWeight: FontWeight.bold)),
+                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  child: Text('₹', style: TextStyle(
+                      color: Color(0xFF00D2FF), fontSize: 15,
+                      fontWeight: FontWeight.bold)),
                 ),
                 Expanded(
                   child: TextField(
-                    controller: _autoCashoutController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    controller: betCtrl,
+                    enabled: !locked,
+                    keyboardType: TextInputType.number,
                     style: const TextStyle(
-                        color: Colors.white, fontSize: 13.0, fontWeight: FontWeight.bold),
+                        color: Colors.white, fontSize: 15,
+                        fontWeight: FontWeight.bold),
                     decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        isDense: true,
+                        border: InputBorder.none, isDense: true,
                         contentPadding: EdgeInsets.zero),
                   ),
                 ),
+                _SmallBtn('-', () => onAdjust(-10)),
+                _SmallBtn('+', () => onAdjust(10)),
               ],
             ),
           ),
+          const SizedBox(height: 10),
+
+          // Presets 2×2
+          _PresetGrid(onPreset: onPreset, locked: locked),
+          const SizedBox(height: 14),
+
+          // Auto cashout
+          _AutoCashout(
+            enabled: autoEnabled,
+            ctrl: autoCashoutCtrl,
+            onToggle: onAutoToggle,
+          ),
+          const Spacer(),
+
+          // Action button
+          _ActionBtn(
+            state: state,
+            betQueued: betQueued, hasBet: hasBet, cashedOut: cashedOut,
+            currentMulti: currentMulti,
+            betCtrl: betCtrl,
+            onPlace: onPlaceBet,
+            onCash: onCashOut,
+          ),
         ],
-      ],
+      ),
     );
   }
+}
 
-  Widget _buildActionButton() {
-    switch (_gameState) {
-      case CrashState.countdown:
-        if (_betQueued) {
-          return _statusBox('BET PLACED', const Color(0xFF00E5FF));
-        }
-        return ElevatedButton(
-          onPressed: _placeBet,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF00E5FF),
-            foregroundColor: Colors.black,
-            minimumSize: const Size.fromHeight(48.0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-            elevation: 0.0,
+class _SmallBtn extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _SmallBtn(this.label, this.onTap);
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 36, height: 44,
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(
+            border: Border(left: BorderSide(color: Color(0xFF1A2033), width: 1)),
           ),
-          child: const Text('PLACE BET',
-              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-        );
-
-      case CrashState.flying:
-        if (!_hasPlacedBet) return _statusBox('ROUND RUNNING', Colors.grey);
-        if (_hasCashedOut) {
-          return _statusBox('CASHED OUT ✓', const Color(0xFF00C853));
-        }
-        final double bet = double.tryParse(_betController.text) ?? 10.0;
-        final double payout = bet * _currentMultiplier;
-        return ElevatedButton(
-          onPressed: _cashOut,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFFFD600),
-            foregroundColor: Colors.black,
-            minimumSize: const Size.fromHeight(48.0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-          ),
-          child: Text('CASH OUT  ₹${payout.toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 12.0, fontWeight: FontWeight.w900)),
-        );
-
-      case CrashState.crashed:
-        return _statusBox('CRASHED', const Color(0xFFFF5252));
-    }
-  }
-
-  Widget _statusBox(String label, Color color) => Container(
-        height: 48.0,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.10),
-          borderRadius: BorderRadius.circular(10.0),
-          border: Border.all(color: color.withOpacity(0.4), width: 1.2),
+          child: Text(label,
+              style: const TextStyle(color: Colors.white60, fontSize: 16,
+                  fontWeight: FontWeight.bold)),
         ),
-        child: Text(label,
-            style: TextStyle(
-                color: color, fontSize: 13.5, fontWeight: FontWeight.w900)),
       );
 }
 
-// ─── Painter ──────────────────────────────────────────────────────────────────
+class _PresetGrid extends StatelessWidget {
+  final ValueChanged<String> onPreset;
+  final bool locked;
+  const _PresetGrid({required this.onPreset, required this.locked});
 
-class _ArenaPainter extends CustomPainter {
+  @override
+  Widget build(BuildContext context) => Column(
+        children: [
+          Row(children: [
+            _chip('10', onPreset, locked), const SizedBox(width: 6),
+            _chip('100', onPreset, locked),
+          ]),
+          const SizedBox(height: 6),
+          Row(children: [
+            _chip('500', onPreset, locked), const SizedBox(width: 6),
+            _chip('1000', onPreset, locked),
+          ]),
+        ],
+      );
+
+  Widget _chip(String val, ValueChanged<String> fn, bool locked) => Expanded(
+        child: GestureDetector(
+          onTap: locked ? null : () => fn(val),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFF141825),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF1E2538), width: 1),
+            ),
+            child: Text(val,
+                style: TextStyle(
+                    color: locked ? Colors.white30 : Colors.white70,
+                    fontSize: 12, fontWeight: FontWeight.bold)),
+          ),
+        ),
+      );
+}
+
+class _AutoCashout extends StatelessWidget {
+  final bool enabled;
+  final TextEditingController ctrl;
+  final ValueChanged<bool> onToggle;
+  const _AutoCashout({required this.enabled, required this.ctrl, required this.onToggle});
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('AUTO CASHOUT',
+                    style: GoogleFonts.robotoMono(
+                        textStyle: const TextStyle(
+                            color: Color(0xFF3A4460), fontSize: 9,
+                            fontWeight: FontWeight.bold, letterSpacing: 1.2))),
+              ),
+              Switch(
+                value: enabled,
+                onChanged: onToggle,
+                activeColor: const Color(0xFF00D2FF),
+                activeTrackColor: const Color(0xFF0C2232),
+                inactiveThumbColor: Colors.grey.shade600,
+                inactiveTrackColor: const Color(0xFF141825),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ],
+          ),
+          if (enabled) ...[
+            const SizedBox(height: 6),
+            Container(
+              height: 38,
+              decoration: BoxDecoration(
+                color: const Color(0xFF080B10),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF1A2033), width: 1.2),
+              ),
+              child: Row(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Text('×', style: TextStyle(
+                        color: Color(0xFF00D2FF), fontSize: 14,
+                        fontWeight: FontWeight.bold)),
+                  ),
+                  Expanded(
+                    child: TextField(
+                      controller: ctrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(color: Colors.white, fontSize: 13,
+                          fontWeight: FontWeight.bold),
+                      decoration: const InputDecoration(
+                          border: InputBorder.none, isDense: true,
+                          contentPadding: EdgeInsets.zero),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      );
+}
+
+class _ActionBtn extends StatelessWidget {
   final CrashState state;
-  final double progress; // 0→1 time-based
-  final List<_Particle> particles;
-  final double multiplier;
+  final bool betQueued, hasBet, cashedOut;
+  final double currentMulti;
+  final TextEditingController betCtrl;
+  final VoidCallback onPlace, onCash;
+  const _ActionBtn({required this.state, required this.betQueued,
+    required this.hasBet, required this.cashedOut, required this.currentMulti,
+    required this.betCtrl, required this.onPlace, required this.onCash});
 
-  _ArenaPainter({
-    required this.state,
-    required this.progress,
-    required this.particles,
-    required this.multiplier,
+  @override
+  Widget build(BuildContext context) {
+    switch (state) {
+      case CrashState.countdown:
+        if (betQueued) {
+          return _chip('BET PLACED', const Color(0xFF00D2FF), null);
+        }
+        return _primary('PLACE BET', const Color(0xFF00D2FF), Colors.black, onPlace);
+
+      case CrashState.flying:
+        if (!hasBet) return _chip('ROUND RUNNING', Colors.white24, null);
+        if (cashedOut) return _chip('CASHED OUT ✓', const Color(0xFF00E396), null);
+        final double bet = double.tryParse(betCtrl.text) ?? 10.0;
+        final double out = bet * currentMulti;
+        return _primary(
+          'CASH OUT  ₹${out.toStringAsFixed(2)}',
+          const Color(0xFFFFB800),
+          Colors.black,
+          onCash,
+        );
+
+      case CrashState.crashed:
+        return _chip('CRASHED', const Color(0xFFFF4560), null);
+    }
+  }
+
+  Widget _primary(String lbl, Color bg, Color fg, VoidCallback? fn) =>
+      ElevatedButton(
+        onPressed: fn,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: bg, foregroundColor: fg,
+          minimumSize: const Size.fromHeight(48),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 0,
+        ),
+        child: Text(lbl,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900,
+                letterSpacing: 0.4)),
+      );
+
+  Widget _chip(String lbl, Color color, VoidCallback? fn) => GestureDetector(
+        onTap: fn,
+        child: Container(
+          height: 48,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.10),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withOpacity(0.35), width: 1.2),
+          ),
+          child: Text(lbl,
+              style: TextStyle(color: color, fontSize: 13,
+                  fontWeight: FontWeight.w900)),
+        ),
+      );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Painter
+// ─────────────────────────────────────────────────────────────────────────────
+class _ChartPainter extends CustomPainter {
+  final CrashState state;
+  final double progress;
+  final List<_Particle> particles;
+  final Color accentColor;
+  final double multi;
+  final double crashedAt;
+
+  _ChartPainter({
+    required this.state, required this.progress, required this.particles,
+    required this.accentColor, required this.multi, required this.crashedAt,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double w = size.width;
-    final double h = size.height;
+    final double w = size.width, h = size.height;
+    const double pL = 38, pB = 28, pR = 14, pT = 14;
+    final double gL = pL, gR = w - pR, gT = pT, gB = h - pB;
+    final double gW = gR - gL, gH = gB - gT;
 
-    // Padding for the graph area
-    const double padL = 36.0;
-    const double padB = 30.0;
-    const double padR = 16.0;
-    const double padT = 16.0;
-
-    final double gLeft = padL;
-    final double gRight = w - padR;
-    final double gTop = padT;
-    final double gBot = h - padB;
-    final double gW = gRight - gLeft;
-    final double gH = gBot - gTop;
-
-    // ── Grid ──
-    final gridP = Paint()
-      ..color = const Color(0xFF1E1E26)
-      ..strokeWidth = 0.8;
-    final int hLines = 5;
-    final int vLines = 8;
-    for (int i = 0; i <= hLines; i++) {
-      final double y = gTop + gH * i / hLines;
-      canvas.drawLine(Offset(gLeft, y), Offset(gRight, y), gridP);
+    // ── subtle grid ──────────────────────────────────────────────────────
+    final gridP = Paint()..color = const Color(0xFF141825)..strokeWidth = 0.7;
+    for (int i = 0; i <= 5; i++) {
+      canvas.drawLine(Offset(gL, gT + gH * i / 5), Offset(gR, gT + gH * i / 5), gridP);
     }
-    for (int i = 0; i <= vLines; i++) {
-      final double x = gLeft + gW * i / vLines;
-      canvas.drawLine(Offset(x, gTop), Offset(x, gBot), gridP);
+    for (int i = 0; i <= 8; i++) {
+      canvas.drawLine(Offset(gL + gW * i / 8, gT), Offset(gL + gW * i / 8, gB), gridP);
     }
 
-    // ── Axes ──
-    final axisP = Paint()
-      ..color = const Color(0xFF2E2E3A)
-      ..strokeWidth = 1.5;
-    canvas.drawLine(Offset(gLeft, gBot), Offset(gRight, gBot), axisP); // X
-    canvas.drawLine(Offset(gLeft, gTop), Offset(gLeft, gBot), axisP); // Y
+    // ── axes ─────────────────────────────────────────────────────────────
+    final axisP = Paint()..color = const Color(0xFF1E2538)..strokeWidth = 1.5;
+    canvas.drawLine(Offset(gL, gB), Offset(gR, gB), axisP);
+    canvas.drawLine(Offset(gL, gT), Offset(gL, gB), axisP);
 
-    // Axis labels
-    final labelStyle = const TextStyle(color: Color(0xFF555560), fontSize: 9.0);
-    void drawLabel(String text, Offset pos) {
-      final span = TextSpan(text: text, style: labelStyle);
-      final tp = TextPainter(text: span, textDirection: TextDirection.ltr)..layout();
+    // ── axis labels ───────────────────────────────────────────────────────
+    void label(String s, Offset pos) {
+      final tp = TextPainter(
+        text: TextSpan(text: s, style: const TextStyle(color: Color(0xFF3A4460), fontSize: 9)),
+        textDirection: TextDirection.ltr,
+      )..layout();
       tp.paint(canvas, pos);
     }
-    drawLabel('1.0x', Offset(0, gBot - 8));
-    drawLabel('10x', Offset(0, gTop + gH * 0.4));
-    drawLabel('99x', Offset(0, gTop));
+    label('1.0×', Offset(2, gB - 12));
+    label('10×',  Offset(2, gT + gH * 0.45));
+    label('99×',  Offset(2, gT));
 
     if (state == CrashState.flying || state == CrashState.crashed) {
-      final bool crashed = state == CrashState.crashed;
-      final Color lineColor =
-          crashed ? const Color(0xFFFF5252) : const Color(0xFF00E5FF);
+      final bool isCrashed = state == CrashState.crashed;
+      final double t = progress.clamp(0.0, 1.0);
 
-      // Map progress → canvas coords using a curved path
-      // X grows linearly. Y uses a sigmoid-like curve so the line starts
-      // nearly flat then curves upward — matching typical crash game look.
-      Offset ptAt(double t) {
-        final double x = gLeft + gW * t;
-        // Ease: starts slow, accelerates upward
-        final double easedY = t < 0.0001 ? 0.0 : math.pow(t, 0.55).toDouble();
-        final double y = gBot - gH * easedY;
-        return Offset(x, y.clamp(gTop, gBot));
+      // Compute path using power-ease curve
+      Offset ptAt(double p) {
+        final double x = gL + gW * p;
+        final double ease = p < 0.0001 ? 0.0 : math.pow(p, 0.52).toDouble();
+        return Offset(x, (gB - gH * ease).clamp(gT, gB));
       }
 
-      final double tipT = progress.clamp(0.0, 1.0);
-
-      // Build trace path
-      final tracePath = Path();
-      tracePath.moveTo(gLeft, gBot);
       const int steps = 80;
+      final path = Path()..moveTo(gL, gB);
       for (int i = 1; i <= steps; i++) {
-        final double t = tipT * i / steps;
-        final p = ptAt(t);
-        tracePath.lineTo(p.dx, p.dy);
+        final p = ptAt(t * i / steps);
+        path.lineTo(p.dx, p.dy);
       }
+      final Offset tip = ptAt(t);
 
-      final Offset tip = ptAt(tipT);
+      // Gradient fill under curve
+      final fillPath = Path.from(path)
+        ..lineTo(tip.dx, gB)
+        ..close();
+      canvas.drawPath(fillPath,
+          Paint()
+            ..shader = LinearGradient(
+              colors: [accentColor.withOpacity(0.22), Colors.transparent],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ).createShader(Rect.fromLTRB(gL, gT, gR, gB))
+            ..style = PaintingStyle.fill);
 
-      // Fill under the curve
-      final fillPath = Path.from(tracePath);
-      fillPath.lineTo(tip.dx, gBot); // close fill under curve
-      fillPath.close();
-      canvas.drawPath(
-        fillPath,
-        Paint()
-          ..shader = LinearGradient(
-            colors: [lineColor.withOpacity(0.18), Colors.transparent],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ).createShader(Rect.fromLTRB(gLeft, gTop, gRight, gBot))
-          ..style = PaintingStyle.fill,
-      );
+      // Curve stroke
+      canvas.drawPath(path,
+          Paint()
+            ..color = accentColor
+            ..strokeWidth = 2.8
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round);
 
-      // Draw the curve itself
-      canvas.drawPath(
-        tracePath,
-        Paint()
-          ..color = lineColor
-          ..strokeWidth = 2.5
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round,
-      );
-
-      // Tip marker glow
-      if (!crashed) {
-        canvas.drawCircle(
-          tip,
-          10.0,
-          Paint()..color = lineColor.withOpacity(0.20),
-        );
+      // Tip glow rings
+      if (!isCrashed) {
+        for (final r in [18.0, 10.0]) {
+          canvas.drawCircle(tip, r,
+              Paint()..color = accentColor.withOpacity(r == 18 ? 0.10 : 0.20));
+        }
       }
-      canvas.drawCircle(tip, 5.0, Paint()..color = lineColor);
+      canvas.drawCircle(tip, 5.5, Paint()..color = accentColor);
 
-      // ── Particles (fractional coords scaled to canvas) ──
+      // Particles
       for (final p in particles) {
-        final double px = gLeft + p.x * gW;
-        final double py = gTop + p.y * gH;
+        final double px = gL + p.fx * gW;
+        final double py = gT + (1.0 - (1.0 - p.fy)) * gH;
         canvas.drawCircle(
           Offset(px, py),
-          p.size * gW,
+          p.sz * gW,
           Paint()
-            ..color = lineColor.withOpacity(p.alpha * 0.85)
-            ..style = PaintingStyle.fill,
+            ..color = accentColor.withOpacity(p.alpha * 0.8)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
         );
       }
 
-      // Live multiplier label near the tip
-      if (!crashed && tipT > 0.02) {
-        final labelSpan = TextSpan(
-          text: '${multiplier.toStringAsFixed(2)}x',
-          style: TextStyle(
-            color: lineColor,
-            fontSize: 11.0,
-            fontWeight: FontWeight.bold,
-          ),
-        );
-        final tp = TextPainter(text: labelSpan, textDirection: TextDirection.ltr)
-          ..layout();
-        tp.paint(
-          canvas,
-          Offset(
-            (tip.dx + 8.0).clamp(gLeft, gRight - tp.width),
-            (tip.dy - tp.height - 4.0).clamp(gTop, gBot),
-          ),
-        );
+      // Live multiplier label near tip
+      if (!isCrashed && t > 0.04) {
+        final labelTp = TextPainter(
+          text: TextSpan(text: '${multi.toStringAsFixed(2)}×',
+              style: TextStyle(color: accentColor, fontSize: 10,
+                  fontWeight: FontWeight.bold)),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        final double lx = (tip.dx + 10).clamp(gL, gR - labelTp.width);
+        final double ly = (tip.dy - labelTp.height - 6).clamp(gT, gB);
+        labelTp.paint(canvas, Offset(lx, ly));
       }
     }
   }
 
   @override
-  bool shouldRepaint(covariant _ArenaPainter old) =>
-      old.progress != progress ||
-      old.state != state ||
-      old.particles.length != particles.length;
+  bool shouldRepaint(covariant _ChartPainter old) =>
+      old.progress != progress || old.state != state ||
+      old.particles.length != particles.length || old.multi != multi;
 }
