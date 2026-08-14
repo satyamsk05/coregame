@@ -46,38 +46,86 @@ class HiLoGameScreen extends StatefulWidget {
   State<HiLoGameScreen> createState() => _HiLoGameScreenState();
 }
 
-class TriangleOutlinePainter extends CustomPainter {
+class TrianglePainter extends CustomPainter {
   final bool isUp;
-  final Color color;
+  final Color strokeColor;
   final double strokeWidth;
+  final double cornerRadius;
 
-  TriangleOutlinePainter({required this.isUp, required this.color, this.strokeWidth = 3.0});
+  TrianglePainter({
+    required this.isUp,
+    required this.strokeColor,
+    this.strokeWidth = 3.5,
+    this.cornerRadius = 10.0,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
+    final w = size.width;
+    final h = size.height;
+    final r = cornerRadius;
+
+    final Offset p1, p2, p3;
+    if (isUp) {
+      p1 = Offset(w / 2, strokeWidth + r * 0.4);
+      p2 = Offset(w - strokeWidth - r * 0.4, h - strokeWidth - r * 0.4);
+      p3 = Offset(strokeWidth + r * 0.4, h - strokeWidth - r * 0.4);
+    } else {
+      p1 = Offset(strokeWidth + r * 0.4, strokeWidth + r * 0.4);
+      p2 = Offset(w - strokeWidth - r * 0.4, strokeWidth + r * 0.4);
+      p3 = Offset(w / 2, h - strokeWidth - r * 0.4);
+    }
 
     final path = Path();
-    if (isUp) {
-      path.moveTo(size.width / 2, strokeWidth);
-      path.lineTo(size.width - strokeWidth, size.height - strokeWidth);
-      path.lineTo(strokeWidth, size.height - strokeWidth);
-    } else {
-      path.moveTo(strokeWidth, strokeWidth);
-      path.lineTo(size.width - strokeWidth, strokeWidth);
-      path.lineTo(size.width / 2, size.height - strokeWidth);
+    final pts = [p1, p2, p3];
+    for (int i = 0; i < 3; i++) {
+      final current = pts[i];
+      final prev = pts[(i + 2) % 3];
+      final next = pts[(i + 1) % 3];
+
+      final vPrev = (prev - current);
+      final vPrevNorm = vPrev / vPrev.distance;
+      final vNext = (next - current);
+      final vNextNorm = vNext / vNext.distance;
+
+      final pStart = current + vPrevNorm * r;
+      final pEnd = current + vNextNorm * r;
+
+      if (i == 0) {
+        path.moveTo(pStart.dx, pStart.dy);
+      } else {
+        path.lineTo(pStart.dx, pStart.dy);
+      }
+      path.quadraticBezierTo(current.dx, current.dy, pEnd.dx, pEnd.dy);
     }
     path.close();
 
-    canvas.drawPath(path, paint);
+    // 1. Fill gradient (matching photos 3 & 4)
+    final fillGradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        strokeColor.withOpacity(0.35),
+        strokeColor.withOpacity(0.08),
+      ],
+    );
+    final fillPaint = Paint()
+      ..shader = fillGradient.createShader(Rect.fromLTWH(0, 0, w, h))
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path, fillPaint);
+
+    // 2. Crisp stroke border
+    final strokePaint = Paint()
+      ..color = strokeColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path, strokePaint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 class _CardHistoryItem {
@@ -99,6 +147,7 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
   
   final List<double> _history = [2.24, 3.64, 0.00, 1.81];
   final List<_CardHistoryItem> _cardSequenceHistory = [];
+  final ScrollController _historyScrollController = ScrollController();
   final List<String> _suits = ['Hearts', 'Diamonds', 'Spades', 'Clubs'];
   final math.Random _random = math.Random();
 
@@ -131,6 +180,7 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
   @override
   void dispose() {
     _betController.dispose();
+    _historyScrollController.dispose();
     super.dispose();
   }
 
@@ -808,39 +858,55 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
   Widget _buildCardSequenceHistoryStrip() {
     if (_cardSequenceHistory.isEmpty) return const SizedBox.shrink();
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: _cardSequenceHistory.map((item) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_historyScrollController.hasClients) {
+        _historyScrollController.animateTo(
+          _historyScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+
+    return SizedBox(
+      height: 70.0,
+      child: ListView.builder(
+        controller: _historyScrollController,
+        scrollDirection: Axis.horizontal,
+        itemCount: _cardSequenceHistory.length,
+        itemBuilder: (context, index) {
+          final item = _cardSequenceHistory[index];
+          final bool isLoss = item.label == '0.00x';
+          final bool isStart = item.label == 'Start Card';
+
           return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 3.0),
+            margin: const EdgeInsets.symmetric(horizontal: 4.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildCardWidget(card: item.card, width: 34.0, height: 48.0),
+                _buildCardWidget(card: item.card, width: 36.0, height: 50.0),
                 const SizedBox(height: 3.0),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 1.5),
+                  padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 1.5),
                   decoration: BoxDecoration(
-                    color: item.label == 'Start Card'
-                        ? const Color(0xFF00C853)
-                        : (item.label == '0.00x' ? const Color(0xFF424242) : const Color(0xFF00E676)),
+                    color: isLoss
+                        ? const Color(0xFF333742)
+                        : (isStart ? const Color(0xFF00C853) : const Color(0xFF00E676)),
                     borderRadius: BorderRadius.circular(4.0),
                   ),
                   child: Text(
                     item.label,
                     style: TextStyle(
-                      color: item.label == '0.00x' ? Colors.white70 : Colors.black,
-                      fontSize: 7.5,
-                      fontWeight: FontWeight.bold,
+                      color: isLoss ? Colors.white70 : Colors.black,
+                      fontSize: 8.0,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
               ],
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
@@ -980,7 +1046,7 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
 
     return InkWell(
       onTap: _isPlaying ? onTap : null,
-      borderRadius: BorderRadius.circular(12.0),
+      borderRadius: BorderRadius.circular(16.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -988,40 +1054,45 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
           Text(
             isUp ? percentText : sublabel,
             style: TextStyle(
-              color: _isPlaying ? Colors.white : Colors.grey[500],
-              fontSize: 10.0,
-              fontWeight: FontWeight.bold,
+              color: _isPlaying ? Colors.white : Colors.grey[400],
+              fontSize: 11.0,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 4.0),
+          const SizedBox(height: 5.0),
 
-          // Triangle shape with label inside
+          // Triangle shape with gradient fill & smooth rounded corners
           CustomPaint(
-            painter: TriangleOutlinePainter(isUp: isUp, color: _isPlaying ? color : Colors.grey[700]!, strokeWidth: 3.0),
+            painter: TrianglePainter(
+              isUp: isUp,
+              strokeColor: _isPlaying ? color : Colors.grey[600]!,
+              strokeWidth: 3.5,
+              cornerRadius: 10.0,
+            ),
             child: Container(
-              width: 75.0,
-              height: 62.0,
+              width: 82.0,
+              height: 68.0,
               alignment: Alignment.center,
               child: Text(
                 label,
-                style: TextStyle(
-                  color: _isPlaying ? color : Colors.grey[500],
-                  fontSize: 15.0,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16.0,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 4.0),
+          const SizedBox(height: 5.0),
 
           // Bottom Label/Percent
           Text(
             isUp ? sublabel : percentText,
             style: TextStyle(
-              color: _isPlaying ? Colors.white : Colors.grey[500],
-              fontSize: 10.0,
-              fontWeight: FontWeight.bold,
+              color: _isPlaying ? Colors.white : Colors.grey[400],
+              fontSize: 11.0,
+              fontWeight: FontWeight.w900,
             ),
           ),
         ],
