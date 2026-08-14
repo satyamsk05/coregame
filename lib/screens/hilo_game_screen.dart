@@ -1047,55 +1047,61 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
     return InkWell(
       onTap: _isPlaying ? onTap : null,
       borderRadius: BorderRadius.circular(16.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Top Label/Percent
-          Text(
-            isUp ? percentText : sublabel,
-            style: TextStyle(
-              color: _isPlaying ? Colors.white : Colors.grey[400],
-              fontSize: 11.0,
-              fontWeight: FontWeight.w900,
+      child: SizedBox(
+        width: 92.0,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Top Label/Percent
+            Text(
+              isUp ? percentText : sublabel,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _isPlaying ? Colors.white : Colors.grey[400],
+                fontSize: 11.5,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-          ),
-          const SizedBox(height: 5.0),
+            const SizedBox(height: 6.0),
 
-          // Triangle shape with gradient fill & smooth rounded corners
-          CustomPaint(
-            painter: TrianglePainter(
-              isUp: isUp,
-              strokeColor: _isPlaying ? color : Colors.grey[600]!,
-              strokeWidth: 3.5,
-              cornerRadius: 10.0,
-            ),
-            child: Container(
-              width: 82.0,
-              height: 68.0,
-              alignment: Alignment.center,
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.5,
+            // Triangle shape (+10% size) with gradient fill & smooth rounded corners
+            CustomPaint(
+              painter: TrianglePainter(
+                isUp: isUp,
+                strokeColor: _isPlaying ? color : Colors.grey[600]!,
+                strokeWidth: 3.8,
+                cornerRadius: 11.0,
+              ),
+              child: Container(
+                width: 90.0,
+                height: 75.0,
+                alignment: Alignment.center,
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 5.0),
+            const SizedBox(height: 6.0),
 
-          // Bottom Label/Percent
-          Text(
-            isUp ? sublabel : percentText,
-            style: TextStyle(
-              color: _isPlaying ? Colors.white : Colors.grey[400],
-              fontSize: 11.0,
-              fontWeight: FontWeight.w900,
+            // Bottom Label/Percent
+            Text(
+              isUp ? sublabel : percentText,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _isPlaying ? Colors.white : Colors.grey[400],
+                fontSize: 11.5,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
