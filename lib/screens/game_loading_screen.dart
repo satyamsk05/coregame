@@ -114,8 +114,10 @@ class _GameLoadingScreenState extends State<GameLoadingScreen> {
       body: AnimatedGameBackground(
         child: Center(
           child: Container(
-            maxHeight: 200.0,
-            maxWidth: 420.0,
+            constraints: const BoxConstraints(
+              maxHeight: 200.0,
+              maxWidth: 420.0,
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
             decoration: BoxDecoration(
               color: const Color(0xFF16103A).withOpacity(0.85),
