@@ -275,44 +275,36 @@ void playCardPlaceSound() {
       (function() {
         try {
           var audioCtx = window._audioCtx || (window._audioCtx = new (window.AudioContext || window.webkitAudioContext)());
-          if (audioCtx.state === 'suspended') audioCtx.resume();
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
           var now = audioCtx.currentTime;
 
-          // 1. Friction swish sound (short noise burst through bandpass filter)
-          var bufferSize = audioCtx.sampleRate * 0.04;
-          var buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-          var output = buffer.getChannelData(0);
-          for (var i = 0; i < bufferSize; i++) {
-            output[i] = Math.random() * 2 - 1;
-          }
-          var noise = audioCtx.createBufferSource();
-          noise.buffer = buffer;
-          var filter = audioCtx.createBiquadFilter();
-          filter.type = 'bandpass';
-          filter.frequency.setValueAtTime(1200, now);
-          filter.Q.setValueAtTime(1.5, now);
-          
-          var noiseGain = audioCtx.createGain();
-          noiseGain.gain.setValueAtTime(0.08, now);
-          noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-          
-          noise.connect(filter);
-          filter.connect(noiseGain);
-          noiseGain.connect(audioCtx.destination);
-          noise.start(now);
+          // 1. Crisp felt card glide swish
+          var osc1 = audioCtx.createOscillator();
+          var gain1 = audioCtx.createGain();
+          osc1.type = 'triangle';
+          osc1.frequency.setValueAtTime(850, now);
+          osc1.frequency.exponentialRampToValueAtTime(180, now + 0.055);
+          gain1.gain.setValueAtTime(0.40, now);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+          osc1.connect(gain1);
+          gain1.connect(audioCtx.destination);
+          osc1.start(now);
+          osc1.stop(now + 0.055);
 
-          // 2. Card snap/slap impact tone on felt
-          var osc = audioCtx.createOscillator();
-          var oscGain = audioCtx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(520, now + 0.01);
-          osc.frequency.exponentialRampToValueAtTime(120, now + 0.05);
-          oscGain.gain.setValueAtTime(0.18, now + 0.01);
-          oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-          osc.connect(oscGain);
-          oscGain.connect(audioCtx.destination);
-          osc.start(now + 0.01);
-          osc.stop(now + 0.05);
+          // 2. Felt table impact snap (12ms sub-pulse)
+          var osc2 = audioCtx.createOscillator();
+          var gain2 = audioCtx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(360, now + 0.012);
+          osc2.frequency.exponentialRampToValueAtTime(95, now + 0.065);
+          gain2.gain.setValueAtTime(0.50, now + 0.012);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+          osc2.connect(gain2);
+          gain2.connect(audioCtx.destination);
+          osc2.start(now + 0.012);
+          osc2.stop(now + 0.065);
         } catch (e) {
           console.error(e);
         }
