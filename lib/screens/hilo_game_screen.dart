@@ -22,7 +22,7 @@ class PlayingCard {
   }
 
   Color get color {
-    return (suit == 'Hearts' || suit == 'Diamonds') ? const Color(0xFFFF1744) : Colors.white;
+    return (suit == 'Hearts' || suit == 'Diamonds') ? const Color(0xFFE53935) : const Color(0xFF1A1D20);
   }
 }
 
@@ -80,6 +80,13 @@ class TriangleOutlinePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+class _CardHistoryItem {
+  final PlayingCard card;
+  final String label;
+
+  _CardHistoryItem({required this.card, required this.label});
+}
+
 class _HiLoGameScreenState extends State<HiLoGameScreen> {
   final _betController = TextEditingController(text: '10');
   
@@ -90,7 +97,8 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
   double _currentMultiplier = 1.0;
   int _correctGuesses = 0;
   
-  final List<double> _history = [];
+  final List<double> _history = [2.24, 3.64, 0.00, 1.81];
+  final List<_CardHistoryItem> _cardSequenceHistory = [];
   final List<String> _suits = ['Hearts', 'Diamonds', 'Spades', 'Clubs'];
   final math.Random _random = math.Random();
 
@@ -134,6 +142,8 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
       if (initial) {
         _currentMultiplier = 1.0;
         _correctGuesses = 0;
+        _cardSequenceHistory.clear();
+        _cardSequenceHistory.add(_CardHistoryItem(card: _currentCard, label: 'Start Card'));
       }
     });
   }
@@ -164,6 +174,8 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
       _isPlaying = true;
       _currentMultiplier = 1.0;
       _correctGuesses = 0;
+      _cardSequenceHistory.clear();
+      _cardSequenceHistory.add(_CardHistoryItem(card: _currentCard, label: 'Start Card'));
     });
     SoundManager.playCardPlace();
   }
@@ -199,8 +211,12 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
         // Correct prediction!
         _correctGuesses++;
         _currentMultiplier = double.parse((_currentMultiplier * stepMultiplier).toStringAsFixed(2));
+        _cardSequenceHistory.add(_CardHistoryItem(card: nextCard, label: '${_currentMultiplier.toStringAsFixed(2)}x'));
+        if (_cardSequenceHistory.length > 5) {
+          _cardSequenceHistory.removeAt(0);
+        }
         _history.add(stepMultiplier);
-        if (_history.length > 4) {
+        if (_history.length > 6) {
           _history.removeAt(0);
         }
       } else {
@@ -208,6 +224,10 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
         _isPlaying = false;
         _currentMultiplier = 1.0;
         _correctGuesses = 0;
+        _cardSequenceHistory.add(_CardHistoryItem(card: nextCard, label: '0.00x'));
+        if (_cardSequenceHistory.length > 5) {
+          _cardSequenceHistory.removeAt(0);
+        }
 
         _triggerOutcomeOverlay(0.0, 0.0, false);
       }
@@ -622,12 +642,12 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: _isPlaying
-                    ? const Color(0xFF311B92) // Purple Cashout
+                    ? const Color(0xFFFFC107) // Gold Amber Cashout matching screenshot 2
                     : const Color(0xFF00C853), // Green Bet
                 borderRadius: BorderRadius.circular(6.0),
                 boxShadow: [
                   BoxShadow(
-                    color: (_isPlaying ? const Color(0xFF311B92) : const Color(0xFF00C853)).withOpacity(0.3),
+                    color: (_isPlaying ? const Color(0xFFFFC107) : const Color(0xFF00C853)).withOpacity(0.3),
                     blurRadius: 6.0,
                     offset: const Offset(0, 3),
                   ),
@@ -635,10 +655,10 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
               ),
               child: Text(
                 _isPlaying 
-                    ? 'Cash Out (₹${(bet * _currentMultiplier).toStringAsFixed(2)})' 
+                    ? 'Cash out  ₹${(bet * _currentMultiplier).toStringAsFixed(2)}' 
                     : 'Bet',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: _isPlaying ? const Color(0xFF1E2024) : Colors.white,
                   fontSize: 14.0,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
@@ -785,38 +805,62 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
     );
   }
 
+  Widget _buildCardSequenceHistoryStrip() {
+    if (_cardSequenceHistory.isEmpty) return const SizedBox.shrink();
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: _cardSequenceHistory.map((item) {
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 3.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildCardWidget(card: item.card, width: 34.0, height: 48.0),
+                const SizedBox(height: 3.0),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: item.label == 'Start Card'
+                        ? const Color(0xFF00C853)
+                        : (item.label == '0.00x' ? const Color(0xFF424242) : const Color(0xFF00E676)),
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                  child: Text(
+                    item.label,
+                    style: TextStyle(
+                      color: item.label == '0.00x' ? Colors.white70 : Colors.black,
+                      fontSize: 7.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildHiLoPlayfield(double bet) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1E2024).withOpacity(0.5),
+        color: const Color(0xFF1E2024),
         borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: const Color(0xFF2C2F36), width: 2.0),
+        border: Border.all(color: const Color(0xFF2C2F36), width: 1.5),
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final double h = constraints.maxHeight;
-
-          return Stack(
-            children: [
-              // 1. History badges (top)
-              Positioned(
-                top: 10.0,
-                left: 12.0,
-                right: 12.0,
-                child: Row(
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Column(
+              children: [
+                // 1. History badges (top)
+                Row(
                   children: [
-                    if (_history.isEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF181A1F),
-                          borderRadius: BorderRadius.circular(6.0),
-                        ),
-                        child: const Text(
-                          'No Payouts',
-                          style: TextStyle(color: Colors.grey, fontSize: 10.5, fontWeight: FontWeight.bold),
-                        ),
-                      ),
                     ..._history.map((val) => Container(
                           margin: const EdgeInsets.only(right: 6.0),
                           padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
@@ -826,11 +870,10 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
                           ),
                           child: Text(
                             '${val.toStringAsFixed(2)}x',
-                            style: const TextStyle(color: Colors.white, fontSize: 11.0, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold),
                           ),
                         )),
                     const Spacer(),
-                    // Current Multiplier
                     if (_isPlaying)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
@@ -845,86 +888,81 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
                       ),
                   ],
                 ),
-              ),
+                const Spacer(),
 
-              // 2. Playfield center card and triangle buttons
-              Positioned(
-                top: 42.0,
-                bottom: 86.0,
-                left: 12.0,
-                right: 12.0,
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // HI Button
-                      _buildHiLoTriangleButton(isUp: true, label: 'HI', sublabel: 'Higher Or Same', onTap: () => _makeGuess(true)),
-                      const SizedBox(width: 16.0),
+                // 2. Playfield center card and triangle buttons (matching screenshot 2)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // HI Button (Up Triangle)
+                    _buildHiLoTriangleButton(isUp: true, label: 'HI', sublabel: 'Higher Or Same', onTap: () => _makeGuess(true)),
+                    const SizedBox(width: 20.0),
 
-                      // Card display with inner skip
-                      Stack(
-                        alignment: Alignment.bottomCenter,
-                        clipBehavior: Clip.none,
-                        children: [
-                          _buildCardWidget(),
-                          Positioned(
-                            bottom: -15.0,
-                            child: _buildCardSkipOverlayButton(),
-                          ),
-                        ],
-                      ),
+                    // Card display with inner skip
+                    Stack(
+                      alignment: Alignment.bottomCenter,
+                      clipBehavior: Clip.none,
+                      children: [
+                        _buildCardWidget(width: 95.0, height: 138.0),
+                        Positioned(
+                          bottom: -12.0,
+                          child: _buildCardSkipOverlayButton(),
+                        ),
+                      ],
+                    ),
 
-                      const SizedBox(width: 16.0),
-                      // LO Button
-                      _buildHiLoTriangleButton(isUp: false, label: 'LO', sublabel: 'Lower Or Same', onTap: () => _makeGuess(false)),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Win/Lose Overlay Card centered in playfield
-              if (_showOutcomeCard)
-                Center(
-                  child: WinOverlayCard(
-                    multiplier: _lastWinMultiplier,
-                    winAmount: _lastWinAmount,
-                    isWin: _lastOutcomeWin,
-                  ),
+                    const SizedBox(width: 20.0),
+                    // LO Button (Down Triangle)
+                    _buildHiLoTriangleButton(isUp: false, label: 'LO', sublabel: 'Lower Or Same', onTap: () => _makeGuess(false)),
+                  ],
                 ),
 
-              // 3. Profit Stats row at the bottom
-              Positioned(
-                bottom: 12.0,
-                left: 12.0,
-                right: 12.0,
-                child: Row(
+                const Spacer(),
+
+                // 3. Profit Stats row (matching screenshot 2)
+                Row(
                   children: [
                     _buildProfitStatsBox(
-                      title: 'Profit Higher',
+                      title: 'Profit Higher (${_multHI.toStringAsFixed(2)}x)',
                       value: bet * (_multHI - 1.0),
                       icon: Icons.arrow_upward,
-                      iconColor: Colors.yellow[600]!,
+                      iconColor: const Color(0xFFFFD700),
                     ),
                     const SizedBox(width: 8.0),
                     _buildProfitStatsBox(
-                      title: 'Total Profit',
+                      title: 'Total Profit (${_currentMultiplier.toStringAsFixed(2)}x)',
                       value: bet * (_currentMultiplier - 1.0),
                       icon: Icons.monetization_on,
                       iconColor: const Color(0xFFFFD700),
                     ),
                     const SizedBox(width: 8.0),
                     _buildProfitStatsBox(
-                      title: 'Profit Lower',
+                      title: 'Profit Lower (${_multLO.toStringAsFixed(2)}x)',
                       value: bet * (_multLO - 1.0),
                       icon: Icons.arrow_downward,
-                      iconColor: Colors.blue[400]!,
+                      iconColor: const Color(0xFF00E5FF),
                     ),
                   ],
                 ),
+                const SizedBox(height: 6.0),
+
+                // 4. Card Sequence History Strip (matching screenshot 2)
+                _buildCardSequenceHistoryStrip(),
+              ],
+            ),
+          ),
+
+          // Win/Lose Overlay Card centered in playfield
+          if (_showOutcomeCard)
+            Center(
+              child: WinOverlayCard(
+                multiplier: _lastWinMultiplier,
+                winAmount: _lastWinAmount,
+                isWin: _lastOutcomeWin,
               ),
-            ],
-          );
-        },
+            ),
+        ],
       ),
     );
   }
@@ -935,128 +973,139 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
     required String sublabel,
     required VoidCallback onTap,
   }) {
-    final Color color = isUp ? Colors.yellow[600]! : Colors.blue[400]!;
+    final Color color = isUp ? const Color(0xFFFFD700) : const Color(0xFF00E5FF);
+    final String percentText = isUp
+        ? '${(_probHI * 100).toStringAsFixed(2)}%'
+        : '${(_probLO * 100).toStringAsFixed(2)}%';
 
     return InkWell(
       onTap: _isPlaying ? onTap : null,
-      borderRadius: BorderRadius.circular(16.0),
-      child: CustomPaint(
-        painter: TriangleOutlinePainter(isUp: isUp, color: _isPlaying ? color : Colors.grey[700]!),
-        child: Container(
-          width: 80.0,
-          height: 80.0,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
+      borderRadius: BorderRadius.circular(12.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Top Label/Percent
+          Text(
+            isUp ? percentText : sublabel,
+            style: TextStyle(
+              color: _isPlaying ? Colors.white : Colors.grey[500],
+              fontSize: 10.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4.0),
+
+          // Triangle shape with label inside
+          CustomPaint(
+            painter: TriangleOutlinePainter(isUp: isUp, color: _isPlaying ? color : Colors.grey[700]!, strokeWidth: 3.0),
+            child: Container(
+              width: 75.0,
+              height: 62.0,
+              alignment: Alignment.center,
+              child: Text(
                 label,
                 style: TextStyle(
-                  color: _isPlaying ? color : Colors.grey[600],
-                  fontSize: 16.0,
+                  color: _isPlaying ? color : Colors.grey[500],
+                  fontSize: 15.0,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 2.0),
-              Text(
-                sublabel,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: _isPlaying ? Colors.white70 : Colors.grey[600],
-                  fontSize: 7.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(height: 4.0),
+
+          // Bottom Label/Percent
+          Text(
+            isUp ? sublabel : percentText,
+            style: TextStyle(
+              color: _isPlaying ? Colors.white : Colors.grey[500],
+              fontSize: 10.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildCardWidget() {
+  Widget _buildCardWidget({PlayingCard? card, double width = 95.0, double height = 138.0}) {
+    final targetCard = card ?? _currentCard;
+    final bool isMini = width < 50.0;
+
     return Container(
-      width: 95.0,
-      height: 140.0,
+      width: width,
+      height: height,
       decoration: BoxDecoration(
-        color: const Color(0xFFFF5252), // Coral red card face
-        borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(color: Colors.white, width: 3.5),
+        color: Colors.white, // Clean white card face matching screenshot 2
+        borderRadius: BorderRadius.circular(isMini ? 4.0 : 10.0),
+        border: Border.all(color: const Color(0xFFD0D5DD), width: isMini ? 1.0 : 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
-            blurRadius: 8.0,
-            offset: const Offset(0, 4),
+            blurRadius: isMini ? 2.0 : 6.0,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Stack(
         children: [
-          // 1. Diamond outline border inside card center
+          // 1. Large Suit Icon in card center
           Center(
-            child: Transform.rotate(
-              angle: math.pi / 4,
-              child: Container(
-                width: 48.0,
-                height: 48.0,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
-                ),
-              ),
-            ),
+            child: _buildSuitIcon(targetCard.suit, isMini ? 16.0 : 34.0, targetCard.color),
           ),
 
-          // 2. Large Suit Icon in card center
-          Center(
-            child: _buildSuitIcon(_currentCard.suit, 24.0, _currentCard.color),
-          ),
-
-          // 3. Top-left rank & suit indicator
+          // 2. Top-left rank & suit indicator
           Positioned(
-            top: 6.0,
-            left: 6.0,
+            top: isMini ? 2.0 : 5.0,
+            left: isMini ? 2.0 : 5.0,
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  _currentCard.rankLabel,
+                  targetCard.rankLabel,
                   style: TextStyle(
-                    color: _currentCard.color,
-                    fontSize: 14.0,
+                    color: targetCard.color,
+                    fontSize: isMini ? 11.0 : 18.0,
                     fontWeight: FontWeight.w900,
                     height: 1.0,
                   ),
                 ),
-                _buildSuitIcon(_currentCard.suit, 8.0, _currentCard.color),
+                if (!isMini) ...[
+                  const SizedBox(height: 1.0),
+                  _buildSuitIcon(targetCard.suit, 11.0, targetCard.color),
+                ],
               ],
             ),
           ),
 
-          // 4. Bottom-right rank & suit indicator (rotated)
-          Positioned(
-            bottom: 6.0,
-            right: 6.0,
-            child: Transform.rotate(
-              angle: math.pi,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _currentCard.rankLabel,
-                    style: TextStyle(
-                      color: _currentCard.color,
-                      fontSize: 14.0,
-                      fontWeight: FontWeight.w900,
-                      height: 1.0,
+          // 3. Bottom-right rank & suit indicator (rotated 180 degrees)
+          if (!isMini)
+            Positioned(
+              bottom: 5.0,
+              right: 5.0,
+              child: Transform.rotate(
+                angle: math.pi,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      targetCard.rankLabel,
+                      style: TextStyle(
+                        color: targetCard.color,
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w900,
+                        height: 1.0,
+                      ),
                     ),
-                  ),
-                  _buildSuitIcon(_currentCard.suit, 8.0, _currentCard.color),
-                ],
+                    const SizedBox(height: 1.0),
+                    _buildSuitIcon(targetCard.suit, 11.0, targetCard.color),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
