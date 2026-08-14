@@ -181,16 +181,14 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
   }
 
   void _triggerPegHit(int rowIndex, _PlinkoBall ball) {
-    // Find the relative peg X coordinate closest to the ball's X coordinate
     final Offset ballPos = ball.path[ball.currentFrame];
-    final double dx = 0.9 / (ball.rows + 3);
     
     int closestPegIndex = 0;
     double minDistance = double.infinity;
     
     final int pegCount = rowIndex + 3;
     for (int i = 0; i < pegCount; i++) {
-      final double pegX = 0.5 + (i - (rowIndex + 2) / 2.0) * dx;
+      final double pegX = i - (rowIndex + 2) / 2.0;
       final double dist = (ballPos.dx - pegX).abs();
       if (dist < minDistance) {
         minDistance = dist;
@@ -205,35 +203,10 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
   List<Offset> _calculateBallPath(int rowCount, int targetBin) {
     final List<Offset> points = [];
     
-    // Let's compute relative coordinates (0.0 to 1.0 for x and y of the board)
-    // Board coordinates: x in [0.0, 1.0], y in [0.0, 1.0]
-    // The top drop point is at (0.5, 0.02)
-    // Pegs at row `r` are:
-    // x = 0.5 + (i - (r + 2)/2) * dx
-    // y = 0.08 + r * dy
-    
-    final double dy = 0.85 / rowCount;
-    final double dx = 0.9 / (rowCount + 3); // Spacing relative to bottom row width
-    
-    // Target path selection
-    // The target bin is index `targetBin` out of `rowCount + 1` bins (from 0 to rowCount).
-    // The sequence of peg columns must lead to this bin.
-    // Let's backtrack or build forward:
-    // A path has `rowCount` segments. In each row `r` (0 to rowCount-1), the peg hit is `pegColumn`.
-    // Let's choose path columns:
     final List<int> pathCols = [];
     int currentCol = 1; // Start at center peg of row 0 (which has index 1)
     pathCols.add(currentCol);
     
-    // To land in `targetBin` (which corresponds to column B at the bottom):
-    // The path must end at index B or B+1?
-    // Let's build the columns list from 0 to rowCount-1:
-    // At row 0: peg is at index 1.
-    // At row `r`, peg is at index `c_r`.
-    // At the bottom bin, the position is `targetBin`.
-    // We can determine the steps (left/right) by generating a set of decisions (0 or 1)
-    // such that the sum of decisions equals `targetBin`.
-    // Let's distribute `targetBin` successes over `rowCount` trials!
     final List<int> steps = List.filled(rowCount, 0);
     final List<int> indices = List.generate(rowCount, (i) => i);
     indices.shuffle(_random);
@@ -243,27 +216,25 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
       }
     }
     
-    // Build path columns
     int col = 1; // start at center peg of row 0
     for (int r = 1; r < rowCount; r++) {
       col += steps[r];
       pathCols.add(col);
     }
     
-    // Generate actual Offset coordinates
-    Offset currentPos = const Offset(0.5, 0.02); // Top drop point
+    // Start above the board (relative y = -1.0)
+    Offset currentPos = const Offset(0.0, -1.0);
     points.add(currentPos);
     
     const int framesPerSegment = 16;
     
-    // Segment 0: Drop to first peg
-    final double firstPegX = 0.5 + (1 - (0 + 2) / 2.0) * dx;
-    final double firstPegY = 0.08 + 0 * dy;
-    final Offset firstPeg = Offset(firstPegX, firstPegY);
+    // Segment 0: Drop to first peg (Row 0, index 1)
+    // Relative X of Row 0, index 1 is: 1 - (0 + 2)/2.0 = 0.0
+    // Relative Y of Row 0 is 0.0
+    final Offset firstPeg = const Offset(0.0, 0.0);
     
     for (int f = 1; f <= framesPerSegment; f++) {
       final double t = f / framesPerSegment;
-      // Gravity drop (quadratic y interpolation)
       final double px = currentPos.dx + (firstPeg.dx - currentPos.dx) * t;
       final double py = currentPos.dy + (firstPeg.dy - currentPos.dy) * t * t;
       points.add(Offset(px, py));
@@ -273,19 +244,18 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
     // Segments 1 to rowCount-1: Bouncing between pegs
     for (int r = 0; r < rowCount - 1; r++) {
       final int nextCol = pathCols[r + 1];
-      final double nextPegX = 0.5 + (nextCol - (r + 1 + 2) / 2.0) * dx;
-      final double nextPegY = 0.08 + (r + 1) * dy;
+      final double nextPegX = nextCol - (r + 1 + 2) / 2.0;
+      final double nextPegY = (r + 1).toDouble();
       final Offset nextPeg = Offset(nextPegX, nextPegY);
       
       // Arc interpolation (bezier curve)
-      // Control point is elevated
+      // Control point is elevated (midpoint in x, midpoint - 0.28 in y)
       final double midX = (currentPos.dx + nextPeg.dx) / 2.0;
-      final double midY = (currentPos.dy + nextPeg.dy) / 2.0 - dy * 0.28;
+      final double midY = (currentPos.dy + nextPeg.dy) / 2.0 - 0.28;
       final Offset control = Offset(midX, midY);
       
       for (int f = 1; f <= framesPerSegment; f++) {
         final double t = f / framesPerSegment;
-        // Bezier formula: (1-t)^2*P0 + 2(1-t)*t*P1 + t^2*P2
         final double t1 = 1 - t;
         final double px = t1 * t1 * currentPos.dx + 2 * t1 * t * control.dx + t * t * nextPeg.dx;
         final double py = t1 * t1 * currentPos.dy + 2 * t1 * t * control.dy + t * t * nextPeg.dy;
@@ -295,15 +265,15 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
     }
     
     // Final Segment: Fall into the bottom bin
-    // Bins are located at y = 0.95
-    // Bin x is centered between peg B and peg B+1 of row rowCount
-    final double binX = 0.5 + (targetBin + 0.5 - (rowCount + 2) / 2.0) * dx;
-    final double binY = 0.95;
+    // Relative X of bin targetBin is: targetBin + 0.5 - (rowCount + 2)/2.0
+    // Relative Y of bin is rowCount + 0.5
+    final double binX = targetBin + 0.5 - (rowCount + 2) / 2.0;
+    final double binY = rowCount.toDouble() + 0.55;
     final Offset targetBinPos = Offset(binX, binY);
     
     // Control point for final bounce
     final double midX = (currentPos.dx + targetBinPos.dx) / 2.0;
-    final double midY = (currentPos.dy + targetBinPos.dy) / 2.0 - dy * 0.3;
+    final double midY = (currentPos.dy + targetBinPos.dy) / 2.0 - 0.3;
     final Offset control = Offset(midX, midY);
     
     for (int f = 1; f <= framesPerSegment; f++) {
@@ -1051,9 +1021,17 @@ class _PlinkoBoardPainter extends CustomPainter {
         // Map relative coordinates to screen space
         final Offset relativePos = ball.path[ball.currentFrame];
         
-        // Calculate screen coordinate
-        final double bxScreen = cx + (relativePos.dx - 0.5) / dx * spacingX;
-        final double byScreen = startY + (relativePos.dy - 0.08) / dy * spacingY;
+        // Calculate screen coordinate using normalized coordinates mapping
+        final double bxScreen = cx + relativePos.dx * spacingX;
+        
+        double byScreen;
+        if (relativePos.dy >= rowCount - 1) {
+          final double lastPegY = startY + (rowCount - 1) * spacingY;
+          final double t = ((relativePos.dy - (rowCount - 1)) / 1.55).clamp(0.0, 1.0);
+          byScreen = lastPegY + (binY - lastPegY) * t;
+        } else {
+          byScreen = startY + relativePos.dy * spacingY;
+        }
         
         // Draw ball glow
         final Paint ballGlowPaint = Paint()
