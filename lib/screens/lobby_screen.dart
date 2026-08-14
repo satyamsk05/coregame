@@ -480,6 +480,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                       widget.onPlayGame('roulette');
                                     } else if (game['title'] == 'Plinko') {
                                       widget.onPlayGame('plinko');
+                                    } else if (game['title'] == 'Crash') {
+                                      widget.onPlayGame('crash');
                                     } else {
                                       _showInfoDialog(game['title']!, 'Launching ${game['title']}! Place your bets to win big.');
                                     }

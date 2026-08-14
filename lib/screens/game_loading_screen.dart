@@ -99,6 +99,8 @@ class _GameLoadingScreenState extends State<GameLoadingScreen> {
         return '7 UP 7 DOWN';
       case 'keno':
         return 'RETRO KENO';
+      case 'crash':
+        return '999X CRASH SPACE';
       default:
         return 'LOADING GAME';
     }
