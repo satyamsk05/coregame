@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:video_player/video_player.dart';
 import '../widgets/game_button.dart';
-import '../widgets/animated_game_background.dart';
 import '../widgets/animated_character.dart';
 import '../utils/sound_helper.dart';
 import 'login_screen.dart';
@@ -24,130 +24,264 @@ class WelcomeScreen extends StatefulWidget {
   State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> {
+class _WelcomeScreenState extends State<WelcomeScreen>
+    with SingleTickerProviderStateMixin {
+  // ── Video ───────────────────────────────────────────────────────────────
+  late VideoPlayerController _videoCtrl;
+  bool _videoReady = false;
+
+  // ── Entry animation ─────────────────────────────────────────────────────
+  late AnimationController _entryCtrl;
+  late Animation<double> _fadeAnim;
+  late Animation<Offset> _slideAnim;
+
   @override
   void initState() {
     super.initState();
-    // Welcome music auto-play disabled by user request
+
+    // Entry animation
+    _entryCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 700));
+    _fadeAnim = CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(
+            begin: const Offset(0, 0.05), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic));
+
+    // Video setup
+    _videoCtrl = VideoPlayerController.asset('assets/bg_video.mp4')
+      ..setLooping(true)
+      ..setVolume(0.0) // mute — pure visual
+      ..initialize().then((_) {
+        if (mounted) {
+          setState(() => _videoReady = true);
+          _videoCtrl.play();
+          _entryCtrl.forward();
+        }
+      });
   }
 
   @override
   void dispose() {
-    // Fade out and stop the music when welcome screen is disposed
     stopWelcomeMusic();
+    _videoCtrl.dispose();
+    _entryCtrl.dispose();
     super.dispose();
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final orientation = MediaQuery.of(context).orientation;
-    final isLandscape = orientation == Orientation.landscape;
-
-    // Background color matching the deep space theme
-    const backgroundColor = Color(0xFF0B0523);
-
     return Scaffold(
-      backgroundColor: backgroundColor,
-      body: AnimatedGameBackground(
-        child: SafeArea(
-          child: isLandscape
-              ? _buildLandscapeLayout(context)
-              : _buildPortraitLayout(context),
-        ),
+      backgroundColor: const Color(0xFF060810),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // ── Full-screen video background ───────────────────────────────
+          if (_videoReady)
+            FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: _videoCtrl.value.size.width,
+                height: _videoCtrl.value.size.height,
+                child: VideoPlayer(_videoCtrl),
+              ),
+            )
+          else
+            Container(color: const Color(0xFF060810)),
+
+          // ── Gradient overlays (darken video so UI is readable) ─────────
+          // Deep dark vignette
+          Container(
+            decoration: const BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: 1.0,
+                colors: [
+                  Colors.transparent,
+                  Color(0xCC000000),
+                ],
+              ),
+            ),
+          ),
+          // Horizontal dark edge fade
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xBB000000), Colors.transparent, Color(0xBB000000)],
+                stops: [0.0, 0.5, 1.0],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+            ),
+          ),
+          // Top + bottom dark bars
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xDD060810), Colors.transparent, Color(0xDD060810)],
+                stops: [0.0, 0.4, 1.0],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+
+          // ── Main UI ────────────────────────────────────────────────────
+          SafeArea(
+            child: FadeTransition(
+              opacity: _fadeAnim,
+              child: SlideTransition(
+                position: _slideAnim,
+                child: _buildLayout(context),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  Widget _buildLayout(BuildContext context) {
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
+    return isLandscape
+        ? _buildLandscapeLayout(context)
+        : _buildPortraitLayout(context);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Logo
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildLogo() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // COREGAME Text in white
-        Text(
-          'COREGAME',
-          style: GoogleFonts.alfaSlabOne(
-            textStyle: const TextStyle(
-              fontSize: 48.0,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 3,
-              height: 1.0,
-              shadows: [
-                Shadow(color: Colors.black, blurRadius: 4.0, offset: Offset(2.0, 2.0)),
-              ],
+        // Glow pill behind text
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 240,
+              height: 70,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(40),
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF00E5FF).withOpacity(0.15),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
             ),
-          ),
+            Text(
+              'COREGAME',
+              style: GoogleFonts.alfaSlabOne(
+                textStyle: const TextStyle(
+                  fontSize: 46.0,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: 3,
+                  height: 1.0,
+                  shadows: [
+                    Shadow(
+                        color: Color(0xFF00E5FF),
+                        blurRadius: 20.0,
+                        offset: Offset(0, 0)),
+                    Shadow(
+                        color: Colors.black,
+                        blurRadius: 6.0,
+                        offset: Offset(2.0, 3.0)),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 12.0),
+        const SizedBox(height: 10.0),
         // Neon gradient underline bar
         Container(
           width: 180,
-          height: 5,
+          height: 4,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [Color(0xFF00E5FF), Color(0xFFE040FB)],
             ),
-            borderRadius: BorderRadius.circular(2.5),
+            borderRadius: BorderRadius.circular(2),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF00E5FF).withValues(alpha: 0.5),
-                blurRadius: 6.0,
-                offset: const Offset(0, 1),
+                color: const Color(0xFF00E5FF).withOpacity(0.5),
+                blurRadius: 8.0,
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 8.0),
+        Text(
+          'PLAY · WIN · REPEAT',
+          style: GoogleFonts.robotoMono(
+            textStyle: TextStyle(
+              color: Colors.white.withOpacity(0.45),
+              fontSize: 9.5,
+              letterSpacing: 2.5,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Buttons
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildButtons(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        GameButton(
-          text: 'LOGIN',
-          backgroundColor: const Color(0xFF00C853), // Green from the image
-          width: 260.0,
-          height: 48.0,
-          onPressed: () {
+        _glassButton(
+          label: 'LOGIN',
+          gradient: const LinearGradient(
+            colors: [Color(0xFF00C853), Color(0xFF00E57A)],
+          ),
+          glowColor: const Color(0xFF00C853),
+          onTap: () {
             stopWelcomeMusic();
             if (widget.onLoginPressed != null) {
               widget.onLoginPressed!();
             } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()));
             }
           },
         ),
         const SizedBox(height: 12.0),
-        GameButton(
-          text: 'SIGN UP',
-          backgroundColor: const Color(0xFFFF5252), // Coral/Red from the image
-          width: 260.0,
-          height: 48.0,
-          onPressed: () {
+        _glassButton(
+          label: 'SIGN UP',
+          gradient: const LinearGradient(
+            colors: [Color(0xFFE040FB), Color(0xFF7B2FF7)],
+          ),
+          glowColor: const Color(0xFFE040FB),
+          onTap: () {
             stopWelcomeMusic();
             if (widget.onSignupPressed != null) {
               widget.onSignupPressed!();
             } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SignupScreen()),
-              );
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const SignupScreen()));
             }
           },
         ),
         const SizedBox(height: 12.0),
-        GameButton(
-          text: 'SKIP',
-          backgroundColor: const Color(0xFF1CB0F6), // Duolingo blue
-          width: 260.0,
-          height: 48.0,
-          onPressed: () {
+        _glassButton(
+          label: 'SKIP →  LOBBY',
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1A2033), Color(0xFF252A40)],
+          ),
+          glowColor: const Color(0xFF00D2FF),
+          border: Border.all(color: const Color(0xFF00D2FF).withOpacity(0.35), width: 1.2),
+          onTap: () {
             stopWelcomeMusic();
             if (widget.onSkipPressed != null) {
               widget.onSkipPressed!();
@@ -155,7 +289,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => LobbyScreen(
+                  builder: (_) => LobbyScreen(
                     onLogoutPressed: () => Navigator.pop(context),
                     balance: 17.57,
                     vipLevel: 1,
@@ -186,35 +320,73 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     );
   }
 
-  Widget _buildLandscapeLayout(BuildContext context) {
-    return Row(
-      children: [
-        // Left side: Title/Logo & Mascot
-        Expanded(
-          flex: 4,
-          child: Center(
-            child: SingleChildScrollView(
-              physics: const NeverScrollableScrollPhysics(),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const AnimatedCharacter(width: 140.0, height: 140.0),
-                  const SizedBox(height: 12.0),
-                  _buildLogo(),
-                ],
-              ),
+  Widget _glassButton({
+    required String label,
+    required LinearGradient gradient,
+    required Color glowColor,
+    required VoidCallback onTap,
+    BoxBorder? border,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 260,
+        height: 50,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(14),
+          border: border,
+          boxShadow: [
+            BoxShadow(
+              color: glowColor.withOpacity(0.30),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.roboto(
+            textStyle: const TextStyle(
+              color: Colors.white,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.8,
             ),
           ),
         ),
-        // Right side: Buttons
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Layouts
+  // ─────────────────────────────────────────────────────────────────────────
+  Widget _buildLandscapeLayout(BuildContext context) {
+    return Row(
+      children: [
+        // Left: Character + Logo
+        Expanded(
+          flex: 4,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const AnimatedCharacter(width: 130.0, height: 130.0),
+                const SizedBox(height: 16.0),
+                _buildLogo(),
+              ],
+            ),
+          ),
+        ),
+        // Right: Buttons
         Expanded(
           flex: 3,
           child: Center(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 48.0),
-                child: _buildButtons(context),
-              ),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 40.0),
+              child: _buildButtons(context),
             ),
           ),
         ),
