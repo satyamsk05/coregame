@@ -28,8 +28,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Start sci-fi welcome screen ambient pad loop
-    startWelcomeMusic();
+    // Welcome music auto-play disabled by user request
   }
 
   @override
