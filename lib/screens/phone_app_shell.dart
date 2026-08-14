@@ -14,6 +14,7 @@ import 'mines_game_screen.dart';
 import 'hilo_game_screen.dart';
 import 'seven_up_down_game_screen.dart';
 import 'plinko_game_screen.dart';
+import 'game_loading_screen.dart';
 
 class PhoneAppShell extends StatefulWidget {
   const PhoneAppShell({super.key});
@@ -24,6 +25,7 @@ class PhoneAppShell extends StatefulWidget {
 
 class _PhoneAppShellState extends State<PhoneAppShell> {
   String _currentScreen = 'welcome';
+  String _loadingGameName = '';
 
   // Lifted state variables to share between lobby and games
   double _balance = 17.57;
@@ -86,7 +88,10 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           },
           onPlayGame: (gameName) {
             SoundManager.playClick();
-            setState(() => _currentScreen = gameName);
+            setState(() {
+              _loadingGameName = gameName;
+              _currentScreen = 'loading';
+            });
           },
           onBalanceChanged: (val) => setState(() => _balance = val),
           onVipLevelChanged: (val) => setState(() => _vipLevel = val),
@@ -197,6 +202,17 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           musicOn: _musicOn,
           onBalanceChanged: (val) => setState(() => _balance = val),
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
+        );
+        break;
+      case 'loading':
+        screenWidget = GameLoadingScreen(
+          key: const ValueKey('loading'),
+          gameKey: _loadingGameName,
+          onLoadingComplete: () {
+            setState(() {
+              _currentScreen = _loadingGameName;
+            });
+          },
         );
         break;
       case 'welcome':
