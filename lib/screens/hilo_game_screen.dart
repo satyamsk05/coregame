@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/win_lose_toast.dart';
+import '../widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/animated_game_background.dart';
 
@@ -90,6 +92,25 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
   final List<double> _history = [];
   final List<String> _suits = ['Hearts', 'Diamonds', 'Spades', 'Clubs'];
   final math.Random _random = math.Random();
+
+  bool _showOutcomeCard = false;
+  double _lastWinMultiplier = 1.96;
+  double _lastWinAmount = 0.0;
+  bool _lastOutcomeWin = true;
+  Timer? _outcomeTimer;
+
+  void _triggerOutcomeOverlay(double multi, double amount, bool isWin) {
+    _outcomeTimer?.cancel();
+    setState(() {
+      _lastWinMultiplier = multi;
+      _lastWinAmount = amount;
+      _lastOutcomeWin = isWin;
+      _showOutcomeCard = true;
+    });
+    _outcomeTimer = Timer(const Duration(milliseconds: 2200), () {
+      if (mounted) setState(() => _showOutcomeCard = false);
+    });
+  }
 
   @override
   void initState() {
@@ -184,11 +205,7 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
         _currentMultiplier = 1.0;
         _correctGuesses = 0;
 
-        _showStatusMessage(
-          title: 'LOSE!',
-          message: 'Incorrect prediction! Card was ${nextCard.rankLabel} of ${nextCard.suit}.',
-          isWin: false,
-        );
+        _triggerOutcomeOverlay(0.0, 0.0, false);
       }
     });
   }
@@ -204,13 +221,7 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
       widget.onBalanceChanged(widget.balance + winAmount);
     }
 
-    _showStatusMessage(
-      title: 'CASHOUT SUCCESS!',
-      message: isDemoMode 
-          ? 'Demo Won ${_currentMultiplier.toStringAsFixed(2)}x!'
-          : 'You won ₹${winAmount.toStringAsFixed(2)} (${_currentMultiplier.toStringAsFixed(2)}x)!',
-      isWin: true,
-    );
+    _triggerOutcomeOverlay(_currentMultiplier, winAmount, true);
 
     setState(() {
       _isPlaying = false;
@@ -852,6 +863,16 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
                   ),
                 ),
               ),
+
+              // Win/Lose Overlay Card centered in playfield
+              if (_showOutcomeCard)
+                Center(
+                  child: WinOverlayCard(
+                    multiplier: _lastWinMultiplier,
+                    winAmount: _lastWinAmount,
+                    isWin: _lastOutcomeWin,
+                  ),
+                ),
 
               // 3. Profit Stats row at the bottom
               Positioned(

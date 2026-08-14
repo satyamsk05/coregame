@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/win_lose_toast.dart';
+import '../widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LimboGameScreen extends StatefulWidget {
@@ -83,6 +84,25 @@ class _LimboGameScreenState extends State<LimboGameScreen>
   final List<double> _history = [1.24, 5.40, 1.88, 15.02, 2.05, 1.03];
   final List<_StaticStar> _staticStars = [];
   final math.Random _random = math.Random();
+
+  bool _showOutcomeCard = false;
+  double _lastWinMultiplier = 1.96;
+  double _lastWinAmount = 0.0;
+  bool _lastOutcomeWin = true;
+  Timer? _outcomeTimer;
+
+  void _triggerOutcomeOverlay(double multi, double amount, bool isWin) {
+    _outcomeTimer?.cancel();
+    setState(() {
+      _lastWinMultiplier = multi;
+      _lastWinAmount = amount;
+      _lastOutcomeWin = isWin;
+      _showOutcomeCard = true;
+    });
+    _outcomeTimer = Timer(const Duration(milliseconds: 2200), () {
+      if (mounted) setState(() => _showOutcomeCard = false);
+    });
+  }
 
   @override
   void initState() {
@@ -268,11 +288,12 @@ class _LimboGameScreenState extends State<LimboGameScreen>
             ? 'DEMO WON ${target.toStringAsFixed(2)}x!' 
             : 'YOU WON ₹${winAmount.toStringAsFixed(2)}!';
       });
-      _showWinNotification(isDemoMode ? 0.0 : winAmount, target, isDemoMode);
+      _triggerOutcomeOverlay(target, winAmount, true);
     } else {
       setState(() {
         _statusText = 'CRASHED @ ${crashPoint.toStringAsFixed(2)}x';
       });
+      _triggerOutcomeOverlay(0.0, 0.0, false);
     }
 
     Future.delayed(const Duration(milliseconds: 2200), () {
@@ -1090,6 +1111,16 @@ class _LimboGameScreenState extends State<LimboGameScreen>
             right: 12.0,
             child: _buildPayoutWinChancePanel(),
           ),
+
+          // Win/Lose Overlay Card centered in playfield
+          if (_showOutcomeCard)
+            Center(
+              child: WinOverlayCard(
+                multiplier: _lastWinMultiplier,
+                winAmount: _lastWinAmount,
+                isWin: _lastOutcomeWin,
+              ),
+            ),
         ],
       ),
     );

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SevenUpDownGameScreen extends StatefulWidget {
@@ -43,6 +44,25 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
   
   int _timerSeconds = 15;
   Timer? _countdownTimer;
+
+  bool _showOutcomeCard = false;
+  double _lastWinMultiplier = 1.96;
+  double _lastWinAmount = 0.0;
+  bool _lastOutcomeWin = true;
+  Timer? _outcomeTimer;
+
+  void _triggerOutcomeOverlay(double multi, double amount, bool isWin) {
+    _outcomeTimer?.cancel();
+    setState(() {
+      _lastWinMultiplier = multi;
+      _lastWinAmount = amount;
+      _lastOutcomeWin = isWin;
+      _showOutcomeCard = true;
+    });
+    _outcomeTimer = Timer(const Duration(milliseconds: 2200), () {
+      if (mounted) setState(() => _showOutcomeCard = false);
+    });
+  }
   
   // Animation controllers
   late AnimationController _shakerController;
@@ -203,7 +223,9 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
 
     if (winnings > 0) {
       widget.onBalanceChanged(widget.balance + winnings);
-      _showWinNotification(winnings);
+      _triggerOutcomeOverlay(sum == 7 ? 5.0 : 2.0, winnings, true);
+    } else {
+      _triggerOutcomeOverlay(0.0, 0.0, false);
     }
 
     setState(() {
@@ -594,6 +616,16 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
                       ),
                     ],
                   ),
+                ),
+              ),
+
+            // Win/Lose Overlay Card centered in playfield
+            if (_showOutcomeCard)
+              Center(
+                child: WinOverlayCard(
+                  multiplier: _lastWinMultiplier,
+                  winAmount: _lastWinAmount,
+                  isWin: _lastOutcomeWin,
                 ),
               ),
           ],

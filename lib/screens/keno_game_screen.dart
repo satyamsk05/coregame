@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/win_overlay_card.dart';
 
 class KenoGameScreen extends StatefulWidget {
   final double balance;
@@ -57,6 +58,25 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
   double _winAmount = 0.0;
   bool _showWinOverlay = false;
   String _statusText = 'SELECT 1 TO 12 SPOTS';
+
+  bool _showOutcomeCard = false;
+  double _lastWinMultiplier = 1.96;
+  double _lastWinAmount = 0.0;
+  bool _lastOutcomeWin = true;
+  Timer? _outcomeTimer;
+
+  void _triggerOutcomeOverlay(double multi, double amount, bool isWin) {
+    _outcomeTimer?.cancel();
+    setState(() {
+      _lastWinMultiplier = multi;
+      _lastWinAmount = amount;
+      _lastOutcomeWin = isWin;
+      _showOutcomeCard = true;
+    });
+    _outcomeTimer = Timer(const Duration(milliseconds: 2200), () {
+      if (mounted) setState(() => _showOutcomeCard = false);
+    });
+  }
 
   // Animation controller for particle effects and overlays
   late AnimationController _animationController;
@@ -240,8 +260,10 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
         widget.onBalanceChanged(widget.balance + totalWin);
         _statusText = 'HITS: $_hitsCount! WON: ₹${totalWin.toStringAsFixed(2)}';
         _triggerWinAnimation(totalWin);
+        _triggerOutcomeOverlay(multiplier, totalWin, true);
       } else {
         _statusText = 'HITS: $_hitsCount! BETTER LUCK NEXT TIME!';
+        _triggerOutcomeOverlay(0.0, 0.0, false);
       }
     });
 
@@ -1105,46 +1127,60 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
 
         // Grid (80 numbers)
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(6.0),
-            decoration: BoxDecoration(
-              color: const Color(0xFF160E45).withOpacity(0.6),
-              borderRadius: BorderRadius.circular(16.0),
-              border: Border.all(color: const Color(0xFF9E84FF), width: 1.2),
-            ),
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: 80,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 10,
-                crossAxisSpacing: 4.0,
-                mainAxisSpacing: 4.0,
-                childAspectRatio: 1.6,
+          child: Stack(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6.0),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF160E45).withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(16.0),
+                  border: Border.all(color: const Color(0xFF9E84FF), width: 1.2),
+                ),
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 80,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 10,
+                    crossAxisSpacing: 4.0,
+                    mainAxisSpacing: 4.0,
+                    childAspectRatio: 1.6,
+                  ),
+                  itemBuilder: (context, index) {
+                    final number = index + 1;
+                    final isSelected = _selectedNumbers.contains(number);
+                    final isDrawn = _drawnNumbers.contains(number);
+                    final isHit = isSelected && isDrawn;
+
+                    _KenoCellState cellState;
+                    if (isHit) {
+                      cellState = _KenoCellState.hit;
+                    } else if (isDrawn) {
+                      cellState = _KenoCellState.drawnMiss;
+                    } else if (isSelected) {
+                      cellState = _KenoCellState.selected;
+                    } else {
+                      cellState = _KenoCellState.normal;
+                    }
+
+                    return _KenoNumberButton(
+                      number: number,
+                      state: cellState,
+                      onTap: () => _onNumberTapped(number),
+                    );
+                  },
+                ),
               ),
-              itemBuilder: (context, index) {
-                final number = index + 1;
-                final isSelected = _selectedNumbers.contains(number);
-                final isDrawn = _drawnNumbers.contains(number);
-                final isHit = isSelected && isDrawn;
 
-                _KenoCellState cellState;
-                if (isHit) {
-                  cellState = _KenoCellState.hit;
-                } else if (isDrawn) {
-                  cellState = _KenoCellState.drawnMiss;
-                } else if (isSelected) {
-                  cellState = _KenoCellState.selected;
-                } else {
-                  cellState = _KenoCellState.normal;
-                }
-
-                return _KenoNumberButton(
-                  number: number,
-                  state: cellState,
-                  onTap: () => _onNumberTapped(number),
-                );
-              },
-            ),
+              // Win/Lose Overlay Card centered over Keno Grid
+              if (_showOutcomeCard)
+                Center(
+                  child: WinOverlayCard(
+                    multiplier: _lastWinMultiplier,
+                    winAmount: _lastWinAmount,
+                    isWin: _lastOutcomeWin,
+                  ),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 8.0),

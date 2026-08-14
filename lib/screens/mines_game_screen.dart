@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/win_lose_toast.dart';
+import '../widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/animated_game_background.dart';
 import '../utils/sound_manager.dart';
@@ -1140,104 +1141,5 @@ class DiamondPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Win Overlay Card Widget (Centered in Game Playfield Arena)
-// ─────────────────────────────────────────────────────────────────────────────
-class WinOverlayCard extends StatelessWidget {
-  final double multiplier;
-  final double winAmount;
-
-  const WinOverlayCard({
-    super.key,
-    required this.multiplier,
-    required this.winAmount,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 190.0,
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E2024).withOpacity(0.96),
-        borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(color: const Color(0xFF2C2F36), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.55),
-            blurRadius: 18.0,
-            spreadRadius: 2.0,
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Top Multiplier with sparkle icons (✦ 1.96x ✦)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.auto_awesome, color: Color(0xFF00E676), size: 14.0),
-              const SizedBox(width: 6.0),
-              Text(
-                '${multiplier.toStringAsFixed(2)}x',
-                style: GoogleFonts.robotoMono(
-                  textStyle: const TextStyle(
-                    color: Color(0xFF00E676),
-                    fontSize: 26.0,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6.0),
-              const Icon(Icons.auto_awesome, color: Color(0xFF00E676), size: 14.0),
-            ],
-          ),
-          const SizedBox(height: 10.0),
-
-          // Bottom Win Amount Container with Gold Rupees Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-            decoration: BoxDecoration(
-              color: const Color(0xFF14161B),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  winAmount.toStringAsFixed(2),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14.0,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 6.0),
-                Container(
-                  width: 17.0,
-                  height: 17.0,
-                  alignment: Alignment.center,
-                  decoration: const BoxDecoration(
-                    color: Colors.orange,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Text(
-                    '₹',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 10.0,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// End of MinesGameScreen
 

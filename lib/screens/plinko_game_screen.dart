@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/win_lose_toast.dart';
+import '../widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/animated_game_background.dart';
 import '../utils/sound_manager.dart';
@@ -148,6 +149,25 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
   Timer? _autoPlayTimer;
   int _autoBetsRemaining = 10;
 
+  bool _showOutcomeCard = false;
+  double _lastWinMultiplier = 1.96;
+  double _lastWinAmount = 0.0;
+  bool _lastOutcomeWin = true;
+  Timer? _outcomeTimer;
+
+  void _triggerOutcomeOverlay(double multi, double amount, bool isWin) {
+    _outcomeTimer?.cancel();
+    setState(() {
+      _lastWinMultiplier = multi;
+      _lastWinAmount = amount;
+      _lastOutcomeWin = isWin;
+      _showOutcomeCard = true;
+    });
+    _outcomeTimer = Timer(const Duration(milliseconds: 2200), () {
+      if (mounted) setState(() => _showOutcomeCard = false);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -194,10 +214,12 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
           // Add to bin flash
           _binFlashes.add(_ActiveBinFlash(index: ball.targetBin));
           
-          // Credit winnings
-          final double winnings = ball.betAmount * ball.multiplier;
-          if (winnings > 0) {
+          if (ball.betAmount > 0.0) {
+            final double winnings = ball.betAmount * ball.multiplier;
             widget.onBalanceChanged(widget.balance + winnings);
+            _triggerOutcomeOverlay(ball.multiplier, winnings, ball.multiplier >= 1.0);
+          } else {
+            _triggerOutcomeOverlay(ball.multiplier, 0.0, ball.multiplier >= 1.0);
           }
 
           // Add to history
@@ -1020,6 +1042,16 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
               )).toList(),
             ),
           ),
+
+          // Win/Lose Overlay Card centered in Plinko playfield
+          if (_showOutcomeCard)
+            Center(
+              child: WinOverlayCard(
+                multiplier: _lastWinMultiplier,
+                winAmount: _lastWinAmount,
+                isWin: _lastOutcomeWin,
+              ),
+            ),
         ],
       ),
     );

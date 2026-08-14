@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../utils/sound_helper.dart';
+import '../widgets/win_overlay_card.dart';
 
 class RouletteGameScreen extends StatefulWidget {
   final double balance;
@@ -65,7 +67,27 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
   
   final List<int> _history = [];
   final List<RouletteParticle> _particles = [];
+  Timer? _particlesTimer;
   final Random _random = Random();
+
+  bool _showOutcomeCard = false;
+  double _lastWinMultiplier = 1.96;
+  double _lastWinAmount = 0.0;
+  bool _lastOutcomeWin = true;
+  Timer? _outcomeTimer;
+
+  void _triggerOutcomeOverlay(double multi, double amount, bool isWin) {
+    _outcomeTimer?.cancel();
+    setState(() {
+      _lastWinMultiplier = multi;
+      _lastWinAmount = amount;
+      _lastOutcomeWin = isWin;
+      _showOutcomeCard = true;
+    });
+    _outcomeTimer = Timer(const Duration(milliseconds: 2200), () {
+      if (mounted) setState(() => _showOutcomeCard = false);
+    });
+  }
   int _lastSectorIndex = -1;
 
   // European Roulette Numbers order on the wheel clockwise
@@ -228,12 +250,14 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
         _showWinOverlay = true;
         _statusText = 'WON! LANDED ON $_winningNumber';
         _spawnParticles();
+        _triggerOutcomeOverlay(payoutMultiplier, _winAmount, true);
         if (widget.soundOn) {
           playWin();
         }
       } else {
         _winAmount = 0.0;
         _statusText = 'LOST. LANDED ON $_winningNumber';
+        _triggerOutcomeOverlay(0.0, 0.0, false);
         if (widget.soundOn) {
           playLose();
         }
@@ -413,6 +437,16 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                       ),
                     ),
                   ),
+                ),
+              ),
+
+            // Win/Lose Overlay Card centered over Roulette Wheel
+            if (_showOutcomeCard)
+              Center(
+                child: WinOverlayCard(
+                  multiplier: _lastWinMultiplier,
+                  winAmount: _lastWinAmount,
+                  isWin: _lastOutcomeWin,
                 ),
               ),
           ],

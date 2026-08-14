@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/win_lose_toast.dart';
+import '../widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:core_game/utils/sound_helper.dart';
 
@@ -91,6 +92,25 @@ class _DiceGameScreenState extends State<DiceGameScreen>
   final List<double> _history = [48.12, 12.04, 75.82, 92.15, 33.45];
   final List<_DiceStar> _staticStars = [];
   final math.Random _random = math.Random();
+
+  bool _showOutcomeCard = false;
+  double _lastWinMultiplier = 1.96;
+  double _lastWinAmount = 0.0;
+  bool _lastOutcomeWin = true;
+  Timer? _outcomeTimer;
+
+  void _triggerOutcomeOverlay(double multi, double amount, bool isWin) {
+    _outcomeTimer?.cancel();
+    setState(() {
+      _lastWinMultiplier = multi;
+      _lastWinAmount = amount;
+      _lastOutcomeWin = isWin;
+      _showOutcomeCard = true;
+    });
+    _outcomeTimer = Timer(const Duration(milliseconds: 2200), () {
+      if (mounted) setState(() => _showOutcomeCard = false);
+    });
+  }
 
   @override
   void initState() {
@@ -320,11 +340,12 @@ class _DiceGameScreenState extends State<DiceGameScreen>
             ? 'DEMO WON ${_payout.toStringAsFixed(2)}x!'
             : 'YOU WON ₹${winAmount.toStringAsFixed(2)}!';
       });
-      _showWinNotification(isDemo ? 0.0 : winAmount, _payout, isDemo);
+      _triggerOutcomeOverlay(_payout, winAmount, true);
     } else {
       setState(() {
         _statusText = 'LOST ROLL @ ${finalRoll.toStringAsFixed(2)}';
       });
+      _triggerOutcomeOverlay(0.0, 0.0, false);
     }
 
     // Auto / Advanced Strategy execution
@@ -1151,28 +1172,20 @@ class _DiceGameScreenState extends State<DiceGameScreen>
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: _history.map((val) {
-                      final bool isLesserThan50 = val < 50.0;
+                      final bool isWinVal = _isRollUnder ? (val < _targetValue) : (val > _targetValue);
                       return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 3.0),
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                        margin: const EdgeInsets.only(right: 4.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 3.0),
                         decoration: BoxDecoration(
-                          color: isLesserThan50
-                              ? const Color(0xFF00C853).withValues(alpha: 0.15)
-                              : const Color(0xFFFF5252).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8.0),
-                          border: Border.all(
-                            color: isLesserThan50
-                                ? const Color(0xFF00C853).withValues(alpha: 0.4)
-                                : const Color(0xFFFF5252).withValues(alpha: 0.4),
-                            width: 1.0,
-                          ),
+                          color: isWinVal ? const Color(0xFF00C853) : const Color(0xFF2E3138),
+                          borderRadius: BorderRadius.circular(4.0),
                         ),
                         child: Text(
                           val.toStringAsFixed(2),
                           style: TextStyle(
-                            color: isLesserThan50 ? const Color(0xFF00C853) : const Color(0xFFFF5252),
-                            fontSize: 9.0,
-                            fontWeight: FontWeight.w900,
+                            color: isWinVal ? Colors.black : Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10.0,
                           ),
                         ),
                       );
@@ -1181,7 +1194,17 @@ class _DiceGameScreenState extends State<DiceGameScreen>
                 ),
               ),
 
-              // 6. Bottom linked payout, target, and win chance dashboards
+              // 6. Win/Lose Overlay Card centered in playfield
+              if (_showOutcomeCard)
+                Center(
+                  child: WinOverlayCard(
+                    multiplier: _lastWinMultiplier,
+                    winAmount: _lastWinAmount,
+                    isWin: _lastOutcomeWin,
+                  ),
+                ),
+
+              // 7. Bottom linked payout, target, and win chance dashboards
               Positioned(
                 bottom: 12.0,
                 left: 12.0,

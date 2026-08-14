@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../utils/sound_manager.dart';
+import '../widgets/win_overlay_card.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Data model
@@ -63,6 +64,9 @@ class _CrashGameScreenState extends State<CrashGameScreen>
   bool _hasBet      = false;
   bool _cashedOut   = false;
   bool _autoEnabled = false;
+
+  double _cashedOutMulti = 1.0;
+  double _cashedOutAmount = 0.0;
 
   double _cashedOutMulti = 1.0;
   double _cashedOutAmount = 0.0;
@@ -349,8 +353,8 @@ class _CrashGameScreenState extends State<CrashGameScreen>
                                 if (_cashedOut)
                                   Center(
                                     child: WinOverlayCard(
-                                      multiplier: _state == CrashState.crashed ? _crashedAt : _multi,
-                                      winAmount: (double.tryParse(_betCtrl.text) ?? 10.0) * (_state == CrashState.crashed ? _crashedAt : _multi),
+                                      multiplier: _cashedOutMulti,
+                                      winAmount: _cashedOutAmount,
                                     ),
                                   ),
                               ],
