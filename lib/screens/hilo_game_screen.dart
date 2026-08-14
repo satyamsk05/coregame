@@ -286,7 +286,12 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
                     ),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(6.0),
-                      child: Image.asset('assets/hilo_logo.png', height: 26.0, fit: BoxFit.cover),
+                      child: Image.asset(
+                        'assets/hilo_logo.png',
+                        height: 26.0,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.style, color: Color(0xFF00E5FF), size: 24.0),
+                      ),
                     ),
                     const SizedBox(width: 8.0),
                     Text(

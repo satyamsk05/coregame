@@ -528,6 +528,29 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                           : Image.asset(
                                               game['image']!,
                                               fit: BoxFit.fill,
+                                              errorBuilder: (context, error, stackTrace) => Container(
+                                                color: const Color(0xFF0D0A1B),
+                                                alignment: Alignment.center,
+                                                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                                                child: Column(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    const Icon(Icons.style, color: Color(0xFF00E5FF), size: 28.0),
+                                                    const SizedBox(height: 6.0),
+                                                    Text(
+                                                      game['title']!.toUpperCase(),
+                                                      textAlign: TextAlign.center,
+                                                      style: GoogleFonts.pressStart2p(
+                                                        textStyle: const TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 8.0,
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
                                             ),
                                     ),
                                   ),
