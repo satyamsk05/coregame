@@ -1067,13 +1067,11 @@ class _PlinkoBoardPainter extends CustomPainter {
     final double startY = 16.0;
     final double binHeight = 32.0;
     
-    // Leave 24.0px padding at the bottom of the container
-    final double maxSpacingY = (size.height - startY - 24.0 - binHeight / 2 - 10.0) / rowCount;
-    final double maxSpacingX = (size.width - 32.0) / (rowCount + 2);
-    final double maxSpacingYFromWidth = maxSpacingX / 1.25;
+    // Width-based spacing for pegs
+    final double spacingX = ((size.width - 32.0) / (rowCount + 2)).clamp(12.0, 60.0);
     
-    final double spacingY = math.min(maxSpacingY, maxSpacingYFromWidth);
-    final double spacingX = spacingY * 1.25;
+    // Height-based spacing for pegs (leave 20.0px padding at the bottom of the container)
+    final double spacingY = ((size.height - startY - 20.0 - binHeight / 2 - 10.0) / rowCount).clamp(10.0, 50.0);
 
     // 1. Paint bottom bins (slots)
     final double binY = hyperMode
@@ -1225,15 +1223,15 @@ class _PlinkoBoardPainter extends CustomPainter {
             canvas.drawCircle(Offset(px, py), 10.0 + 6.0 * hitIntensity, hitPaint);
           }
 
-          // Draw peg glow (2x larger)
-          canvas.drawCircle(Offset(px, py), 5.5, pegGlowPaint);
+          // Draw peg glow (beautiful wide light aura)
+          canvas.drawCircle(Offset(px, py), 7.0, pegGlowPaint);
           
-          // Draw peg dot (2x larger)
+          // Draw peg dot (crisp medium dot)
           final Color pColor = Color.lerp(const Color(0xFFE3F2FD), const Color(0xFF00E5FF), hitIntensity) ?? const Color(0xFFE3F2FD);
           final Paint currentPegPaint = Paint()
             ..color = pColor
             ..style = PaintingStyle.fill;
-          canvas.drawCircle(Offset(px, py), 4.4 + 1.2 * hitIntensity, currentPegPaint);
+          canvas.drawCircle(Offset(px, py), 3.0 + 0.8 * hitIntensity, currentPegPaint);
         }
       }
     }
@@ -1259,20 +1257,20 @@ class _PlinkoBoardPainter extends CustomPainter {
             byScreen = startY + relativePos.dy * spacingY;
           }
           
-          // Draw ball glow (proportional scale up)
+          // Draw ball glow (matching proportional scale)
           final Paint ballGlowPaint = Paint()
             ..color = const Color(0xFFFFEB3B).withOpacity(0.45)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
-          canvas.drawCircle(Offset(bxScreen, byScreen), 10.0, ballGlowPaint);
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+          canvas.drawCircle(Offset(bxScreen, byScreen), 8.0, ballGlowPaint);
           
-          // Draw ball itself (proportional scale up)
-          canvas.drawCircle(Offset(bxScreen, byScreen), 6.5, ballPaint);
+          // Draw ball itself
+          canvas.drawCircle(Offset(bxScreen, byScreen), 4.8, ballPaint);
           
-          // Highlight active trail (proportional scale up)
+          // Highlight active trail
           final Paint trailPaint = Paint()
             ..color = const Color(0xFFFFEB3B).withOpacity(0.15)
             ..style = PaintingStyle.fill;
-          canvas.drawCircle(Offset(bxScreen, byScreen), 13.0, trailPaint);
+          canvas.drawCircle(Offset(bxScreen, byScreen), 10.0, trailPaint);
         }
       }
     }
