@@ -186,7 +186,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
     final bool isMobilePlatform = defaultTargetPlatform == TargetPlatform.android ||
                                   defaultTargetPlatform == TargetPlatform.iOS;
-    final double paddingHorizontal = isMobilePlatform ? 32.0 : 16.0;
+    final double paddingHorizontal = isMobilePlatform ? 12.0 : 16.0;
     final double paddingVertical = isMobilePlatform ? 12.0 : 16.0;
 
     final double screenHeight = MediaQuery.of(context).size.height;
@@ -524,7 +524,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         color: const Color(0xFF3A4142),
                         width: 115.0,
                         height: 36.0,
-                        onTap: () => _showInfoDialog('REFERRAL', 'Refer your friends and earn 50% commission!'),
+                        onTap: _showReferralDialog,
                       ),
                       const SizedBox(width: 8.0),
                       // VIP Club
@@ -994,17 +994,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
           width: maxWidth,
           height: maxHeight,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF2C1B6E), Color(0xFF13083B)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
+            color: const Color(0xFF1E2024),
             borderRadius: BorderRadius.circular(16.0),
-            border: Border.all(color: const Color(0xFF9E84FF), width: 2.0),
+            border: Border.all(color: const Color(0xFF2E3135), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.7),
-                blurRadius: 15.0,
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 12.0,
                 offset: const Offset(0, 6),
               ),
             ],
@@ -1013,10 +1009,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
             children: [
               // Header Banner
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
                 decoration: const BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(color: Color(0xFF3F2B96), width: 1.0),
+                    bottom: BorderSide(color: Color(0xFF2E3135), width: 1.0),
                   ),
                 ),
                 child: Row(
@@ -1024,27 +1020,27 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   children: [
                     Text(
                       title.toUpperCase(),
-                      style: GoogleFonts.alfaSlabOne(
+                      style: GoogleFonts.pressStart2p(
                         textStyle: const TextStyle(
-                          fontSize: 16.0,
-                          color: Color(0xFFFFD700), // Gold Text
-                          letterSpacing: 1.0,
-                          shadows: [
-                            Shadow(color: Colors.black, offset: Offset(1.5, 1.5), blurRadius: 2.0),
-                          ],
+                          fontSize: 11.0,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
-                    // Close button tab (matching red X corner layout)
-                    GestureDetector(
+                    _Bounceable(
                       onTap: () => Navigator.pop(context),
                       child: Container(
-                        padding: const EdgeInsets.all(5.0),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFFF3355),
+                        width: 28.0,
+                        height: 28.0,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2E3135),
                           shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFF3E4347)),
                         ),
-                        child: const Icon(Icons.close, color: Colors.white, size: 14.0),
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.close, color: Colors.white70, size: 14.0),
                       ),
                     ),
                   ],
@@ -1090,9 +1086,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
       decoration: BoxDecoration(
-        color: const Color(0xFF160E45),
+        color: const Color(0xFF181A1F),
         borderRadius: BorderRadius.circular(20.0),
-        border: Border.all(color: const Color(0xFF322878), width: 1.5),
+        border: Border.all(color: const Color(0xFF2E3135), width: 1.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1115,10 +1111,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
               child: Container(
                 padding: const EdgeInsets.all(2.0),
                 decoration: const BoxDecoration(
-                  color: Color(0xFF00E5FF),
+                  color: Color(0xFF00C853),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.add, color: Colors.black, size: 10.0),
+                child: const Icon(Icons.add, color: Colors.white, size: 10.0),
               ),
             ),
           ],
@@ -1155,18 +1151,18 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             padding: const EdgeInsets.all(4.0),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFFFF33CC), width: 2.0),
+                              border: Border.all(color: const Color(0xFF2E3135), width: 2.0),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFFFF33CC).withOpacity(0.3),
+                                  color: Colors.black.withOpacity(0.2),
                                   blurRadius: 8.0,
                                 ),
                               ],
                             ),
                             child: const CircleAvatar(
                               radius: 36,
-                              backgroundColor: Color(0xFF2C1B6E),
-                              child: Icon(Icons.face, size: 52, color: Colors.white),
+                              backgroundColor: Color(0xFF181A1F),
+                              child: Icon(Icons.face, size: 52, color: Colors.white70),
                             ),
                           ),
                           // VIP Level Ribbon
@@ -1175,9 +1171,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 3.0),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFF3355),
+                                color: const Color(0xFFFF9100),
                                 borderRadius: BorderRadius.circular(10.0),
-                                border: Border.all(color: const Color(0xFFFFD700), width: 1.0),
+                                border: Border.all(color: const Color(0xFF2E3135), width: 1.0),
                               ),
                               child: Text(
                                 'VIP $_vipLevel',
@@ -1195,7 +1191,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       // Edit avatar button
                       _buildMiniCasinoButton(
                         text: 'EDIT AVATAR',
-                        color: const Color(0xFF0288D1),
+                        color: const Color(0xFF2E3135),
                         onTap: () {},
                       ),
                     ],
@@ -1234,7 +1230,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         children: [
                           const Text(
                             'COINS:  ',
-                            style: TextStyle(color: Color(0xFF8C9EFF), fontWeight: FontWeight.bold, fontSize: 12.0),
+                            style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 12.0),
                           ),
                           _buildCasinoBalanceCapsule(
                             _balance, 
@@ -1256,7 +1252,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
           Center(
             child: _buildLargeCasinoButton(
               text: 'SET PW',
-              color: const Color(0xFFE040FB),
+              color: const Color(0xFF2E3135),
               width: 140,
               onTap: () {
                 _showInfoDialog('PASSWORD', 'Simulated password change. Encryption key updated!');
@@ -1275,7 +1271,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
         Text(
           label,
           style: const TextStyle(
-            color: Color(0xFF8C9EFF),
+            color: Colors.grey,
             fontWeight: FontWeight.bold,
             fontSize: 11.0,
             letterSpacing: 0.5,
@@ -1306,6 +1302,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
     final withdrawController = TextEditingController(text: '100');
     final withdrawFormKey = GlobalKey<FormState>();
+    String activeTab = 'IMPS';
 
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
@@ -1372,348 +1369,494 @@ class _LobbyScreenState extends State<LobbyScreen> {
               
               // Body
               Expanded(
-                child: Row(
-                  children: [
-                    // Left Sidebar
-                    Container(
-                      width: 135.0,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF181A1F),
-                        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15.0)),
-                        border: Border(
-                          right: BorderSide(color: Color(0xFF2E3135), width: 1.0),
+                child: StatefulBuilder(
+                  builder: (context, setWithdrawState) => Row(
+                    children: [
+                      // Left Sidebar
+                      Container(
+                        width: 135.0,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF181A1F),
+                          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15.0)),
+                          border: Border(
+                            right: BorderSide(color: Color(0xFF2E3135), width: 1.0),
+                          ),
                         ),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 12.0),
-                      child: Column(
-                        children: [
-                          // IMPS Tab (Selected)
-                          Container(
-                            height: 38.0,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF232528),
-                              borderRadius: BorderRadius.circular(8.0),
-                              border: Border.all(color: const Color(0xFF323539), width: 1.0),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 3.0,
-                                  height: 14.0,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF24EE89),
-                                    borderRadius: BorderRadius.circular(1.5),
-                                  ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 12.0),
+                        child: Column(
+                          children: [
+                            // IMPS Tab
+                            _Bounceable(
+                              onTap: () {
+                                setWithdrawState(() {
+                                  activeTab = 'IMPS';
+                                });
+                              },
+                              child: Container(
+                                height: 38.0,
+                                decoration: BoxDecoration(
+                                  color: activeTab == 'IMPS' ? const Color(0xFF232528) : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  border: activeTab == 'IMPS'
+                                      ? Border.all(color: const Color(0xFF323539), width: 1.0)
+                                      : null,
                                 ),
-                                const SizedBox(width: 8.0),
-                                const Icon(Icons.account_balance_wallet, color: Colors.white, size: 14.0),
-                                const SizedBox(width: 8.0),
-                                const Text(
-                                  'IMPS',
-                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.0),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 8.0),
-                          // Records Tab (Unselected)
-                          _Bounceable(
-                            onTap: () {
-                              _showInfoDialog('RECORDS', 'No recent withdrawal records.');
-                            },
-                            child: Container(
-                              height: 38.0,
-                              decoration: BoxDecoration(
-                                color: Colors.transparent,
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                              child: const Row(
-                                children: [
-                                  SizedBox(width: 11.0),
-                                  Icon(Icons.history, color: Colors.white70, size: 14.0),
-                                  SizedBox(width: 8.0),
-                                  Text(
-                                    'Records',
-                                    style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 12.0),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    // Right Content Area
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-                        child: StatefulBuilder(
-                          builder: (context, setWithdrawState) => Form(
-                            key: withdrawFormKey,
-                            child: SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Total Balance Row
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'Total Balance :',
-                                        style: GoogleFonts.montserrat(
-                                          textStyle: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 12.5,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                                child: Row(
+                                  children: [
+                                    if (activeTab == 'IMPS') ...[
+                                      Container(
+                                        width: 3.0,
+                                        height: 14.0,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF24EE89),
+                                          borderRadius: BorderRadius.circular(1.5),
                                         ),
                                       ),
-                                      // Balance Capsule matching top bar
+                                      const SizedBox(width: 8.0),
+                                    ] else ...[
+                                      const SizedBox(width: 11.0),
+                                    ],
+                                    Icon(
+                                      Icons.account_balance_wallet,
+                                      color: activeTab == 'IMPS' ? Colors.white : Colors.white70,
+                                      size: 14.0,
+                                    ),
+                                    const SizedBox(width: 8.0),
+                                    Text(
+                                      'IMPS',
+                                      style: TextStyle(
+                                        color: activeTab == 'IMPS' ? Colors.white : Colors.white70,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12.0,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8.0),
+                            // Records Tab
+                            _Bounceable(
+                              onTap: () {
+                                setWithdrawState(() {
+                                  activeTab = 'Records';
+                                });
+                              },
+                              child: Container(
+                                height: 38.0,
+                                decoration: BoxDecoration(
+                                  color: activeTab == 'Records' ? const Color(0xFF232528) : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  border: activeTab == 'Records'
+                                      ? Border.all(color: const Color(0xFF323539), width: 1.0)
+                                      : null,
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                                child: Row(
+                                  children: [
+                                    if (activeTab == 'Records') ...[
                                       Container(
-                                        height: 34.0,
+                                        width: 3.0,
+                                        height: 14.0,
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF181A1F),
-                                          borderRadius: BorderRadius.circular(8.0),
-                                          border: Border.all(color: const Color(0xFF2E3135), width: 1.2),
+                                          color: const Color(0xFF24EE89),
+                                          borderRadius: BorderRadius.circular(1.5),
                                         ),
-                                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                                        child: Row(
+                                      ),
+                                      const SizedBox(width: 8.0),
+                                    ] else ...[
+                                      const SizedBox(width: 11.0),
+                                    ],
+                                    Icon(
+                                      Icons.history,
+                                      color: activeTab == 'Records' ? Colors.white : Colors.white70,
+                                      size: 14.0,
+                                    ),
+                                    const SizedBox(width: 8.0),
+                                    Text(
+                                      'Records',
+                                      style: TextStyle(
+                                        color: activeTab == 'Records' ? Colors.white : Colors.white70,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12.0,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      // Right Content Area
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                          child: activeTab == 'IMPS'
+                              ? Form(
+                                  key: withdrawFormKey,
+                                  child: SingleChildScrollView(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Total Balance Row
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Container(
-                                              width: 16.0,
-                                              height: 16.0,
-                                              decoration: const BoxDecoration(
-                                                color: Colors.orange,
-                                                shape: BoxShape.circle,
-                                              ),
-                                              alignment: Alignment.center,
-                                              child: const Text(
-                                                '₹',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 10.0,
+                                            Text(
+                                              'Total Balance :',
+                                              style: GoogleFonts.montserrat(
+                                                textStyle: const TextStyle(
+                                                  color: Colors.white70,
+                                                  fontSize: 12.5,
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
                                             ),
-                                            const SizedBox(width: 8.0),
-                                            Text(
-                                              '₹${_balance.toStringAsFixed(2)}',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 13.0,
-                                                fontWeight: FontWeight.w800,
+                                            // Balance Capsule matching top bar
+                                            Container(
+                                              height: 34.0,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF181A1F),
+                                                borderRadius: BorderRadius.circular(8.0),
+                                                border: Border.all(color: const Color(0xFF2E3135), width: 1.2),
+                                              ),
+                                              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                                              child: Row(
+                                                children: [
+                                                  Container(
+                                                    width: 16.0,
+                                                    height: 16.0,
+                                                    decoration: const BoxDecoration(
+                                                      color: Colors.orange,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    alignment: Alignment.center,
+                                                    child: const Text(
+                                                      '₹',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 10.0,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8.0),
+                                                  Text(
+                                                    '₹${_balance.toStringAsFixed(2)}',
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 13.0,
+                                                      fontWeight: FontWeight.w800,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                           ],
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12.0),
-                                  
-                                  // Withdrawable Row
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'Withdrawable :',
-                                        style: GoogleFonts.montserrat(
-                                          textStyle: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 12.5,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                        const SizedBox(height: 12.0),
+                                        
+                                        // Withdrawable Row
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              'Withdrawable :',
+                                              style: GoogleFonts.montserrat(
+                                                textStyle: const TextStyle(
+                                                  color: Colors.white70,
+                                                  fontSize: 12.5,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12.0),
+                                            // Text Field Container
+                                            Expanded(
+                                              child: Container(
+                                                height: 34.0,
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF181A1F),
+                                                  borderRadius: BorderRadius.circular(6.0),
+                                                  border: Border.all(color: const Color(0xFF2E3135), width: 1.2),
+                                                ),
+                                                child: TextFormField(
+                                                  controller: withdrawController,
+                                                  keyboardType: TextInputType.number,
+                                                  style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+                                                  decoration: const InputDecoration(
+                                                    border: InputBorder.none,
+                                                    hintText: 'Enter Amount',
+                                                    hintStyle: TextStyle(color: Colors.white24, fontSize: 12.0),
+                                                    contentPadding: EdgeInsets.only(left: 10.0, right: 10.0, bottom: 12.0),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8.0),
+                                            // MAX Button
+                                            _Bounceable(
+                                              onTap: () {
+                                                setWithdrawState(() {
+                                                  withdrawController.text = _balance.toInt().toString();
+                                                });
+                                              },
+                                              child: Container(
+                                                width: 65.0,
+                                                height: 34.0,
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF2C2F36),
+                                                  borderRadius: BorderRadius.circular(6.0),
+                                                  border: Border.all(color: const Color(0xFF3E4347), width: 1.0),
+                                                ),
+                                                alignment: Alignment.center,
+                                                child: const Text(
+                                                  'MAX',
+                                                  style: TextStyle(
+                                                    color: Colors.orangeAccent,
+                                                    fontSize: 12.0,
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                      const SizedBox(width: 12.0),
-                                      // Text Field Container
-                                      Expanded(
-                                        child: Container(
-                                          height: 34.0,
+                                        const SizedBox(height: 12.0),
+                                        
+                                        // Bank Info Box
+                                        Container(
+                                          width: double.infinity,
+                                          height: 55.0,
                                           decoration: BoxDecoration(
                                             color: const Color(0xFF181A1F),
-                                            borderRadius: BorderRadius.circular(6.0),
-                                            border: Border.all(color: const Color(0xFF2E3135), width: 1.2),
+                                            borderRadius: BorderRadius.circular(8.0),
+                                            border: Border.all(color: const Color(0xFF2E3135), width: 1.0),
                                           ),
-                                          child: TextFormField(
-                                            controller: withdrawController,
-                                            keyboardType: TextInputType.number,
-                                            style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
-                                            decoration: const InputDecoration(
-                                              border: InputBorder.none,
-                                              hintText: 'Enter Amount',
-                                              hintStyle: TextStyle(color: Colors.white24, fontSize: 12.0),
-                                              contentPadding: EdgeInsets.only(left: 10.0, right: 10.0, bottom: 12.0),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8.0),
-                                      // MAX Button
-                                      _Bounceable(
-                                        onTap: () {
-                                          setWithdrawState(() {
-                                            withdrawController.text = _balance.toInt().toString();
-                                          });
-                                        },
-                                        child: Container(
-                                          width: 65.0,
-                                          height: 34.0,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF2C2F36),
-                                            borderRadius: BorderRadius.circular(6.0),
-                                            border: Border.all(color: const Color(0xFF3E4347), width: 1.0),
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: const Text(
-                                            'MAX',
-                                            style: TextStyle(
-                                              color: Colors.orangeAccent,
-                                              fontSize: 12.0,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12.0),
-                                  
-                                  // Bank Info Box
-                                  Container(
-                                    width: double.infinity,
-                                    height: 55.0,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF181A1F),
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      border: Border.all(color: const Color(0xFF2E3135), width: 1.0),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            mainAxisAlignment: MainAxisAlignment.center,
+                                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                                          child: Row(
                                             children: [
-                                              Text(
-                                                'Name : $_bankHolderName',
-                                                style: GoogleFonts.montserrat(textStyle: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w600)),
-                                                overflow: TextOverflow.ellipsis,
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Text(
+                                                      'Name : $_bankHolderName',
+                                                      style: GoogleFonts.montserrat(textStyle: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w600)),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                    Text(
+                                                      'Account No : $_bankAccountNumber',
+                                                      style: GoogleFonts.montserrat(textStyle: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w600)),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
-                                              Text(
-                                                'Account No : $_bankAccountNumber',
-                                                style: GoogleFonts.montserrat(textStyle: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w600)),
-                                                overflow: TextOverflow.ellipsis,
+                                              const VerticalDivider(color: Color(0xFF2E3135), width: 20.0, thickness: 1.0),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Text(
+                                                      'Bank Name : $_bankName',
+                                                      style: GoogleFonts.montserrat(textStyle: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w600)),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                    Text(
+                                                      'IFSC Code : ${widget.bankPhoneNumber}',
+                                                      style: GoogleFonts.montserrat(textStyle: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w600)),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ],
                                           ),
                                         ),
-                                        const VerticalDivider(color: Color(0xFF2E3135), width: 20.0, thickness: 1.0),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                'Bank Name : $_bankName',
-                                                style: GoogleFonts.montserrat(textStyle: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w600)),
-                                                overflow: TextOverflow.ellipsis,
+                                        const SizedBox(height: 12.0),
+                                        
+                                        // Bottom Row
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            _Bounceable(
+                                              onTap: () {
+                                                final withdrawVal = double.tryParse(withdrawController.text);
+                                                if (withdrawVal == null || withdrawVal <= 0) {
+                                                  _showInfoDialog('ERROR', 'Please enter a valid withdrawal amount.');
+                                                  return;
+                                                }
+                                                if (withdrawVal > _balance) {
+                                                  _showInfoDialog('ERROR', 'Insufficient balance available.');
+                                                  return;
+                                                }
+                                                
+                                                widget.onBalanceChanged(widget.balance - withdrawVal);
+                                                Navigator.pop(context);
+                                                _showInfoDialog(
+                                                  'SUCCESS', 
+                                                  'Withdrawal of ₹${withdrawVal.toStringAsFixed(0)} initiated to $_bankName!'
+                                                );
+                                              },
+                                              child: Container(
+                                                width: 130.0,
+                                                height: 34.0,
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF00C853),
+                                                  borderRadius: BorderRadius.circular(6.0),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: const Color(0xFF00C853).withOpacity(0.2),
+                                                      blurRadius: 8.0,
+                                                      offset: const Offset(0, 2),
+                                                    )
+                                                  ]
+                                                ),
+                                                alignment: Alignment.center,
+                                                child: Text(
+                                                  'WITHDRAW',
+                                                  style: GoogleFonts.montserrat(
+                                                    textStyle: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 13.0,
+                                                      fontWeight: FontWeight.bold,
+                                                      letterSpacing: 0.5,
+                                                    ),
+                                                  ),
+                                                ),
                                               ),
-                                              Text(
-                                                'IFSC Code : ${widget.bankPhoneNumber}',
-                                                style: GoogleFonts.montserrat(textStyle: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w600)),
-                                                overflow: TextOverflow.ellipsis,
+                                            ),
+                                            Text(
+                                              'REMAINING WAGER : ₹0.00',
+                                              style: GoogleFonts.montserrat(
+                                                textStyle: const TextStyle(
+                                                  color: Colors.grey,
+                                                  fontSize: 9.5,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(height: 12.0),
-                                  
-                                  // Bottom Row
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      _Bounceable(
-                                        onTap: () {
-                                          final withdrawVal = double.tryParse(withdrawController.text);
-                                          if (withdrawVal == null || withdrawVal <= 0) {
-                                            _showInfoDialog('ERROR', 'Please enter a valid withdrawal amount.');
-                                            return;
-                                          }
-                                          if (withdrawVal > _balance) {
-                                            _showInfoDialog('ERROR', 'Insufficient balance available.');
-                                            return;
-                                          }
-                                          
-                                          widget.onBalanceChanged(widget.balance - withdrawVal);
-                                          Navigator.pop(context);
-                                          _showInfoDialog(
-                                            'SUCCESS', 
-                                            'Withdrawal of ₹${withdrawVal.toStringAsFixed(0)} initiated to $_bankName!'
-                                          );
-                                        },
-                                        child: Container(
-                                          width: 130.0,
-                                          height: 34.0,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF00C853),
-                                            borderRadius: BorderRadius.circular(6.0),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: const Color(0xFF00C853).withOpacity(0.2),
-                                                blurRadius: 8.0,
-                                                offset: const Offset(0, 2),
-                                              )
-                                            ]
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            'WITHDRAW',
-                                            style: GoogleFonts.montserrat(
-                                              textStyle: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 13.0,
-                                                fontWeight: FontWeight.bold,
-                                                letterSpacing: 0.5,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Text(
-                                        'REMAINING WAGER : ₹0.00',
-                                        style: GoogleFonts.montserrat(
-                                          textStyle: const TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 9.5,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                                )
+                              : _buildWithdrawalRecordsView(),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildWithdrawalRecordsView() {
+    final List<Map<String, String>> records = [
+      {'txId': 'T83925018', 'amount': '₹500', 'status': 'SUCCESS', 'date': '2026/08/18 19:40'},
+      {'txId': 'T91274092', 'amount': '₹1,500', 'status': 'PENDING', 'date': '2026/08/18 20:12'},
+      {'txId': 'T72839103', 'amount': '₹1,000', 'status': 'SUCCESS', 'date': '2026/08/17 11:15'},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'WITHDRAWAL RECORDS',
+          style: GoogleFonts.montserrat(
+            textStyle: const TextStyle(
+              color: Colors.white,
+              fontSize: 12.5,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8.0),
+        Expanded(
+          child: ListView.builder(
+            itemCount: records.length,
+            padding: EdgeInsets.zero,
+            itemBuilder: (context, index) {
+              final record = records[index];
+              final isSuccess = record['status'] == 'SUCCESS';
+              return Container(
+                margin: const EdgeInsets.only(bottom: 6.0),
+                padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF181A1F),
+                  borderRadius: BorderRadius.circular(6.0),
+                  border: Border.all(color: const Color(0xFF2E3135), width: 1.0),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              record['txId']!,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                            const SizedBox(width: 8.0),
+                            Text(
+                              record['date']!,
+                              style: const TextStyle(color: Colors.white24, fontSize: 8.0),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2.0),
+                        Text(
+                          'Amount: ${record['amount']}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11.0),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                      decoration: BoxDecoration(
+                        color: isSuccess 
+                            ? const Color(0xFF00C853).withOpacity(0.12)
+                            : const Color(0xFFFFAB00).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(4.0),
+                        border: Border.all(
+                          color: isSuccess ? const Color(0xFF00C853) : const Color(0xFFFFAB00), 
+                          width: 1.0,
+                        ),
+                      ),
+                      child: Text(
+                        record['status']!,
+                        style: TextStyle(
+                          color: isSuccess ? const Color(0xFF00C853) : const Color(0xFFFFAB00), 
+                          fontSize: 7.5, 
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -1743,13 +1886,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   margin: const EdgeInsets.only(bottom: 8.0),
                   padding: const EdgeInsets.all(8.0),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF160E45),
+                    color: const Color(0xFF181A1F),
                     borderRadius: BorderRadius.circular(10.0),
-                    border: Border.all(color: const Color(0xFF2C1B6E), width: 1.0),
+                    border: Border.all(color: const Color(0xFF2E3135), width: 1.0),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.mail_outline, color: Color(0xFF00E5FF), size: 24.0),
+                      const Icon(Icons.mail_outline, color: Color(0xFFFFD700), size: 24.0),
                       const SizedBox(width: 10.0),
                       Expanded(
                         child: Column(
@@ -1803,7 +1946,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             children: [
               _buildLargeCasinoButton(
                 text: 'DELETE ALL',
-                color: const Color(0xFFE040FB),
+                color: const Color(0xFF2E3135),
                 width: 140,
                 onTap: () {
                   Navigator.pop(context);
@@ -1812,7 +1955,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
               ),
               _buildLargeCasinoButton(
                 text: 'CLAIM ALL',
-                color: const Color(0xFFFF9100),
+                color: const Color(0xFF00C853),
                 width: 140,
                 onTap: () {
                   Navigator.pop(context);
@@ -1843,16 +1986,16 @@ class _LobbyScreenState extends State<LobbyScreen> {
               const SizedBox(width: 8.0),
               Text(
                 'VIP CLUB',
-                style: GoogleFonts.alfaSlabOne(textStyle: const TextStyle(color: Colors.white, fontSize: 15.0)),
+                style: GoogleFonts.pressStart2p(textStyle: const TextStyle(color: Colors.white, fontSize: 12.0, fontWeight: FontWeight.bold)),
               ),
               const Spacer(),
               // Info banner notes from Screenshot 5
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF160E45),
+                  color: const Color(0xFF181A1F),
                   borderRadius: BorderRadius.circular(8.0),
-                  border: Border.all(color: const Color(0xFF3F2B96), width: 1.0),
+                  border: Border.all(color: const Color(0xFF2E3135), width: 1.0),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -1860,11 +2003,11 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.date_range, color: Color(0xFF00E5FF), size: 10.0),
+                        const Icon(Icons.date_range, color: Color(0xFFFFD700), size: 10.0),
                         const SizedBox(width: 4.0),
                         const Text(
                           'Weekly Bonus - (Every Monday 8am)',
-                          style: TextStyle(color: Color(0xFF00E5FF), fontSize: 8.0, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: Color(0xFFFFD700), fontSize: 8.0, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -1892,16 +2035,16 @@ class _LobbyScreenState extends State<LobbyScreen> {
             children: [
               const Text(
                 'VIP 7',
-                style: TextStyle(color: Color(0xFF00E5FF), fontWeight: FontWeight.w900, fontSize: 12.0),
+                style: TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.w900, fontSize: 12.0),
               ),
               const SizedBox(width: 8.0),
               Expanded(
                 child: Container(
                   height: 14.0,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF160E45),
+                    color: const Color(0xFF181A1F),
                     borderRadius: BorderRadius.circular(7.0),
-                    border: Border.all(color: const Color(0xFF322878), width: 1.0),
+                    border: Border.all(color: const Color(0xFF2E3135), width: 1.0),
                   ),
                   child: Stack(
                     alignment: Alignment.center,
@@ -1912,7 +2055,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           widthFactor: 171503 / 200000,
                           child: Container(
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(colors: [Color(0xFFE040FB), Color(0xFF00E5FF)]),
+                              gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFF9100)]),
                               borderRadius: BorderRadius.circular(7.0),
                             ),
                           ),
@@ -1960,7 +2103,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   actionText: 'RECEIVE',
                   isReceived: false,
                   icon: Icons.redeem,
-                  iconColor: const Color(0xFFE040FB), // Magenta
+                  iconColor: const Color(0xFFFF9100), // Amber
                 ),
                 const SizedBox(width: 8.0),
                 _buildVipBenefitCard(
@@ -1969,7 +2112,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   actionText: 'RECEIVE',
                   isReceived: false,
                   icon: Icons.savings,
-                  iconColor: const Color(0xFFFF9100), // Amber orange
+                  iconColor: const Color(0xFF00C853), // Green
                 ),
                 const SizedBox(width: 8.0),
                 _buildVipBenefitCard(
@@ -1998,17 +2141,21 @@ class _LobbyScreenState extends State<LobbyScreen> {
     required Color iconColor,
     bool isBuff = false,
   }) {
+    final Color buttonColor = isReceived
+        ? const Color(0xFF2E3135)
+        : (actionText.toUpperCase() == 'DETAILS' ? const Color(0xFF2E3135) : const Color(0xFF00C853));
+
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF241A63), Color(0xFF0F0730)],
+            colors: [Color(0xFF232528), Color(0xFF181A1F)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
           borderRadius: BorderRadius.circular(12.0),
-          border: Border.all(color: const Color(0xFF3B2E92), width: 1.5),
+          border: Border.all(color: const Color(0xFF2E3135), width: 1.5),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.3),
@@ -2023,7 +2170,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF8C9EFF), fontSize: 7.5, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: Colors.white70, fontSize: 7.5, fontWeight: FontWeight.bold),
             ),
             Container(
               padding: const EdgeInsets.all(4.0),
@@ -2047,7 +2194,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   style: TextStyle(
                     color: isBuff ? const Color(0xFF00E5FF) : const Color(0xFFFFD700),
                     fontSize: 14.0,
-                    fontFamily: GoogleFonts.alfaSlabOne().fontFamily,
+                    fontFamily: GoogleFonts.montserrat().fontFamily,
                     fontWeight: FontWeight.w900,
                     shadows: const [
                       Shadow(color: Colors.black, blurRadius: 2.0, offset: Offset(1.0, 1.0)),
@@ -2067,14 +2214,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 5.0),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: isReceived ? const Color(0xFF5E5E6E) : const Color(0xFFFF9100),
+                  color: buttonColor,
                   borderRadius: BorderRadius.circular(8.0),
                   boxShadow: isReceived
                       ? []
                       : [
-                          const BoxShadow(
-                            color: Color(0xFFB26A00),
-                            offset: Offset(0, 3.0),
+                          BoxShadow(
+                            color: buttonColor.withOpacity(0.3),
+                            blurRadius: 4.0,
+                            offset: const Offset(0, 2),
                           )
                         ],
                 ),
@@ -2090,6 +2238,290 @@ class _LobbyScreenState extends State<LobbyScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // ==================== REFERRAL DIALOG (Withdrawal Layout style) ====================
+
+  void _showReferralDialog() {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double dialogWidth = screenWidth < 650 ? screenWidth * 0.95 : 619.0;
+    final double dialogHeight = screenHeight < 360 ? screenHeight * 0.95 : 320.0;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+        child: Container(
+          width: dialogWidth,
+          height: dialogHeight,
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E2024),
+            borderRadius: BorderRadius.circular(16.0),
+            border: Border.all(color: const Color(0xFF2E3135), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 12.0,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Header Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'REFERRAL',
+                      style: GoogleFonts.pressStart2p(
+                        textStyle: const TextStyle(
+                          fontSize: 11.0,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    _Bounceable(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 28.0,
+                        height: 28.0,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2E3135),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFF3E4347)),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.close, color: Colors.white70, size: 14.0),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(color: Color(0xFF2E3135), height: 1.0, thickness: 1.0),
+              
+              // Body
+              Expanded(
+                child: Row(
+                  children: [
+                    // Left Sidebar
+                    Container(
+                      width: 135.0,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF181A1F),
+                        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15.0)),
+                        border: Border(
+                          right: BorderSide(color: Color(0xFF2E3135), width: 1.0),
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 12.0),
+                      child: Column(
+                        children: [
+                          // Invite Tab (Selected)
+                          Container(
+                            height: 38.0,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF232528),
+                              borderRadius: BorderRadius.circular(8.0),
+                              border: Border.all(color: const Color(0xFF323539), width: 1.0),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 3.0,
+                                  height: 14.0,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF24EE89),
+                                    borderRadius: BorderRadius.circular(1.5),
+                                  ),
+                                ),
+                                const SizedBox(width: 8.0),
+                                const Icon(Icons.people, color: Colors.white, size: 14.0),
+                                const SizedBox(width: 8.0),
+                                const Text(
+                                  'Invite',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.0),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8.0),
+                          // Rules Tab (Unselected)
+                          _Bounceable(
+                            onTap: () {
+                              _showInfoDialog('RULES', 'Invite friends via your referral link. You earn a permanent 50% commission from their game fees!');
+                            },
+                            child: Container(
+                              height: 38.0,
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                              child: const Row(
+                                children: [
+                                  SizedBox(width: 11.0),
+                                  Icon(Icons.rule_folder, color: Colors.white70, size: 14.0),
+                                  SizedBox(width: 8.0),
+                                  Text(
+                                    'Rules',
+                                    style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 12.0),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    // Right Content Area
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'INVITE FRIENDS & EARN CASH',
+                                style: GoogleFonts.montserrat(
+                                  textStyle: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4.0),
+                              const Text(
+                                'Get a 50% commission for every active user that signs up under your referral code.',
+                                style: TextStyle(color: Colors.grey, fontSize: 9.5),
+                              ),
+                              const SizedBox(height: 12.0),
+                              
+                              // Referral Code Row
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      height: 36.0,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF181A1F),
+                                        borderRadius: BorderRadius.circular(6.0),
+                                        border: Border.all(color: const Color(0xFF2E3135), width: 1.2),
+                                      ),
+                                      alignment: Alignment.centerLeft,
+                                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                                      child: const Text(
+                                        'REF-18316818',
+                                        style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8.0),
+                                  // COPY Button
+                                  _Bounceable(
+                                    onTap: () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Referral Code Copied!')),
+                                      );
+                                    },
+                                    child: Container(
+                                      height: 36.0,
+                                      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF00C853),
+                                        borderRadius: BorderRadius.circular(6.0),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: const Text(
+                                        'COPY',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12.0),
+                              
+                              // Stats Box
+                              Container(
+                                width: double.infinity,
+                                height: 50.0,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF181A1F),
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  border: Border.all(color: const Color(0xFF2E3135), width: 1.0),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('TOTAL INVITED', style: TextStyle(color: Colors.grey, fontSize: 8.0, fontWeight: FontWeight.bold)),
+                                        Text('0 Users', style: GoogleFonts.montserrat(textStyle: const TextStyle(color: Colors.white, fontSize: 11.0, fontWeight: FontWeight.w600))),
+                                      ],
+                                    ),
+                                    const VerticalDivider(color: Color(0xFF2E3135), width: 20.0, thickness: 1.0),
+                                    Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('COMMISSION EARNED', style: TextStyle(color: Colors.grey, fontSize: 8.0, fontWeight: FontWeight.bold)),
+                                        Text('₹0.00', style: GoogleFonts.montserrat(textStyle: const TextStyle(color: Colors.white, fontSize: 11.0, fontWeight: FontWeight.w600))),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12.0),
+                              
+                              // Claim Button
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  _buildLargeCasinoButton(
+                                    text: 'CLAIM REWARD',
+                                    color: const Color(0xFF00C853),
+                                    width: 140,
+                                    onTap: () {
+                                      _showInfoDialog('CLAIM', 'No rewards currently available to claim.');
+                                    },
+                                  ),
+                                  const Text(
+                                    'MINIMUM CLAIM : ₹10.00',
+                                    style: TextStyle(color: Colors.grey, fontSize: 8.5, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -2145,7 +2577,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
               ),
               _buildLargeCasinoButton(
                 text: 'CLOSE',
-                color: const Color(0xFF0288D1),
+                color: const Color(0xFF2E3135),
                 width: 110,
                 onTap: () => Navigator.pop(context),
               ),
@@ -2169,9 +2601,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
           const SizedBox(height: 10.0),
           Text(
             'CONGRATULATIONS!',
-            style: GoogleFonts.alfaSlabOne(fontSize: 16.0, color: const Color(0xFF00C853)),
+            style: GoogleFonts.pressStart2p(
+              textStyle: const TextStyle(
+                fontSize: 11.0, 
+                color: Color(0xFF00C853), 
+                fontWeight: FontWeight.bold
+              ),
+            ),
           ),
-          const SizedBox(height: 6.0),
+          const SizedBox(height: 8.0),
           Text(
             'YOU UPGRADED TO VIP $newLevel!',
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.0),
