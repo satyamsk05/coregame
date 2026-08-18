@@ -566,9 +566,9 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen> with Ticker
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFF070B1E), // Premium deep navy backdrop
-      child: LayoutBuilder(
+    return Scaffold(
+      backgroundColor: const Color(0xFF070B1E), // Premium deep navy backdrop
+      body: LayoutBuilder(
         builder: (context, constraints) {
           final double h = constraints.maxHeight;
           final double w = constraints.maxWidth;

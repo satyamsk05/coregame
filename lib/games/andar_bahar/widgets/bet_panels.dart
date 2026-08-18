@@ -22,15 +22,16 @@ class SideBetPanel extends StatelessWidget {
   });
 
   BoxDecoration _getPanelDecoration(bool winner) {
+    final Color startColor = Color.lerp(Colors.black, baseColor, 0.45)!;
+    final Color endColor = Color.lerp(Colors.black, baseColor, 0.22)!;
+
     if (winner) {
       final double val = blinkAnimation.value;
       return BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color.lerp(baseColor.withValues(alpha: 0.4),
-                const Color(0xFFFFD700).withValues(alpha: 0.5), val)!,
-            Color.lerp(baseColor.withValues(alpha: 0.15),
-                const Color(0xFFFFD700).withValues(alpha: 0.2), val)!,
+            Color.lerp(startColor, const Color(0xFFB8860B), val)!,
+            Color.lerp(endColor, const Color(0xFF5C4033), val)!,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -51,10 +52,7 @@ class SideBetPanel extends StatelessWidget {
     }
     return BoxDecoration(
       gradient: LinearGradient(
-        colors: [
-          baseColor.withValues(alpha: 0.4),
-          baseColor.withValues(alpha: 0.15)
-        ],
+        colors: [startColor, endColor],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
@@ -63,6 +61,7 @@ class SideBetPanel extends StatelessWidget {
       boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4.0)],
     );
   }
+
 
   Widget _buildContent() {
     return Stack(
@@ -85,14 +84,8 @@ class SideBetPanel extends StatelessWidget {
             ],
           ),
         ),
-        Positioned(
-          top: 2.0,
-          right: 2.0,
-          child: Text(
-            isLeft ? 'Can bet: 2147480327' : 'Can bet: 2147486967',
-            style: const TextStyle(color: Colors.white54, fontSize: 7.5),
-          ),
-        ),
+        // Can bet label removed
+
         Positioned(
           left: isLeft ? 8.0 : null,
           right: !isLeft ? 8.0 : null,
@@ -252,14 +245,8 @@ class TieBetPanel extends StatelessWidget {
             ],
           ),
         ),
-        const Positioned(
-          top: 2.0,
-          right: 2.0,
-          child: Text(
-            'Can bet: 2147483397',
-            style: TextStyle(color: Colors.white54, fontSize: 7.5),
-          ),
-        ),
+        // Can bet label removed
+
         Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,

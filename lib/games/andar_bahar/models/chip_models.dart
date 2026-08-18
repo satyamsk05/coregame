@@ -5,12 +5,14 @@ class TableChip {
   final double y;
   final Color color;
   final String label;
+  final int value;
 
   TableChip({
     required this.x,
     required this.y,
     required this.color,
     required this.label,
+    required this.value,
   });
 }
 
@@ -22,6 +24,7 @@ class FlyingChip {
   final Color color;
   final String label;
   final AnimationController controller;
+  final int value;
 
   FlyingChip({
     required this.startX,
@@ -31,5 +34,7 @@ class FlyingChip {
     required this.color,
     required this.label,
     required this.controller,
+    required this.value,
   });
 }
+

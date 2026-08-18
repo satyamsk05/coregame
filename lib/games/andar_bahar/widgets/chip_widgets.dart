@@ -1,57 +1,61 @@
 import 'package:flutter/material.dart';
 
-/// A single poker chip widget used in the chip selector and flying chip animations.
+/// A single poker chip widget using PNG asset images.
 class PokerChipWidget extends StatelessWidget {
-  final Color color;
-  final String label;
+  final int value;
   final double size;
   final bool selected;
 
   const PokerChipWidget({
     super.key,
-    required this.color,
-    required this.label,
+    required this.value,
     this.size = 32.0,
     this.selected = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    int val = value;
+    if (val != 10 && val != 50 && val != 100 && val != 500 && val != 1000 && val != 5000) {
+      if (val < 30) {
+        val = 10;
+      } else if (val < 75) {
+        val = 50;
+      } else if (val < 300) {
+        val = 100;
+      } else if (val < 750) {
+        val = 500;
+      } else if (val < 3000) {
+        val = 1000;
+      } else {
+        val = 5000;
+      }
+    }
+
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color.withValues(alpha: 0.9), color],
-          radius: 0.8,
-        ),
         border: Border.all(
           color: selected ? const Color(0xFF00E5FF) : Colors.white60,
-          width: selected ? 2.5 : 1.5,
+          width: selected ? 2.0 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
             color: selected ? const Color(0x9900E5FF) : Colors.black45,
-            blurRadius: selected ? 6.0 : 3.0,
-            spreadRadius: selected ? 1.0 : 0.0,
+            blurRadius: selected ? 5.0 : 2.0,
           ),
         ],
       ),
-      alignment: Alignment.center,
-      child: Container(
-        width: size - 8.0,
-        height: size - 8.0,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white30, style: BorderStyle.solid),
+      child: ClipOval(
+        child: Image.asset(
+          'assets/chips/chip_$val.png',
+          fit: BoxFit.cover,
+          width: size,
+          height: size,
         ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: const TextStyle(
-              color: Colors.white, fontSize: 8.0, fontWeight: FontWeight.bold),
-        ),
+
       ),
     );
   }
@@ -74,28 +78,33 @@ class ChipSelectorWidget extends StatelessWidget {
     switch (val) {
       case 10:
         return const Color(0xFF1E1E24);
+      case 50:
+        return const Color(0xFFE91E63);
       case 100:
         return const Color(0xFF2E7D32);
       case 500:
         return const Color(0xFF1565C0);
       case 1000:
         return const Color(0xFF6A1B9A);
-      case 10000:
-        return const Color(0xFFD84315);
+      case 5000:
+        return const Color(0xFFFFD700);
       default:
         return Colors.blueGrey;
     }
   }
 
   static String getChipText(int val) {
-    if (val >= 10000) return '10K';
+    if (val >= 5000) return '5K';
     if (val >= 1000) return '1K';
     return '$val';
   }
 
   @override
   Widget build(BuildContext context) {
-    final chipValues = [10, 100, 500, 1000, 10000];
+    final chipValues = [10, 50, 100, 500, 1000, 5000];
+
+
+
     return Container(
       height: height * 0.12,
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
@@ -108,21 +117,25 @@ class ChipSelectorWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: chipValues.map((val) {
           final isSelected = selectedChipValue == val;
-          final color = getChipColor(val);
-          final label = getChipText(val);
           return GestureDetector(
             onTap: () => onChipSelected(val),
-            child: Transform.scale(
-              scale: isSelected ? 1.12 : 1.0,
-              child: PokerChipWidget(
-                color: color,
-                label: label,
-                selected: isSelected,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              transform: Matrix4.translationValues(0.0, isSelected ? -8.0 : 0.0, 0.0),
+              child: Transform.scale(
+                scale: isSelected ? 1.12 : 1.0,
+                child: PokerChipWidget(
+                  value: val,
+                  selected: isSelected,
+                  size: 38.0,
+                ),
               ),
             ),
           );
+
         }).toList(),
       ),
     );
   }
 }
+

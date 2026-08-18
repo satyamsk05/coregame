@@ -313,7 +313,7 @@ class _TwistGameScreenState extends State<TwistGameScreen>
             ),
           ),
           const SizedBox(width: 8.0),
-          Image.asset('assets/twist_logo.png', width: 24.0, height: 24.0,
+          Image.asset('assets/logos/twist_logo.png', width: 24.0, height: 24.0,
               errorBuilder: (_, e, __) =>
                   const Icon(Icons.rotate_right, color: Color(0xFF9B59B6), size: 22.0)),
           const SizedBox(width: 6.0),

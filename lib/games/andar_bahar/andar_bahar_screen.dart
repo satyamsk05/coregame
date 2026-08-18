@@ -50,6 +50,11 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
   double _userBetAndar = 0.0;
   double _userBetBahar = 0.0;
   double _userBetTie = 0.0;
+  double _userWinAmount = 0.0;
+  int _userWinTrigger = 0;
+  int _activeUsersCount = 45;
+
+
 
   // ── Table Totals (user + mock players) ──────────────────────────────────────
   double _totalBetAndar = 3970.0;
@@ -63,6 +68,15 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
   double _masterBalance = 5400.0;
   double _proKingBalance = 12800.0;
   double _elitePlayerBalance = 7500.0;
+
+  // ── Mock Player Bet Animation Triggers ───────────────────────────────────────
+  int _triggerBillionaire = 0;
+  int _triggerRichie = 0;
+  int _triggerHighRoller = 0;
+  int _triggerMaster = 0;
+  int _triggerProKing = 0;
+  int _triggerElitePlayer = 0;
+  int _triggerUser = 0;
 
   // ── Mock Player Bet Tracking ─────────────────────────────────────────────────
   final Map<String, double> _mockBetsAndar = {};
@@ -90,6 +104,20 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
 
   // ── Flying Chips ─────────────────────────────────────────────────────────────
   final List<FlyingChip> _flyingChips = [];
+
+  // Mock player win triggers & amounts (matching User avatar win float animation)
+  double _billionaireWinAmount = 0.0;
+  int _billionaireWinTrigger = 0;
+  double _richieWinAmount = 0.0;
+  int _richieWinTrigger = 0;
+  double _highRollerWinAmount = 0.0;
+  int _highRollerWinTrigger = 0;
+  double _masterWinAmount = 0.0;
+  int _masterWinTrigger = 0;
+  double _proKingWinAmount = 0.0;
+  int _proKingWinTrigger = 0;
+  double _elitePlayerWinAmount = 0.0;
+  int _elitePlayerWinTrigger = 0;
 
   // ── Winner ───────────────────────────────────────────────────────────────────
   String _winnerName = ''; // 'Andar' | 'Bahar' | 'Tie'
@@ -141,7 +169,9 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       _userBetAndar = 0.0;
       _userBetBahar = 0.0;
       _userBetTie = 0.0;
+      _userWinAmount = 0.0;
       _totalBetAndar = 0.0;
+
       _totalBetBahar = 0.0;
       _totalBetTie = 0.0;
       _andarCard = null;
@@ -150,6 +180,16 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       _mockBetsBahar.clear();
       _mockBetsTie.clear();
       _tableChips.clear();
+
+
+
+      // Reset win text amounts
+      _billionaireWinAmount = 0.0;
+      _richieWinAmount = 0.0;
+      _highRollerWinAmount = 0.0;
+      _masterWinAmount = 0.0;
+      _proKingWinAmount = 0.0;
+      _elitePlayerWinAmount = 0.0;
     });
 
     _gameTimer?.cancel();
@@ -158,7 +198,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       if (_timerSeconds > 0) {
         setState(() {
           _timerSeconds--;
-          final int betCount = _random.nextInt(3) + 1;
+          final int betCount = _random.nextInt(4) + 2;
           for (int i = 0; i < betCount; i++) {
             _simulateMockBets();
           }
@@ -171,13 +211,56 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
   }
 
   void _simulateMockBets() {
-    if (_random.nextDouble() > 0.70) return;
+    if (_random.nextDouble() > 0.30) return;
 
-    final double betValue =
-        [10, 100, 500, 1000][_random.nextInt(4)].toDouble();
+    // Fluctuate active user count slightly
+    if (_random.nextDouble() > 0.60) {
+      setState(() {
+        _activeUsersCount += _random.nextBool() ? _random.nextInt(2) : -_random.nextInt(2);
+        _activeUsersCount = _activeUsersCount.clamp(30, 60);
+      });
+    }
+
+    final double betValue = [
+      10, 10, 10, 10, 10,
+      50, 50, 50, 50, 50,
+      100, 500, 1000, 5000
+    ][_random.nextInt(14)].toDouble();
+
     final int spotIndex = _random.nextInt(3);
     final String spot =
         spotIndex == 0 ? 'andar' : (spotIndex == 1 ? 'bahar' : 'tie');
+
+    // 40% chance the bet is placed by one of the "other" active room users (bottom-right corner)
+    final bool isOtherPlayer = _random.nextDouble() < 0.40;
+
+    if (isOtherPlayer) {
+      double startX = 0.95;
+      double startY = 0.92;
+
+      setState(() {
+        if (spot == 'andar') {
+          _totalBetAndar += betValue;
+          _mockBetsAndar['activeUsers'] = (_mockBetsAndar['activeUsers'] ?? 0.0) + betValue;
+        } else if (spot == 'bahar') {
+          _totalBetBahar += betValue;
+          _mockBetsBahar['activeUsers'] = (_mockBetsBahar['activeUsers'] ?? 0.0) + betValue;
+        } else {
+          _totalBetTie += betValue;
+          _mockBetsTie['activeUsers'] = (_mockBetsTie['activeUsers'] ?? 0.0) + betValue;
+        }
+
+        _triggerChipFlight(
+          spot: spot,
+          startX: startX,
+          startY: startY,
+          chipColor: ChipSelectorWidget.getChipColor(betValue.toInt()),
+          chipLabel: ChipSelectorWidget.getChipText(betValue.toInt()),
+          chipValue: betValue.toInt(),
+        );
+      });
+      return;
+    }
 
     final bool isLeft = _random.nextBool();
     final int playerIndex = _random.nextInt(3);
@@ -186,28 +269,35 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
     double startX = isLeft ? 0.05 : 0.95;
     double startY = 0.30 + 0.08 + playerIndex * 0.145;
 
+
     bool placeBet = false;
     if (isLeft) {
       if (playerIndex == 0 && _billionaireBalance >= betValue) {
         _billionaireBalance = math.max(0.0, _billionaireBalance - betValue);
         placeBet = true;
+        _triggerBillionaire++;
       } else if (playerIndex == 1 && _richieBalance >= betValue) {
         _richieBalance = math.max(0.0, _richieBalance - betValue);
         placeBet = true;
+        _triggerRichie++;
       } else if (playerIndex == 2 && _highRollerBalance >= betValue) {
         _highRollerBalance = math.max(0.0, _highRollerBalance - betValue);
         placeBet = true;
+        _triggerHighRoller++;
       }
     } else {
       if (playerIndex == 0 && _masterBalance >= betValue) {
         _masterBalance = math.max(0.0, _masterBalance - betValue);
         placeBet = true;
+        _triggerMaster++;
       } else if (playerIndex == 1 && _proKingBalance >= betValue) {
         _proKingBalance = math.max(0.0, _proKingBalance - betValue);
         placeBet = true;
+        _triggerProKing++;
       } else if (playerIndex == 2 && _elitePlayerBalance >= betValue) {
         _elitePlayerBalance = math.max(0.0, _elitePlayerBalance - betValue);
         placeBet = true;
+        _triggerElitePlayer++;
       }
     }
 
@@ -232,9 +322,11 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
         startY: startY,
         chipColor: ChipSelectorWidget.getChipColor(betValue.toInt()),
         chipLabel: ChipSelectorWidget.getChipText(betValue.toInt()),
+        chipValue: betValue.toInt(),
       );
     }
   }
+
 
   void _startDealingPhase() {
     setState(() => _gamePhase = 'dealing');
@@ -315,6 +407,8 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       }
 
       if (winnings > 0) {
+        _userWinAmount = winnings;
+        _userWinTrigger++;
         widget.onBalanceChanged(widget.balance + winnings);
         _triggerWinningsFlight(
             spot: winner.toLowerCase(),
@@ -322,6 +416,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
             targetY: 0.92,
             value: winnings);
       }
+
 
       final Map<String, double> winningBets = winner == 'Andar'
           ? _mockBetsAndar
@@ -331,23 +426,45 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       winningBets.forEach((playerKey, betValue) {
         if (betValue > 0) {
           final double playerWinnings = betValue * payoutMultiplier;
+
+          if (playerKey == 'activeUsers') {
+            _triggerWinningsFlight(
+                spot: winner.toLowerCase(),
+                targetX: 0.95,
+                targetY: 0.92,
+                value: playerWinnings);
+            return;
+          }
+
           final bool isLeft = playerKey.startsWith('L');
           final int index = int.parse(playerKey.substring(1));
           if (isLeft) {
             if (index == 0) {
               _billionaireBalance += playerWinnings;
+              _billionaireWinAmount = playerWinnings;
+              _billionaireWinTrigger++;
             } else if (index == 1) {
               _richieBalance += playerWinnings;
+              _richieWinAmount = playerWinnings;
+              _richieWinTrigger++;
             } else {
               _highRollerBalance += playerWinnings;
+              _highRollerWinAmount = playerWinnings;
+              _highRollerWinTrigger++;
             }
           } else {
             if (index == 0) {
               _masterBalance += playerWinnings;
+              _masterWinAmount = playerWinnings;
+              _masterWinTrigger++;
             } else if (index == 1) {
               _proKingBalance += playerWinnings;
+              _proKingWinAmount = playerWinnings;
+              _proKingWinTrigger++;
             } else {
               _elitePlayerBalance += playerWinnings;
+              _elitePlayerWinAmount = playerWinnings;
+              _elitePlayerWinTrigger++;
             }
           }
           _triggerWinningsFlight(
@@ -388,10 +505,13 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       startY: 0.92,
       chipColor: ChipSelectorWidget.getChipColor(_selectedChipValue),
       chipLabel: ChipSelectorWidget.getChipText(_selectedChipValue),
+      chipValue: _selectedChipValue,
     );
 
     widget.onBalanceChanged(widget.balance - _selectedChipValue);
+
     setState(() {
+      _triggerUser++;
       if (spot == 'andar') {
         _userBetAndar += _selectedChipValue;
         _totalBetAndar += _selectedChipValue;
@@ -416,6 +536,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
     required double startY,
     required Color chipColor,
     required String chipLabel,
+    required int chipValue,
   }) {
     double endX = 0.5;
     double endY = 0.5;
@@ -441,6 +562,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
         vsync: this,
         duration: const Duration(milliseconds: 550),
       ),
+      value: chipValue,
     );
 
     setState(() => _flyingChips.add(newChip));
@@ -454,6 +576,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
           y: newChip.endY,
           color: newChip.color,
           label: newChip.label,
+          value: newChip.value,
         ));
       });
       newChip.controller.dispose();
@@ -480,9 +603,9 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
     }
 
     final Color chipColor = ChipSelectorWidget.getChipColor(
-        value.toInt() > 0 ? value.toInt() : 10);
+        value.toInt() > 0 ? value.toInt() : 50);
     final String chipLabel = ChipSelectorWidget.getChipText(
-        value.toInt() > 0 ? value.toInt() : 10);
+        value.toInt() > 0 ? value.toInt() : 50);
 
     final int count = value >= 1000 ? 3 : (value >= 100 ? 2 : 1);
     for (int i = 0; i < count; i++) {
@@ -500,6 +623,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
           color: chipColor,
           label: chipLabel,
           controller: controller,
+          value: value.toInt() > 0 ? value.toInt() : 50,
         );
         setState(() => _flyingChips.add(chip));
         controller.forward().then((_) {
@@ -510,16 +634,24 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
     }
   }
 
+
   // ════════════════════════════════════════════════════════════════════════════
   // Build
   // ════════════════════════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFF070B1E),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/ABbg.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+
           final double h = constraints.maxHeight;
           final double w = constraints.maxWidth;
 
@@ -548,6 +680,10 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                       iconData: Icons.diamond,
                       color: const Color(0xFFFFD700),
                       showNameTag: true,
+                      avatarPath: 'assets/userprofile/user1.png',
+                      betTrigger: _triggerBillionaire,
+                      winAmount: _billionaireWinAmount,
+                      winTrigger: _billionaireWinTrigger,
                     ),
                     SizedBox(height: h * 0.045),
                     MockPlayerWidget(
@@ -557,6 +693,10 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                       iconData: Icons.workspace_premium,
                       color: const Color(0xFFFFB300),
                       showNameTag: false,
+                      avatarPath: 'assets/userprofile/user2.png',
+                      betTrigger: _triggerRichie,
+                      winAmount: _richieWinAmount,
+                      winTrigger: _richieWinTrigger,
                     ),
                     SizedBox(height: h * 0.045),
                     MockPlayerWidget(
@@ -566,6 +706,10 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                       iconData: Icons.insights,
                       color: const Color(0xFFFFA000),
                       showNameTag: false,
+                      avatarPath: 'assets/userprofile/user3.png',
+                      betTrigger: _triggerHighRoller,
+                      winAmount: _highRollerWinAmount,
+                      winTrigger: _highRollerWinTrigger,
                     ),
                   ],
                 ),
@@ -585,6 +729,10 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                       iconData: Icons.star,
                       color: const Color(0xFF00E5FF),
                       showNameTag: true,
+                      avatarPath: 'assets/userprofile/user4.png',
+                      betTrigger: _triggerMaster,
+                      winAmount: _masterWinAmount,
+                      winTrigger: _masterWinTrigger,
                     ),
                     SizedBox(height: h * 0.045),
                     MockPlayerWidget(
@@ -594,6 +742,10 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                       iconData: Icons.bolt,
                       color: const Color(0xFF26C6DA),
                       showNameTag: false,
+                      avatarPath: 'assets/userprofile/user5.png',
+                      betTrigger: _triggerProKing,
+                      winAmount: _proKingWinAmount,
+                      winTrigger: _proKingWinTrigger,
                     ),
                     SizedBox(height: h * 0.045),
                     MockPlayerWidget(
@@ -603,6 +755,10 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                       iconData: Icons.auto_awesome,
                       color: const Color(0xFF00B0FF),
                       showNameTag: false,
+                      avatarPath: 'assets/userprofile/user6.png',
+                      betTrigger: _triggerElitePlayer,
+                      winAmount: _elitePlayerWinAmount,
+                      winTrigger: _elitePlayerWinTrigger,
                     ),
                   ],
                 ),
@@ -612,8 +768,71 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
               Positioned(
                 bottom: h * 0.05,
                 left: w * 0.02,
-                child: UserAvatarWidget(balance: widget.balance),
+                child: UserAvatarWidget(
+                  balance: widget.balance,
+                  avatarPath: 'assets/userprofile/user7.png',
+                  betTrigger: _triggerUser,
+                  winAmount: _userWinAmount,
+                  winTrigger: _userWinTrigger,
+                ),
               ),
+
+              // 4b. Bottom Active Users Count (Bottom Right)
+              Positioned(
+                bottom: h * 0.05,
+                right: w * 0.02,
+                child: GestureDetector(
+                  onTap: _showActiveUsersDialog,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                    decoration: BoxDecoration(
+                      color: const Color(0x99000000),
+                      borderRadius: BorderRadius.circular(12.0),
+                      border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.3), width: 1.0),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black38, blurRadius: 4.0, offset: Offset(0.0, 2.0))
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.people_alt_rounded,
+                          color: Color(0xFF00E5FF),
+                          size: 20.0,
+                        ),
+                        const SizedBox(width: 8.0),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'ONLINE',
+                              style: TextStyle(
+                                color: Color(0xFF00E676),
+                                fontSize: 7.0,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                            Text(
+                              '$_activeUsersCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+
+
 
               // 5. Central Gameplay / Betting Area
               Positioned(
@@ -660,8 +879,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                         left: chip.x * w - 9.0,
                         top: chip.y * h - 9.0,
                         child: PokerChipWidget(
-                          color: chip.color,
-                          label: chip.label,
+                          value: chip.value,
                           size: 18.0,
                           selected: false,
                         ),
@@ -676,33 +894,30 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                 child: IgnorePointer(
                   child: Stack(
                     children: _flyingChips.map((chip) {
-                      return AnimatedBuilder(
-                        animation: chip.controller,
-                        builder: (context, child) {
-                          final double t = chip.controller.value;
-                          final double currentX =
-                              chip.startX + (chip.endX - chip.startX) * t;
-                          final double arcY =
-                              -0.15 * math.sin(t * math.pi);
-                          final double currentY = chip.startY +
-                              (chip.endY - chip.startY) * t +
-                              arcY;
-                          final double scale =
-                              1.0 + 0.15 * math.sin(t * math.pi);
-                          return Positioned(
-                            left: currentX * w - 9.0,
-                            top: currentY * h - 9.0,
-                            child: Transform.scale(
-                              scale: scale,
-                              child: PokerChipWidget(
-                                color: chip.color,
-                                label: chip.label,
-                                size: 18.0,
-                                selected: true,
-                              ),
-                            ),
-                          );
-                        },
+                      return Positioned.fill(
+                        child: AnimatedBuilder(
+                          animation: chip.controller,
+                          builder: (context, child) {
+                            final double t = chip.controller.value;
+                            final double currentX =
+                                chip.startX + (chip.endX - chip.startX) * t;
+                            final double currentY =
+                                chip.startY + (chip.endY - chip.startY) * t;
+                            return Stack(
+                              children: [
+                                Positioned(
+                                  left: currentX * w - 9.0,
+                                  top: currentY * h - 9.0,
+                                  child: PokerChipWidget(
+                                    value: chip.value,
+                                    size: 18.0,
+                                    selected: true,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                       );
                     }).toList(),
                   ),
@@ -714,12 +929,12 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                   _timerSeconds <= 10 &&
                   _timerSeconds > 3)
                 Positioned(
-                  right: w * 0.03,
-                  top: h * 0.08,
+                  left: w * 0.66,
+                  top: h * 0.04,
                   child: IgnorePointer(
                     child: SizedBox(
-                      width: 100.0,
-                      height: 40.0,
+                      width: 130.0,
+                      height: 52.0,
                       child: Lottie.asset(
                         'assets/10_second_countdown_timer.json',
                         repeat: false,
@@ -728,7 +943,27 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                   ),
                 ),
 
-              // 11. Lottie last-3-sec countdown
+
+              // 11. Lottie last-3-sec countdown (and dealing/winner loop phase)
+              if ((_gamePhase == 'betting' && _timerSeconds <= 3 && _timerSeconds > 0) ||
+                  _gamePhase == 'dealing' ||
+                  _gamePhase == 'winner')
+                Positioned(
+                  left: w * 0.66,
+                  top: h * 0.04,
+                  child: IgnorePointer(
+                    child: SizedBox(
+                      width: 130.0,
+                      height: 52.0,
+                      child: Lottie.asset(
+                        'assets/10_second_countdown_timer_react_end_loop.json',
+                        repeat: true,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // 12. Center Lottie 3-sec warning animation
               if (_gamePhase == 'betting' &&
                   _timerSeconds <= 3 &&
                   _timerSeconds > 0)
@@ -745,12 +980,17 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                     ),
                   ),
                 ),
+
+
+
             ],
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   // ════════════════════════════════════════════════════════════════════════════
   // Sub-build methods
@@ -958,4 +1198,141 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       ],
     );
   }
+
+  void _showActiveUsersDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
+          child: Container(
+            width: 280.0,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F1224),
+              borderRadius: BorderRadius.circular(16.0),
+              border: Border.all(color: const Color(0xFF00E5FF), width: 1.5),
+              boxShadow: const [
+                BoxShadow(color: Colors.black87, blurRadius: 15.0, spreadRadius: 2.0)
+              ],
+            ),
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.people_alt_rounded, color: Color(0xFF00E5FF), size: 20.0),
+                        const SizedBox(width: 8.0),
+                        Text(
+                          'Active Room Players',
+                          style: GoogleFonts.pressStart2p(
+                            textStyle: const TextStyle(color: Colors.white, fontSize: 8.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: const Icon(Icons.close, color: Colors.white70, size: 18.0),
+                    ),
+                  ],
+                ),
+                const Divider(color: Colors.white10, height: 16.0),
+                const SizedBox(height: 4.0),
+                Text(
+                  'There are currently $_activeUsersCount active players betting at this table.',
+                  style: const TextStyle(color: Colors.white70, fontSize: 11.0, height: 1.4),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12.0),
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0x33000000),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  padding: const EdgeInsets.all(8.0),
+                  child: const Column(
+                    children: [
+                      _ActiveUserRow(name: 'Satyamsk (You)', isMe: true),
+                      _ActiveUserRow(name: 'Billionaire', isMe: false),
+                      _ActiveUserRow(name: 'Richie', isMe: false),
+                      _ActiveUserRow(name: 'Master', isMe: false),
+                      _ActiveUserRow(name: 'ProKing', isMe: false),
+                      _ActiveUserRow(name: 'Elite Player', isMe: false),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14.0),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF00E5FF), Color(0xFF00B0FF)],
+                      ),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: const Text(
+                      'CLOSE',
+                      style: TextStyle(color: Colors.white, fontSize: 10.0, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
+
+class _ActiveUserRow extends StatelessWidget {
+  final String name;
+  final bool isMe;
+
+  const _ActiveUserRow({required this.name, required this.isMe});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3.0),
+      child: Row(
+        children: [
+          Container(
+            width: 6.0,
+            height: 6.0,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isMe ? const Color(0xFF00E676) : const Color(0xFF00E5FF),
+            ),
+          ),
+          const SizedBox(width: 8.0),
+          Text(
+            name,
+            style: TextStyle(
+              color: isMe ? const Color(0xFF00E676) : Colors.white70,
+              fontSize: 10.0,
+              fontWeight: isMe ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            isMe ? 'BETTING' : 'ONLINE',
+            style: TextStyle(
+              color: isMe ? const Color(0xFF00E676) : Colors.white38,
+              fontSize: 8.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

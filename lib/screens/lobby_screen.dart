@@ -75,52 +75,53 @@ class _LobbyScreenState extends State<LobbyScreen> {
   final List<Map<String, String>> _games = [
     {
       'title': 'Keno 12',
-      'image': 'assets/keno_logo.png',
+      'image': 'assets/logos/keno_logo.png',
     },
     {
       'title': 'Coin Flip',
-      'image': 'assets/coin_flip_logo.png',
+      'image': 'assets/logos/coin_flip_logo.png',
     },
     {
       'title': 'Limbo Rocket',
-      'image': 'assets/limbo_logo.png',
+      'image': 'assets/logos/limbo_logo.png',
     },
     {
       'title': 'Classic Dice',
-      'image': 'assets/dice_logo.png',
+      'image': 'assets/logos/dice_logo.png',
     },
     {
       'title': 'Mines',
-      'image': 'assets/mines_logo.png',
+      'image': 'assets/logos/mines_logo.png',
     },
     {
       'title': 'Roulette Rush',
-      'image': 'assets/roulette_logo.png',
+      'image': 'assets/logos/roulette_logo.png',
     },
     {
       'title': 'Crash',
-      'image': 'assets/crash_logo.png',
+      'image': 'assets/logos/crash_logo.png',
     },
     {
       'title': 'Plinko',
-      'image': 'assets/plinko_logo.png',
+      'image': 'assets/logos/plinko_logo.png',
     },
     {
       'title': '7 Up Down',
-      'image': 'assets/seven_up_down_logo.png',
+      'image': 'assets/logos/seven_up_down_logo.png',
     },
     {
       'title': 'HiLo',
-      'image': 'assets/hilo_logo.png',
+      'image': 'assets/logos/hilo_logo.png',
     },
     {
       'title': 'Andar Bahar',
-      'image': 'assets/andar_bahar.png',
+      'image': 'assets/logos/andar_bahar.png',
     },
     {
       'title': 'Twist',
-      'image': 'assets/twist_logo.png',
+      'image': 'assets/logos/twist_logo.png',
     },
+
     {
       'title': 'Fruit Slash',
       'image': 'black',
@@ -539,11 +540,12 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Image.asset(
-                              'assets/icon_vip_club.png',
+                              'assets/icons/icon_vip_club.png',
                               width: 16.0,
                               height: 16.0,
                               errorBuilder: (context, error, stackTrace) => const SizedBox(width: 16.0, height: 16.0),
                             ),
+
                             const SizedBox(width: 6.0),
                             const Text(
                               'VIP ',
@@ -847,11 +849,12 @@ class _LobbyScreenState extends State<LobbyScreen> {
         child: Row(
           children: [
             Image.asset(
-              'assets/$assetName',
+              'assets/icons/$assetName',
               width: 18.0,
               height: 18.0,
               errorBuilder: (context, error, stackTrace) => Icon(icon, color: iconColor, size: 18.0),
             ),
+
             const SizedBox(width: 10.0),
             Expanded(
               child: Text(
@@ -949,9 +952,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
               const SizedBox(width: 6.0),
             ],
             Image.asset(
-              'assets/$assetName',
+              'assets/icons/$assetName',
               width: isSelected ? 20.0 : 18.0,
               height: isSelected ? 20.0 : 18.0,
+
               errorBuilder: (context, error, stackTrace) => Icon(
                 icon,
                 color: isSelected ? const Color(0xFF24EE89) : iconColor,
@@ -2887,10 +2891,11 @@ class _LobbyButtonState extends State<_LobbyButton> with SingleTickerProviderSta
                 children: [
                   Image.asset(
                     widget.label.toLowerCase().contains('withdraw')
-                        ? 'assets/icon_withdraw.png'
+                        ? 'assets/icons/icon_withdraw.png'
                         : (widget.label.toLowerCase().contains('vault')
-                            ? 'assets/icon_vault_pro.png'
-                            : 'assets/icon_bet_history.png'),
+                            ? 'assets/icons/icon_vault_pro.png'
+                            : 'assets/icons/icon_bet_history.png'),
+
                     width: 14.0,
                     height: 14.0,
                     fit: BoxFit.contain,

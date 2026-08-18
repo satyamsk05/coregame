@@ -29,7 +29,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
   final math.Random _random = math.Random();
   
   // Game states
-  int _selectedChipValue = 50;
+  int _selectedChipValue = 10;
   int _betOn2to6 = 0;
   int _betOn7 = 0;
   int _betOn8to12 = 0;
@@ -383,7 +383,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
               ),
               alignment: Alignment.center,
               child: Image.asset(
-                'assets/home_icon.png',
+                'assets/icons/home_icon.png',
                 width: 23.0,
                 height: 23.0,
                 fit: BoxFit.contain,
@@ -929,8 +929,12 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
 
           // Chips selector row
           Row(
-            children: [50, 100, 500, 1000].map((val) {
+            children: [10, 50, 100, 500, 1000, 5000].map((val) {
               final isSelected = _selectedChipValue == val;
+
+
+
+
 
               return GestureDetector(
                 onTap: () {
@@ -941,9 +945,11 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                  transform: Matrix4.translationValues(0.0, isSelected ? -8.0 : 0.0, 0.0),
                   width: isSelected ? 48.0 : 40.0,
                   height: isSelected ? 48.0 : 40.0,
                   decoration: BoxDecoration(
+
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isSelected ? const Color(0xFF24EE89) : Colors.transparent,
@@ -960,9 +966,10 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(99.0),
                     child: Image.asset(
-                      'assets/chip_$val.png',
+                      'assets/chips/chip_$val.png',
                       fit: BoxFit.cover,
                     ),
+
                   ),
                 ),
               );
