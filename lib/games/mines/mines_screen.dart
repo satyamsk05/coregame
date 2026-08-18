@@ -774,7 +774,7 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
         color: const Color(0xFF0F1115),
         borderRadius: BorderRadius.circular(8.0),
         image: const DecorationImage(
-          image: AssetImage('assets/mines/bg_frame.png'),
+          image: AssetImage('assets/mines/mines_bg_frame.png'),
           fit: BoxFit.cover,
         ),
       ),
@@ -809,7 +809,7 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
                 width: 32.0,
                 height: 12.0,
                 child: Image.asset(
-                  'assets/mines/crack_decor.png',
+                  'assets/mines/mines_crack_decor.png',
                   fit: BoxFit.contain,
                 ),
               ),
@@ -821,7 +821,7 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
                 width: 52.0,
                 height: 24.0,
                 child: Image.asset(
-                  'assets/mines/skull_decor.png',
+                  'assets/mines/mines_skull_decor.png',
                   fit: BoxFit.contain,
                 ),
               ),
@@ -1037,7 +1037,7 @@ class _MinesTileWidgetState extends State<MinesTileWidget> {
           child: Container(
             padding: const EdgeInsets.all(5.0),
             child: Image.asset(
-              'assets/mines/bomb.png',
+              'assets/mines/mines_bomb.png',
               fit: BoxFit.contain,
             ),
           ),

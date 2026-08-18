@@ -750,7 +750,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
                     alignment: Alignment.center,
                     children: [
                       Lottie.asset(
-                        'assets/7updown/Comp 1.json',
+                        'assets/7updown/seven_up_down_anim.json',
                         controller: _lottieController,
                         fit: BoxFit.contain,
                         onWarning: (w) {},

@@ -428,7 +428,7 @@ class _TwistGameScreenState extends State<TwistGameScreen>
     return SizedBox(
       width: 64.0,
       height: 64.0,
-      child: Image.asset('assets/twist/G.png',
+      child: Image.asset('assets/twist/ring_inner.png',
           fit: BoxFit.contain,
           errorBuilder: (_, e, __) => const Icon(Icons.diamond, color: Color(0xFF00C853), size: 40.0)),
     );
@@ -483,9 +483,9 @@ class _TwistGameScreenState extends State<TwistGameScreen>
 
   Widget _buildRingLegend() {
     final gems = [
-      ('assets/twist/G.png', 'Inner', _ringActiveColors[0]),
-      ('assets/twist/R.png', 'Middle', _ringActiveColors[1]),
-      ('assets/twist/b.png', 'Outer', _ringActiveColors[2]),
+      ('assets/twist/ring_inner.png', 'Inner', _ringActiveColors[0]),
+      ('assets/twist/ring_middle.png', 'Middle', _ringActiveColors[1]),
+      ('assets/twist/ring_outer.png', 'Outer', _ringActiveColors[2]),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

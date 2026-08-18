@@ -473,7 +473,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Image.asset(
-                            'assets/coinflip/Figure.png',
+                            'assets/coinflip/coin_heads.png',
                             width: 19.0,
                             height: 19.0,
                             errorBuilder: (context, error, stackTrace) => const Icon(Icons.circle, color: Color(0xFFFFD700), size: 19.0),
@@ -514,7 +514,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Image.asset(
-                            'assets/coinflip/Container.png',
+                            'assets/coinflip/coin_tails.png',
                             width: 19.0,
                             height: 19.0,
                             errorBuilder: (context, error, stackTrace) => const Icon(Icons.circle, color: Color(0xFFECEFF1), size: 19.0),
@@ -666,7 +666,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: const Color(0xFF2C2F36), width: 2.0),
         image: const DecorationImage(
-          image: AssetImage('assets/coinflip/bg.png'),
+          image: AssetImage('assets/coinflip/coin_flip_bg.png'),
           fit: BoxFit.cover,
         ),
       ),
@@ -837,7 +837,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
                 ],
               ),
               child: Image.asset(
-                showHeadsFace ? 'assets/coinflip/Figure.png' : 'assets/coinflip/Container.png',
+                showHeadsFace ? 'assets/coinflip/coin_heads.png' : 'assets/coinflip/coin_tails.png',
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
                   // Fallback vector drawing if assets fails to load

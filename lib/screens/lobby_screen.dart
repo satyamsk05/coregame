@@ -75,39 +75,39 @@ class _LobbyScreenState extends State<LobbyScreen> {
   final List<Map<String, String>> _games = [
     {
       'title': 'Keno 12',
-      'image': 'assets/file_00000000563482119a9594084f1f194c.png',
+      'image': 'assets/keno_logo.png',
     },
     {
       'title': 'Coin Flip',
-      'image': 'assets/file_0000000004908211b393b98d4a502080.png',
+      'image': 'assets/coin_flip_logo.png',
     },
     {
       'title': 'Limbo Rocket',
-      'image': 'assets/file_000000004f48821189f8d507b9ab2857.png',
+      'image': 'assets/limbo_logo.png',
     },
     {
       'title': 'Classic Dice',
-      'image': 'assets/file_0000000075348208b1ffe9f8fcf2385b.png',
+      'image': 'assets/dice_logo.png',
     },
     {
       'title': 'Mines',
-      'image': 'assets/file_00000000eb388211a7196e8362206f0c.png',
+      'image': 'assets/mines_logo.png',
     },
     {
       'title': 'Roulette Rush',
-      'image': 'assets/file_0000000043b882118581e6c2651cc980.png',
+      'image': 'assets/roulette_logo.png',
     },
     {
       'title': 'Crash',
-      'image': 'assets/file_0000000059c88211addea865bde5ea3d.png',
+      'image': 'assets/crash_logo.png',
     },
     {
       'title': 'Plinko',
-      'image': 'assets/file_00000000be94821189dc5d6696cf5925.png',
+      'image': 'assets/plinko_logo.png',
     },
     {
       'title': '7 Up Down',
-      'image': 'assets/file_00000000bf5482119cfaa6800c38c2c1.png',
+      'image': 'assets/seven_up_down_logo.png',
     },
     {
       'title': 'HiLo',
@@ -198,7 +198,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/coinflip/bg.png'),
+            image: AssetImage('assets/coinflip/coin_flip_bg.png'),
             fit: BoxFit.cover,
           ),
         ),
