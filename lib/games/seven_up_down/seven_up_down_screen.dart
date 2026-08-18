@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/win_overlay_card.dart';
+import '../../shared/widgets/win_overlay_card.dart';
 import 'package:lottie/lottie.dart';
 
 class SevenUpDownGameScreen extends StatefulWidget {

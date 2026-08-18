@@ -1,22 +1,31 @@
 import 'package:flutter/material.dart';
-import '../widgets/phone_mockup_wrapper.dart';
+import '../shared/widgets/phone_mockup_wrapper.dart';
 import '../utils/sound_manager.dart';
-import 'welcome_screen.dart';
-import 'login_screen.dart';
-import 'signup_screen.dart';
+
+// Auth screens
+import '../auth/screens/welcome_screen.dart';
+import '../auth/screens/login_screen.dart';
+import '../auth/screens/signup_screen.dart';
+
+// Lobby
 import 'lobby_screen.dart';
-import 'keno_game_screen.dart';
-import 'coin_flip_game_screen.dart';
-import 'limbo_game_screen.dart';
-import 'dice_game_screen.dart';
-import 'roulette_game_screen.dart';
-import 'mines_game_screen.dart';
-import 'hilo_game_screen.dart';
-import 'seven_up_down_game_screen.dart';
-import 'plinko_game_screen.dart';
-import 'game_loading_screen.dart';
-import 'crash_game_screen.dart';
-import 'twist_game_screen.dart';
+
+// Shared
+import '../shared/widgets/game_loading_screen.dart';
+
+// Games
+import '../games/keno/keno_screen.dart';
+import '../games/coin_flip/coin_flip_screen.dart';
+import '../games/limbo/limbo_screen.dart';
+import '../games/dice/dice_screen.dart';
+import '../games/roulette/roulette_screen.dart';
+import '../games/mines/mines_screen.dart';
+import '../games/hilo/hilo_screen.dart';
+import '../games/seven_up_down/seven_up_down_screen.dart';
+import '../games/andar_bahar/andar_bahar_screen.dart';
+import '../games/plinko/plinko_screen.dart';
+import '../games/crash/crash_screen.dart';
+import '../games/twist/twist_screen.dart';
 
 class PhoneAppShell extends StatefulWidget {
   const PhoneAppShell({super.key});
@@ -196,6 +205,16 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
+      case 'andar_bahar':
+        screenWidget = AndarBaharGameScreen(
+          key: const ValueKey('andar_bahar'),
+          balance: _balance,
+          soundOn: _soundOn,
+          musicOn: _musicOn,
+          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBackPressed: () => setState(() => _currentScreen = 'lobby'),
+        );
+        break;
       case 'plinko':
         screenWidget = PlinkoGameScreen(
           key: const ValueKey('plinko'),
@@ -279,4 +298,3 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
     );
   }
 }
-

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../widgets/win_lose_toast.dart';
-import '../widgets/win_overlay_card.dart';
+import '../../shared/widgets/win_lose_toast.dart';
+import '../../shared/widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:core_game/utils/sound_helper.dart';
-import '../utils/sound_manager.dart';
+import '../../utils/sound_manager.dart';
 
 
 class DiceGameScreen extends StatefulWidget {

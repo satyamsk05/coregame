@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_fonts: ^6.2.0
   video_player: ^2.9.2
+  lottie: ^3.1.2
 
 dev_dependencies:
   flutter_test:
@@ -65,6 +66,7 @@ flutter:
     - assets/coinflip/
     - assets/mines/
     - assets/bg_video.mp4
+    - assets/7updown/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
