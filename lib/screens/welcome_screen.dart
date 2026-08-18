@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:video_player/video_player.dart';
 import '../widgets/game_button.dart';
 import '../widgets/animated_character.dart';
+import '../widgets/bounceable.dart';
 import '../utils/sound_helper.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
@@ -26,10 +26,6 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen>
     with SingleTickerProviderStateMixin {
-  // ── Video ───────────────────────────────────────────────────────────────
-  late VideoPlayerController _videoCtrl;
-  bool _videoReady = false;
-
   // ── Entry animation ─────────────────────────────────────────────────────
   late AnimationController _entryCtrl;
   late Animation<double> _fadeAnim;
@@ -47,28 +43,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             begin: const Offset(0, 0.05), end: Offset.zero)
         .animate(CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic));
 
-    // Video setup
-    _videoCtrl = VideoPlayerController.asset('assets/bg_video.mp4')
-      ..setLooping(true)
-      ..setVolume(0.0) // mute — pure visual
-      ..initialize().then((_) {
-        if (mounted) {
-          setState(() => _videoReady = true);
-          _videoCtrl.play();
-          _entryCtrl.forward();
-        }
-      });
+    _entryCtrl.forward();
   }
 
   @override
   void dispose() {
     stopWelcomeMusic();
-    _videoCtrl.dispose();
     _entryCtrl.dispose();
     super.dispose();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,20 +60,22 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Full-screen video background ───────────────────────────────
-          if (_videoReady)
-            FittedBox(
+          // ── Full-screen background image instead of video ────────────────
+          Positioned.fill(
+            child: Image.asset(
+              'assets/startlogo.png',
               fit: BoxFit.cover,
-              child: SizedBox(
-                width: _videoCtrl.value.size.width,
-                height: _videoCtrl.value.size.height,
-                child: VideoPlayer(_videoCtrl),
-              ),
-            )
-          else
-            Container(color: const Color(0xFF060810)),
+            ),
+          ),
 
-          // ── Gradient overlays (darken video so UI is readable) ─────────
+          // ── Dark tint overlay ───────────────────────────────────────────
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.4),
+            ),
+          ),
+
+          // ── Gradient overlays (darken image so UI is readable) ─────────
           // Deep dark vignette
           Container(
             decoration: const BoxDecoration(
@@ -150,15 +136,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         : _buildPortraitLayout(context);
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Logo
-  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildLogo() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Glow pill behind text
         Stack(
           alignment: Alignment.center,
           children: [
@@ -200,7 +182,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           ],
         ),
         const SizedBox(height: 10.0),
-        // Neon gradient underline bar
         Container(
           width: 180,
           height: 4,
@@ -233,9 +214,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Buttons
-  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildButtons(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -310,6 +288,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     onMusicToggled: (_) {},
                     onActiveGatewayChanged: (_) {},
                     onBankDetailsChanged: (_, __, ___, ____, _____) {},
+                    onDepositPressed: () {},
                   ),
                 ),
               );
@@ -327,7 +306,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     required VoidCallback onTap,
     BoxBorder? border,
   }) {
-    return GestureDetector(
+    return Bounceable(
       onTap: onTap,
       child: Container(
         width: 260,
@@ -360,13 +339,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Layouts
-  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildLandscapeLayout(BuildContext context) {
     return Row(
       children: [
-        // Left: Character + Logo
         Expanded(
           flex: 4,
           child: Center(
@@ -380,7 +355,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             ),
           ),
         ),
-        // Right: Buttons
         Expanded(
           flex: 3,
           child: Center(

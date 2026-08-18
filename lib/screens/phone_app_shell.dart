@@ -7,8 +7,9 @@ import '../auth/screens/welcome_screen.dart';
 import '../auth/screens/login_screen.dart';
 import '../auth/screens/signup_screen.dart';
 
-// Lobby
+// Lobby & Shop
 import 'lobby_screen.dart';
+import 'deposit_screen.dart';
 
 // Shared
 import '../shared/widgets/game_loading_screen.dart';
@@ -68,6 +69,10 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
             SoundManager.playClick();
             setState(() => _currentScreen = 'welcome');
           },
+          onLoginSuccess: () {
+            SoundManager.playClick();
+            setState(() => _currentScreen = 'lobby');
+          },
         );
         break;
       case 'signup':
@@ -97,6 +102,10 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
             SoundManager.playClick();
             setState(() => _currentScreen = 'welcome');
           },
+          onDepositPressed: () {
+            SoundManager.playClick();
+            setState(() => _currentScreen = 'deposit');
+          },
           onPlayGame: (gameName) {
             SoundManager.playClick();
             setState(() {
@@ -122,6 +131,23 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
               _bankName = bank;
               _bankAccountNumber = acc;
             });
+          },
+        );
+        break;
+      case 'deposit':
+        screenWidget = DepositScreen(
+          key: const ValueKey('deposit'),
+          balance: _balance,
+          totalDeposited: _totalDeposited,
+          vipLevel: _vipLevel,
+          activeGateway: _activeGateway,
+          onBalanceChanged: (val) => setState(() => _balance = val),
+          onTotalDepositedChanged: (val) => setState(() => _totalDeposited = val),
+          onVipLevelChanged: (val) => setState(() => _vipLevel = val),
+          onActiveGatewayChanged: (val) => setState(() => _activeGateway = val),
+          onBackPressed: () {
+            SoundManager.playClick();
+            setState(() => _currentScreen = 'lobby');
           },
         );
         break;

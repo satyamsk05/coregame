@@ -1,0 +1,2765 @@
+/* Screenshot_2026-08-14-16-48-32-94_05015927ee89437d63712895fb528c3b 1 */
+
+position: absolute;
+width: 1027px;
+height: 460px;
+left: -11px;
+top: 15px;
+
+background: url(Screenshot_2026-08-14-16-48-32-94_05015927ee89437d63712895fb528c3b.jpg);
+
+
+/* Screenshot_2026-08-14-16-48-32-94_05015927ee89437d63712895fb528c3b 2 */
+
+position: absolute;
+width: 1027px;
+height: 460px;
+left: -11px;
+top: 15px;
+
+background: url(Screenshot_2026-08-14-16-48-32-94_05015927ee89437d63712895fb528c3b.jpg);
+
+
+/* Rectangle 1 */
+
+position: absolute;
+width: 1029px;
+height: 132px;
+left: -30px;
+top: 405px;
+
+background: #1E0733;
+
+
+/* Rectangle 2 */
+
+position: absolute;
+width: 1092px;
+height: 87px;
+left: -42px;
+top: 0px;
+
+background: #1E0733;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: flex-end;
+align-items: center;
+padding: 0px 12px;
+
+position: absolute;
+width: 24px;
+height: 36px;
+left: 1045px;
+top: 27px;
+
+
+
+/* Button */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+display: none;
+width: 40px;
+height: 40px;
+
+background: #3A4142;
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon */
+
+width: 24px;
+height: 24px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: 9.38%;
+right: 17.71%;
+top: 20.37%;
+bottom: 6.53%;
+
+background: #FFFFFF;
+
+
+/* Vector */
+
+position: absolute;
+left: 63.39%;
+right: 5.87%;
+top: 9.38%;
+bottom: 59.86%;
+
+background: #FFFFFF;
+
+
+/* Container:margin */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 0px 0px 12px;
+
+width: 420px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+
+width: 408px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 2px;
+
+width: 264px;
+height: 40px;
+
+background: #292D2E;
+border: 1.77778px solid #3A4142;
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container:margin */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 4px 0px 0px;
+
+width: 255.13px;
+height: 32.44px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 191;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+
+width: 186.79px;
+height: 32.44px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Image:margin */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 4px;
+
+width: 32px;
+height: 24px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Image */
+
+width: 24px;
+height: 24px;
+
+background: url(image.png);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+
+width: 134.79px;
+height: 21px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 135;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 36px;
+height: 21px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* ₹0.91 */
+
+width: 36px;
+height: 21px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 21px;
+/* identical to box height, or 150% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon:transform */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Icon */
+
+position: absolute;
+width: 20px;
+height: 20px;
+left: 0px;
+top: 0px;
+
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: -2.5%;
+right: 60.57%;
+top: 29.03%;
+bottom: 5.97%;
+
+background: #B3BEC1;
+transform: rotate(-90deg);
+
+
+/* Button:align */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: flex-end;
+align-items: flex-start;
+padding: 0px;
+
+width: 1.32px;
+height: 32px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Button */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px 8px;
+
+width: 68px;
+height: 32px;
+
+background: #24EE89;
+border-radius: 6px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 0px;
+
+width: 52px;
+height: 21px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Deposit */
+
+width: 52px;
+height: 21px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 21px;
+/* identical to box height, or 150% */
+text-align: center;
+
+color: #000000;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container:margin */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 0px 0px 12px;
+
+width: 52px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Button */
+
+width: 40px;
+height: 40px;
+
+background: #3A4142;
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+position: absolute;
+width: 40px;
+height: 40px;
+left: 0px;
+top: 0px;
+
+
+
+/* Icon */
+
+width: 24px;
+height: 24px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: 13.81%;
+right: 13.56%;
+top: 13.81%;
+bottom: 58.48%;
+
+background: #B3BEC1;
+
+
+/* Vector */
+
+position: absolute;
+left: 19.37%;
+right: 54.31%;
+top: 46.16%;
+bottom: 15.19%;
+
+background: #B3BEC1;
+
+
+/* Vector */
+
+position: absolute;
+left: 54.9%;
+right: 18.79%;
+top: 46.15%;
+bottom: 15.19%;
+
+background: #B3BEC1;
+
+
+/* Container:margin */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 0px 0px 12px;
+
+width: 92px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Button */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 3px;
+
+position: absolute;
+width: 44px;
+height: 44px;
+left: 18px;
+top: 22px;
+
+background: #3A4142;
+border-radius: 9999px;
+
+
+/* Image (avatar) */
+
+position: absolute;
+width: 38px;
+height: 38px;
+left: 21px;
+top: 25px;
+
+background: url(image);
+border-radius: 9999px;
+
+
+/* Rectangle 3 */
+
+position: absolute;
+width: 367px;
+height: 345px;
+left: -141px;
+top: 74px;
+
+background: #1E0733;
+
+
+/* Link (BC.GAME: Crypto Casino Games & Casino Slot Games - Crypto Gambling) */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 8px 0px 0px;
+isolation: isolate;
+
+position: absolute;
+width: 121px;
+height: 40px;
+left: 860px;
+top: 419px;
+
+background: #3A4142;
+border-radius: 8px;
+
+
+/* Placeholder for Container */
+
+width: 40px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Text */
+
+width: 61.53px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+z-index: 1;
+
+
+/* VIP */
+
+position: absolute;
+width: 23px;
+height: 20px;
+left: 0px;
+top: 0.5px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #24EE89;
+
+
+
+/* Club */
+
+position: absolute;
+width: 31px;
+height: 20px;
+left: 27px;
+top: 0.5px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #FFFFFF;
+
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+position: absolute;
+width: 46px;
+height: 46px;
+left: -3px;
+top: -3px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+z-index: 2;
+
+
+/* Container:transform */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+width: 36.8px;
+height: 36.8px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+position: absolute;
+width: 27.6px;
+height: 27.6px;
+left: 4.6px;
+top: 4.6px;
+
+background: url(image.png);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Link (BC.GAME: Crypto Casino Games & Casino Slot Games - Crypto Gambling) */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 8px 0px 0px;
+isolation: isolate;
+
+position: absolute;
+width: 121px;
+height: 40px;
+left: 860px;
+top: 419px;
+
+background: #3A4142;
+border-radius: 8px;
+
+
+/* Placeholder for Container */
+
+width: 40px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Text */
+
+width: 61.53px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+z-index: 1;
+
+
+/* VIP */
+
+position: absolute;
+width: 23px;
+height: 20px;
+left: 0px;
+top: 0.5px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #24EE89;
+
+
+
+/* Club */
+
+position: absolute;
+width: 31px;
+height: 20px;
+left: 27px;
+top: 0.5px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #FFFFFF;
+
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+position: absolute;
+width: 46px;
+height: 46px;
+left: -3px;
+top: -3px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+z-index: 2;
+
+
+/* Container:transform */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+width: 36.8px;
+height: 36.8px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+position: absolute;
+width: 27.6px;
+height: 27.6px;
+left: 4.6px;
+top: 4.6px;
+
+background: url(image.png);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Link (BC.GAME: Crypto Casino Games & Casino Slot Games - Crypto Gambling) */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 8px 0px 0px;
+isolation: isolate;
+
+position: absolute;
+width: 115px;
+height: 40px;
+left: 735px;
+top: 419px;
+
+background: #3A4142;
+border-radius: 8px;
+
+
+/* Placeholder for Container */
+
+width: 40px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 52px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+z-index: 1;
+
+
+/* Referral */
+
+width: 52px;
+height: 20px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+position: absolute;
+width: 46px;
+height: 46px;
+left: -3px;
+top: -3px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+z-index: 2;
+
+
+/* Container:transform */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+width: 36.8px;
+height: 36.8px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+position: absolute;
+width: 27.6px;
+height: 27.6px;
+left: 4.6px;
+top: 4.6px;
+
+background: url(image.png);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Link (BC.GAME: Crypto Casino Games & Casino Slot Games - Crypto Gambling) */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 8px 0px 0px;
+isolation: isolate;
+
+position: absolute;
+width: 115px;
+height: 40px;
+left: 735px;
+top: 419px;
+
+background: #3A4142;
+border-radius: 8px;
+
+
+/* Placeholder for Container */
+
+width: 40px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 52px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+z-index: 1;
+
+
+/* Referral */
+
+width: 52px;
+height: 20px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+position: absolute;
+width: 46px;
+height: 46px;
+left: -3px;
+top: -3px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+z-index: 2;
+
+
+/* Container:transform */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+width: 36.8px;
+height: 36.8px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+position: absolute;
+width: 27.6px;
+height: 27.6px;
+left: 4.6px;
+top: 4.6px;
+
+background: url(image.png);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+isolation: isolate;
+
+position: absolute;
+width: 135px;
+height: 40px;
+left: 531px;
+top: 419px;
+
+background: #3A4142;
+border-radius: 8px;
+
+
+/* Placeholder for Container */
+
+width: 40px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 84px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+z-index: 1;
+
+
+/* Live Support */
+
+width: 84px;
+height: 20px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+position: absolute;
+width: 46px;
+height: 46px;
+left: -3px;
+top: -3px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+z-index: 2;
+
+
+/* Icon */
+
+width: 27.6px;
+height: 27.6px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: 11.57%;
+right: 11.57%;
+top: 15.55%;
+bottom: 15.55%;
+
+background: #B3BEC1;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+isolation: isolate;
+
+position: absolute;
+width: 135px;
+height: 40px;
+left: 531px;
+top: 419px;
+
+background: #3A4142;
+border-radius: 8px;
+
+
+/* Placeholder for Container */
+
+width: 40px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 84px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+z-index: 1;
+
+
+/* Live Support */
+
+width: 84px;
+height: 20px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+position: absolute;
+width: 46px;
+height: 46px;
+left: -3px;
+top: -3px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+z-index: 2;
+
+
+/* Icon */
+
+width: 27.6px;
+height: 27.6px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: 11.57%;
+right: 11.57%;
+top: 15.55%;
+bottom: 15.55%;
+
+background: #B3BEC1;
+
+
+/* Link:margin */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 4px 0px 0px;
+
+position: absolute;
+width: 195.11px;
+height: 44px;
+left: 28px;
+top: 214px;
+
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 8px 0px 0px;
+
+width: 195.11px;
+height: 40px;
+
+background: #323738;
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+width: 40px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container:transform */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+width: 32px;
+height: 32px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+position: absolute;
+width: 24px;
+height: 24px;
+left: 4px;
+top: 4px;
+
+background: url(image.png);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 73px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Hot Games */
+
+width: 73px;
+height: 20px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link:margin */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 4px 0px 0px;
+
+position: absolute;
+width: 195.11px;
+height: 44px;
+left: 27px;
+top: 303px;
+
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 8px 0px 0px;
+
+width: 195.11px;
+height: 40px;
+
+background: #323738;
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+width: 40px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container:transform */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+width: 32px;
+height: 32px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+position: absolute;
+width: 24px;
+height: 24px;
+left: 4px;
+top: 4px;
+
+background: url(image.png);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 34px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Slots */
+
+width: 34px;
+height: 20px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link:margin */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 4px 0px 0px;
+
+position: absolute;
+width: 195.11px;
+height: 44px;
+left: 27px;
+top: 347px;
+
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 8px 0px 0px;
+
+width: 195.11px;
+height: 40px;
+
+background: #323738;
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+width: 40px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container:transform */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+width: 32px;
+height: 32px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+position: absolute;
+width: 24px;
+height: 24px;
+left: 4px;
+top: 4px;
+
+background: url(image.png);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 87px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Game Shows */
+
+width: 87px;
+height: 20px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 16px;
+gap: 4px;
+
+position: absolute;
+width: 113px;
+height: 36px;
+left: 32px;
+top: 423px;
+
+background: #3A4142;
+border-radius: 8px;
+
+
+/* Icon */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: 12.5%;
+right: 12.58%;
+top: 18.43%;
+bottom: 18.36%;
+
+background: #FFFFFF;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 64.07px;
+height: 21px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Withdraw */
+
+width: 63px;
+height: 21px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 21px;
+/* identical to box height, or 150% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 16px;
+gap: 4px;
+
+position: absolute;
+width: 113px;
+height: 36px;
+left: 32px;
+top: 423px;
+
+background: #3A4142;
+border-radius: 8px;
+
+
+/* Icon */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: 12.5%;
+right: 12.58%;
+top: 18.43%;
+bottom: 18.36%;
+
+background: #FFFFFF;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 64.07px;
+height: 21px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Withdraw */
+
+width: 63px;
+height: 21px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 21px;
+/* identical to box height, or 150% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link (BC.GAME: Crypto Casino Games & Casino Slot Games - Crypto Gambling) */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 16px;
+gap: 4px;
+
+position: absolute;
+width: 125px;
+height: 39px;
+left: 394px;
+top: 420px;
+
+background: #3A4142;
+border-radius: 8px;
+
+
+/* Icon */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: 12.5%;
+right: 12.5%;
+top: 12.5%;
+bottom: 12.51%;
+
+background: #FFFFFF;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 59.26px;
+height: 21px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Vault Pro */
+
+width: 61px;
+height: 21px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 21px;
+/* identical to box height, or 150% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link (BC.GAME: Crypto Casino Games & Casino Slot Games - Crypto Gambling) */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 16px;
+gap: 4px;
+
+position: absolute;
+width: 125px;
+height: 39px;
+left: 394px;
+top: 420px;
+
+background: #3A4142;
+border-radius: 8px;
+
+
+/* Icon */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: 12.5%;
+right: 12.5%;
+top: 12.5%;
+bottom: 12.51%;
+
+background: #FFFFFF;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 59.26px;
+height: 21px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Vault Pro */
+
+width: 61px;
+height: 21px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 21px;
+/* identical to box height, or 150% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link (BC.GAME: Crypto Casino Games & Casino Slot Games - Crypto Gambling) */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 16px;
+gap: 4px;
+
+position: absolute;
+width: 118px;
+height: 36px;
+left: 150px;
+top: 423px;
+
+background: #3A4142;
+border-radius: 8px;
+
+
+/* Vector */
+
+width: 15px;
+height: 15px;
+
+background: #FFFFFF;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Bet History */
+
+width: 75px;
+height: 21px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 21px;
+/* identical to box height, or 150% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Link (BC.GAME: Crypto Casino Games & Casino Slot Games - Crypto Gambling) */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 16px;
+gap: 4px;
+
+position: absolute;
+width: 118px;
+height: 36px;
+left: 150px;
+top: 423px;
+
+background: #3A4142;
+border-radius: 8px;
+
+
+/* Vector */
+
+width: 15px;
+height: 15px;
+
+background: #FFFFFF;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Bet History */
+
+width: 75px;
+height: 21px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 21px;
+/* identical to box height, or 150% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Link:margin */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 4px 0px 0px;
+
+position: absolute;
+width: 195.11px;
+height: 44px;
+left: 27px;
+top: 258px;
+
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 8px 0px 0px;
+
+width: 195.11px;
+height: 40px;
+
+background: #323738;
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+width: 40px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container:transform */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+width: 32px;
+height: 32px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+position: absolute;
+width: 24px;
+height: 24px;
+left: 4px;
+top: 4px;
+
+background: url(image.png);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 93px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* New Releases */
+
+width: 93px;
+height: 20px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 8px 0px 0px;
+
+position: absolute;
+width: 195px;
+height: 82px;
+left: 29px;
+top: 90px;
+
+background: #323738;
+border-radius: 8px;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+width: 40px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 77px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 8px 0px 0px;
+
+position: absolute;
+width: 195px;
+height: 82px;
+left: 29px;
+top: 100px;
+
+background: #323738;
+border-radius: 8px;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+width: 40px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 77px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* . */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+isolation: isolate;
+
+position: relative;
+width: 80px;
+height: 40px;
+
+background: #3A4142;
+border-radius: 8px;
+
+
+/* Button */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+width: 40px;
+height: 40px;
+
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Container:transform */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+width: 32px;
+height: 32px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+position: absolute;
+width: 25.6px;
+height: 25.6px;
+left: 3.2px;
+top: 3.2px;
+
+background: url(image.png);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Placeholder for Button */
+
+width: 40px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+z-index: 1;
+
+
+/* Container */
+
+position: absolute;
+width: 1px;
+height: 24px;
+left: 40px;
+top: 8px;
+
+background: rgba(228, 234, 240, 0.098);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+z-index: 2;
+
+
+/* Button */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+isolation: isolate;
+
+position: absolute;
+width: 40px;
+height: 40px;
+left: 40px;
+top: 0px;
+
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 3;
+flex-grow: 0;
+z-index: 3;
+
+
+/* Container:transform */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+width: 32px;
+height: 32px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Container */
+
+position: absolute;
+width: 25.6px;
+height: 25.6px;
+left: 3.2px;
+top: 3.2px;
+
+background: url(image.png);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Container */
+
+position: absolute;
+width: 8px;
+height: 8px;
+left: 32px;
+top: 0px;
+
+background: #24EE89;
+border-radius: 9999px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+z-index: 1;
+
+
+/* . */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 4px 0px 0px;
+
+position: relative;
+width: 195.11px;
+height: 44px;
+
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 8px 0px 0px;
+
+width: 195.11px;
+height: 40px;
+
+background: #323738;
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+width: 40px;
+height: 40px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container:transform */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+width: 32px;
+height: 32px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Container */
+
+position: absolute;
+width: 24px;
+height: 24px;
+left: 6px;
+top: 6px;
+
+background: url(image.png);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 46px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Recent */
+
+width: 46px;
+height: 20px;
+
+font-family: 'avertastd';
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* . */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 16px 0px 0px;
+isolation: isolate;
+
+position: relative;
+width: 68px;
+height: 60px;
+
+
+
+/* Container */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+
+position: absolute;
+width: 160px;
+height: 59.11px;
+left: -150px;
+top: 0px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+z-index: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+width: 144px;
+height: 32px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Image (logo) */
+
+width: 144px;
+height: 32px;
+
+background: url(image.png);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;

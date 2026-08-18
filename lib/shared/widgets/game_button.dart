@@ -78,7 +78,11 @@ class _GameButtonState extends State<GameButton> with SingleTickerProviderStateM
           widget.onPressed();
         },
         onTapCancel: () => setState(() => _isPressed = false),
-        child: AnimatedContainer(
+        child: AnimatedScale(
+          scale: _isPressed ? 0.94 : 1.0,
+          duration: const Duration(milliseconds: 80),
+          curve: Curves.easeOut,
+          child: AnimatedContainer(
           duration: const Duration(milliseconds: 60),
           width: widget.width,
           height: widget.height + shadowHeight,
@@ -165,6 +169,7 @@ class _GameButtonState extends State<GameButton> with SingleTickerProviderStateM
               ),
             ],
           ),
+        ),
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../shared/widgets/bounceable.dart';
 import '../../shared/widgets/win_lose_toast.dart';
 import '../../shared/widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -748,7 +749,7 @@ class _DiceGameScreenState extends State<DiceGameScreen>
             if (!isLandscape) const SizedBox(height: 14.0),
 
             // Play Bet Button
-            GestureDetector(
+            Bounceable(
               onTap: _isPlaying ? null : _playDiceRoll,
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 11.0),
@@ -836,7 +837,7 @@ class _DiceGameScreenState extends State<DiceGameScreen>
             if (!isLandscape) const SizedBox(height: 12.0),
 
             // Start Auto Bet Button
-            GestureDetector(
+            Bounceable(
               onTap: _toggleAutoBet,
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 11.0),
@@ -889,7 +890,7 @@ class _DiceGameScreenState extends State<DiceGameScreen>
             if (!isLandscape) const SizedBox(height: 12.0),
 
             // Start Strategy Button
-            GestureDetector(
+            Bounceable(
               onTap: _toggleAutoBet,
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 11.0),
@@ -976,7 +977,7 @@ class _DiceGameScreenState extends State<DiceGameScreen>
 
   Widget _buildTabButton(String label, bool isActive) {
     return Expanded(
-      child: GestureDetector(
+      child: Bounceable(
         onTap: () {
           if (_isAutoRunning || _isPlaying) return;
           setState(() {
@@ -1011,7 +1012,7 @@ class _DiceGameScreenState extends State<DiceGameScreen>
   }
 
   Widget _buildBetActionTextButton(String label, VoidCallback onTap) {
-    return GestureDetector(
+    return Bounceable(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
@@ -1029,7 +1030,7 @@ class _DiceGameScreenState extends State<DiceGameScreen>
   }
 
   Widget _buildBetActionIconButton(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
+    return Bounceable(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
@@ -1045,7 +1046,7 @@ class _DiceGameScreenState extends State<DiceGameScreen>
 
   Widget _buildFlatQuickBetButton(String label, VoidCallback onTap) {
     return Expanded(
-      child: GestureDetector(
+      child: Bounceable(
         onTap: onTap,
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 2.0),

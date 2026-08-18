@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../shared/widgets/bounceable.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../shared/widgets/win_overlay_card.dart';
 import 'package:lottie/lottie.dart';

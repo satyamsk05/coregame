@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../shared/widgets/bounceable.dart';
 import '../../shared/widgets/win_lose_toast.dart';
 import '../../shared/widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -536,7 +537,7 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
             const SizedBox(height: 8.0),
 
             // Main Play / Cash Out Button (Coin Flip Style: Green Bet / Purple Cashout with White Text)
-            GestureDetector(
+            Bounceable(
               onTap: () {
                 if (_isPlaying) {
                   _cashOut();

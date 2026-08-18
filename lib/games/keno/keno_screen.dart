@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../shared/widgets/bounceable.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../shared/widgets/win_overlay_card.dart';
 
@@ -899,7 +900,7 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
                     const SizedBox(height: 12.0),
 
                     // Start Auto Bet Button
-                    GestureDetector(
+                    Bounceable(
                       onTap: _toggleAutoBet,
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 11.0),
@@ -960,7 +961,7 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
                     const SizedBox(height: 12.0),
 
                     // Start Strategy Button
-                    GestureDetector(
+                    Bounceable(
                       onTap: _toggleAutoBet,
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 11.0),
@@ -1065,7 +1066,7 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
 
   Widget _buildTabButton(String label, bool isActive) {
     return Expanded(
-      child: GestureDetector(
+      child: Bounceable(
         onTap: () {
           if (_isAutoRunning || _isDrawing) return;
           setState(() {
