@@ -28,6 +28,7 @@ class FlyingChip {
   final AnimationController controller;
   final int value;
   final bool isStar;
+  final bool addToTable;
 
   FlyingChip({
     required this.startX,
@@ -39,6 +40,7 @@ class FlyingChip {
     required this.controller,
     required this.value,
     this.isStar = false,
+    this.addToTable = true,
   });
 }
 

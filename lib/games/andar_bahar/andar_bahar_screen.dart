@@ -320,15 +320,34 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
             (_mockBetsTie[playerKey] ?? 0) + betValue;
       }
 
-      _triggerChipFlight(
-        spot: spot,
-        startX: startX,
-        startY: startY,
-        chipColor: ChipSelectorWidget.getChipColor(betValue.toInt()),
-        chipLabel: ChipSelectorWidget.getChipText(betValue.toInt()),
-        chipValue: betValue.toInt(),
-        isStar: playerKey == 'R0',
-      );
+      if (playerKey == 'R0') {
+        for (int i = 0; i < 8; i++) {
+          Future.delayed(Duration(milliseconds: i * 60), () {
+            if (!mounted) return;
+            _triggerChipFlight(
+              spot: spot,
+              startX: startX,
+              startY: startY,
+              chipColor: ChipSelectorWidget.getChipColor(betValue.toInt()),
+              chipLabel: ChipSelectorWidget.getChipText(betValue.toInt()),
+              chipValue: betValue.toInt(),
+              isStar: true,
+              addToTable: i == 7,
+            );
+          });
+        }
+      } else {
+        _triggerChipFlight(
+          spot: spot,
+          startX: startX,
+          startY: startY,
+          chipColor: ChipSelectorWidget.getChipColor(betValue.toInt()),
+          chipLabel: ChipSelectorWidget.getChipText(betValue.toInt()),
+          chipValue: betValue.toInt(),
+          isStar: false,
+          addToTable: true,
+        );
+      }
     }
   }
 
@@ -643,6 +662,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
     required String chipLabel,
     required int chipValue,
     bool isStar = false,
+    bool addToTable = true,
   }) {
     double endX = 0.5;
     double endY = 0.5;
@@ -670,6 +690,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       ),
       value: chipValue,
       isStar: isStar,
+      addToTable: addToTable,
     );
 
     setState(() => _flyingChips.add(newChip));
@@ -678,14 +699,16 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       if (!mounted) return;
       setState(() {
         _flyingChips.remove(newChip);
-        _tableChips.add(TableChip(
-          x: newChip.endX,
-          y: newChip.endY,
-          color: newChip.color,
-          label: newChip.label,
-          value: newChip.value,
-          spot: spot,
-        ));
+        if (addToTable) {
+          _tableChips.add(TableChip(
+            x: newChip.endX,
+            y: newChip.endY,
+            color: newChip.color,
+            label: newChip.label,
+            value: newChip.value,
+            spot: spot,
+          ));
+        }
       });
       newChip.controller.dispose();
     });
