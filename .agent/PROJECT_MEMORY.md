@@ -129,13 +129,12 @@ The app references multiple types of assets in [pubspec.yaml](file:///Users/saty
 19. **Lobby Screen Profile Customization**: Tapping the top-left user avatar in the lobby screen opens a profile customization dialog. The NICKNAME section displays the dynamic nickname (defaults to `superhit`) and includes an `EDIT` button that opens a text input dialog to save a new name. The `EDIT AVATAR` button opens a grid of all 7 available PNG files (`assets/userprofile/user1.png` to `user7.png`). Selecting any avatar updates the profile image synchronously in the lobby header and inside the active gameplay screens (Andar Bahar and Seven Up Down).
 20. **Andar Bahar Tie Bet Panel Layout**: Adjusted font sizes inside `TieBetPanel` to `9.0` (label), `14.0` (title), and `7.5` (status) to prevent a vertical RenderFlex layout overflow exception on landscape viewports.
 21. **Welcome and Login Screens Redesign**: The Welcome and Login screens backgrounds have been upgraded from static images to the dynamic `NightForestBackground` widget (gradient sky, drifting stars, vector mountains/trees silhouette), matching the loading screen theme.
-
-
-
-
-
-
-
+22. **Grand Master Star Badge**: A gold-to-orange gradient `Icons.star` badge is overlaid using `Positioned(top: -8.0)` directly above the Grand Master (`name == 'Master'`, right side index 0) player avatar in `player_widgets.dart`. The parent `Stack` uses `clipBehavior: Clip.none` to allow the badge to render above the card boundary.
+23. **Grand Master Flying Star Trail Animation**: When the Grand Master places a bet (`playerKey == 'R0'`), 20 stars are spawned in sequence (45ms delay each). Stars decrease in size from 24px → 4px. All 20 target the same pre-computed `fixedEndX/fixedEndY` landing point, forming a single comet-tail line. Each star originates from a **different edge of the Grand Master profile card** using 8-direction offset cycling (top/top-right/right/bottom-right/bottom/bottom-left/left/top-left) from `profileCX=0.96, profileCY=0.22`. Star Y-path follows a parabolic arc (`arcLift = -0.18 × 4 × t × (1-t)`). Only the 20th star has `addToTable: true`; all others dissolve on arrival.
+24. **`FlyingChip` Model Fields**: `isStar` (bool, default false), `addToTable` (bool, default true), `starSize` (double, default 18.0), `fixedEndX`/`fixedEndY` (optional doubles) added to `_triggerChipFlight`. When `fixedEndX` is provided, random endpoint generation is skipped.
+25. **Active Users Widget — True Bottom-Right Corner**: Moved from `right: w*0.15` → `right: w*0.02`. Mock bet coin origin updated to `startX: 0.98, startY: 0.88` to match the widget's actual screen position.
+26. **Player Profile Sizes (+3%)**: Mock player avatars: `36px → 37px`, username font `7.0 → 7.2px`. User own profile: avatar `36 → 37 → 38px`, icon `21 → 22 → 23px`, name/balance font `7.5 → 7.7 → 7.9px`.
+27. **Grand Master Bet Panel Glow Star**: `_masterBetSpots` (a `Set<String>`) tracks which bet spots (`'andar'`, `'bahar'`, `'tie'`) the Grand Master has placed a bet on in the current round. It is cleared in `_startBettingPhase`. Both `SideBetPanel` and `TieBetPanel` now accept a `hasMasterBet` boolean. When true, a pulsating gold→orange gradient `Icons.star` with an orange glow `BoxShadow` replaces the static dim `star_border` icon. The glow animation uses an internal `AnimationController` (900ms repeat reverse) with opacity/size pulsing from `0.4 → 1.0`. Star position: bottom-left/bottom-right of `SideBetPanel`, top-right of `TieBetPanel`.
 
 
 
