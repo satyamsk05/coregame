@@ -85,6 +85,7 @@ Do not modify these files unless requested, as they are not imported by the main
 *   **User Avatar Synchronization**: The lobby screen user avatar (top-left header circular profile) is synchronized with the active gameplay avatar (`assets/userprofile/user7.png`) so they display the same image.
 *   **App Icon / Logo**: The app launcher logo (`assets/newapklogo.png`) has 12% rounded corners with alpha channels correctly removed on iOS to match standard platform specifications and avoid store warnings.
 *   **Welcome Screen Logo & Character**: The floating space droid character has been removed. The 'COREGAME' text logo has been redesigned to use a 3D gold-to-orange gradient display font (via `ShaderMask`) with a heavy black outline/shadow, and a tilted cowboy hat asset (`assets/cowboy_hat.png`) positioned dynamically resting on top of the first letter 'C' to match the forest night cowboy loading screen theme.
+*   **Andar Bahar 15s Timer & Win Flow**: The 10-second Lottie timers have been replaced with a custom-built, cartoonish capsule timer matching the reference mock-up (with a monospaced "00:SS" readout, ticking clock hands, and red color alerts when time is low). The betting phase is set to 15 seconds. On round completion, the winning sequence executes a 2-phase chip animation: first, chips on losing tables fly to the winning table (1 second), then all table chips fly from the winning table directly to the player profiles (1 second) before transitioning back to the betting phase after 3.8 seconds.
 
 ---
 

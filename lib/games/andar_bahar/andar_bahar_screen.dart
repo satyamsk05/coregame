@@ -1106,68 +1106,82 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                               alignment: Alignment.center,
                               children: [
                                 Positioned(
-                                  top: 2, 
+                                  top: 2.0,
+                                  left: 14.0,
                                   child: Container(
-                                    width: 1.5, 
-                                    height: 2, 
+                                    width: 2.0,
+                                    height: 3.5,
                                     color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
                                   ),
                                 ),
                                 Positioned(
-                                  bottom: 2, 
+                                  bottom: 2.0,
+                                  left: 14.0,
                                   child: Container(
-                                    width: 1.5, 
-                                    height: 2, 
+                                    width: 2.0,
+                                    height: 3.5,
                                     color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
                                   ),
                                 ),
                                 Positioned(
-                                  left: 2, 
+                                  left: 2.0,
+                                  top: 14.0,
                                   child: Container(
-                                    width: 2, 
-                                    height: 1.5, 
+                                    width: 3.5,
+                                    height: 2.0,
                                     color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
                                   ),
                                 ),
                                 Positioned(
-                                  right: 2, 
+                                  right: 2.0,
+                                  top: 14.0,
                                   child: Container(
-                                    width: 2, 
-                                    height: 1.5, 
+                                    width: 3.5,
+                                    height: 2.0,
                                     color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
                                   ),
                                 ),
-                                Container(
-                                  width: 4,
-                                  height: 4,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
-                                  ),
-                                ),
-                                Transform.rotate(
-                                  angle: -2.3 - (_timerSeconds * 0.15),
-                                  alignment: Alignment.bottomCenter,
-                                  child: Container(
-                                    width: 1.8,
-                                    height: 6.0,
-                                    margin: const EdgeInsets.only(bottom: 6.0),
-                                    decoration: BoxDecoration(
-                                      color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
-                                      borderRadius: BorderRadius.circular(1.0),
+                                Positioned(
+                                  top: 9.0, // Center y is 15. Hour hand height is 6. 15 - 6 = 9.
+                                  left: 14.0, // Center x is 15. Hour hand half-width is 1. 15 - 1 = 14.
+                                  child: Transform.rotate(
+                                    angle: -2.3 - (_timerSeconds * 0.15),
+                                    alignment: Alignment.bottomCenter,
+                                    child: Container(
+                                      width: 2.0,
+                                      height: 6.0,
+                                      decoration: BoxDecoration(
+                                        color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
+                                        borderRadius: BorderRadius.circular(1.0),
+                                      ),
                                     ),
                                   ),
                                 ),
-                                Transform.rotate(
-                                  angle: 1.1 + (_timerSeconds * 0.4),
-                                  alignment: Alignment.bottomCenter,
+                                Positioned(
+                                  top: 7.0, // Center y is 15. Minute hand height is 8. 15 - 8 = 7.
+                                  left: 14.0, // Center x is 15. Minute hand half-width is 1. 15 - 1 = 14.
+                                  child: Transform.rotate(
+                                    angle: 1.1 + (_timerSeconds * 0.4),
+                                    alignment: Alignment.bottomCenter,
+                                    child: Container(
+                                      width: 2.0,
+                                      height: 8.0,
+                                      decoration: BoxDecoration(
+                                        color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
+                                        borderRadius: BorderRadius.circular(1.0),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 13.0, // center (15) - half width (2) = 13.
+                                  left: 13.0,
                                   child: Container(
-                                    width: 1.8,
-                                    height: 8.0,
-                                    margin: const EdgeInsets.only(bottom: 8.0),
+                                    width: 4.0,
+                                    height: 4.0,
                                     decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
                                       color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
-                                      borderRadius: BorderRadius.circular(1.0),
                                     ),
                                   ),
                                 ),
