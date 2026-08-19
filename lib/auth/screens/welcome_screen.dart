@@ -152,14 +152,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               ),
             ),
             Positioned(
-              top: -32.0,
-              left: 20.0,
+              top: -38.0,
+              left: 16.0,
               child: Transform.rotate(
                 angle: -0.22,
                 child: Image.asset(
                   'assets/cowboy_hat.png',
-                  width: 55.0,
-                  height: 55.0,
+                  width: 66.0,
+                  height: 66.0,
                   fit: BoxFit.contain,
                 ),
               ),
