@@ -321,8 +321,25 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       }
 
       if (playerKey == 'R0') {
-        for (int i = 0; i < 8; i++) {
-          Future.delayed(Duration(milliseconds: i * 60), () {
+        // Pre-compute a single fixed landing spot for all 20 stars
+        double trailEndX;
+        double trailEndY;
+        if (spot == 'andar') {
+          trailEndX = 0.22 + _random.nextDouble() * 0.22;
+          trailEndY = 0.59 + _random.nextDouble() * 0.12;
+        } else if (spot == 'bahar') {
+          trailEndX = 0.56 + _random.nextDouble() * 0.22;
+          trailEndY = 0.59 + _random.nextDouble() * 0.12;
+        } else {
+          trailEndX = 0.32 + _random.nextDouble() * 0.36;
+          trailEndY = 0.36 + _random.nextDouble() * 0.08;
+        }
+        // Spawn 20 stars: first is largest (24px), last is smallest (4px)
+        // All go to the same endpoint so they form one ordered line
+        const int total = 20;
+        for (int i = 0; i < total; i++) {
+          final double sz = 24.0 - (20.0 * i / (total - 1)); // 24 → 4
+          Future.delayed(Duration(milliseconds: i * 45), () {
             if (!mounted) return;
             _triggerChipFlight(
               spot: spot,
@@ -332,7 +349,10 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
               chipLabel: ChipSelectorWidget.getChipText(betValue.toInt()),
               chipValue: betValue.toInt(),
               isStar: true,
-              addToTable: i == 7,
+              addToTable: i == total - 1,
+              starSize: sz.clamp(4.0, 24.0),
+              fixedEndX: trailEndX,
+              fixedEndY: trailEndY,
             );
           });
         }
@@ -663,18 +683,23 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
     required int chipValue,
     bool isStar = false,
     bool addToTable = true,
+    double starSize = 18.0,
+    double? fixedEndX,
+    double? fixedEndY,
   }) {
-    double endX = 0.5;
-    double endY = 0.5;
-    if (spot == 'andar') {
-      endX = 0.22 + _random.nextDouble() * 0.22;
-      endY = 0.59 + _random.nextDouble() * 0.12;
-    } else if (spot == 'bahar') {
-      endX = 0.56 + _random.nextDouble() * 0.22;
-      endY = 0.59 + _random.nextDouble() * 0.12;
-    } else if (spot == 'tie') {
-      endX = 0.32 + _random.nextDouble() * 0.36;
-      endY = 0.36 + _random.nextDouble() * 0.08;
+    double endX = fixedEndX ?? 0.5;
+    double endY = fixedEndY ?? 0.5;
+    if (fixedEndX == null) {
+      if (spot == 'andar') {
+        endX = 0.22 + _random.nextDouble() * 0.22;
+        endY = 0.59 + _random.nextDouble() * 0.12;
+      } else if (spot == 'bahar') {
+        endX = 0.56 + _random.nextDouble() * 0.22;
+        endY = 0.59 + _random.nextDouble() * 0.12;
+      } else if (spot == 'tie') {
+        endX = 0.32 + _random.nextDouble() * 0.36;
+        endY = 0.36 + _random.nextDouble() * 0.08;
+      }
     }
 
     final newChip = FlyingChip(
@@ -686,11 +711,12 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       label: chipLabel,
       controller: AnimationController(
         vsync: this,
-        duration: const Duration(milliseconds: 550),
+        duration: const Duration(milliseconds: 600),
       ),
       value: chipValue,
       isStar: isStar,
       addToTable: addToTable,
+      starSize: starSize,
     );
 
     setState(() => _flyingChips.add(newChip));
@@ -1038,12 +1064,12 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                             return Stack(
                               children: [
                                 Positioned(
-                                  left: currentX * w - 9.0,
-                                  top: currentY * h - 9.0,
+                                  left: currentX * w - (chip.starSize / 2.0),
+                                  top: currentY * h - (chip.starSize / 2.0),
                                   child: chip.isStar
                                       ? Container(
-                                          width: 18.0,
-                                          height: 18.0,
+                                          width: chip.starSize,
+                                          height: chip.starSize,
                                           decoration: const BoxDecoration(
                                             shape: BoxShape.circle,
                                             boxShadow: [
@@ -1060,9 +1086,9 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                                               begin: Alignment.topCenter,
                                               end: Alignment.bottomCenter,
                                             ).createShader(bounds),
-                                            child: const Icon(
+                                            child: Icon(
                                               Icons.star,
-                                              size: 18.0,
+                                              size: chip.starSize,
                                               color: Colors.white,
                                             ),
                                           ),

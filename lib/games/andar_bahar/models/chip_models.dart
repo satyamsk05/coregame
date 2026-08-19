@@ -29,6 +29,7 @@ class FlyingChip {
   final int value;
   final bool isStar;
   final bool addToTable;
+  final double starSize;
 
   FlyingChip({
     required this.startX,
@@ -41,6 +42,7 @@ class FlyingChip {
     required this.value,
     this.isStar = false,
     this.addToTable = true,
+    this.starSize = 18.0,
   });
 }
 
