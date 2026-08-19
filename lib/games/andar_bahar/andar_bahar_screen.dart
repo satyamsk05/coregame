@@ -343,31 +343,18 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
         }
 
         // 20 stars: first is largest (24px), last is smallest (4px).
-        // Each star originates from a slightly different point around the
-        // profile card (left/right/top/bottom edges) — 4-directional spread.
+        // ALL start from the EXACT SAME point (profile center).
+        // Because each is delayed by 45ms, at any given moment they are spread
+        // across the arc path at different progress values → perfect comet-tail line.
         const int total = 20;
-        // 4 origin positions cycling: top, right, bottom, left of avatar
-        const List<List<double>> offsets = [
-          [ 0.00, -0.06], // top
-          [ 0.04, -0.03], // top-right
-          [ 0.04,  0.00], // right
-          [ 0.04,  0.03], // bottom-right
-          [ 0.00,  0.06], // bottom
-          [-0.04,  0.03], // bottom-left
-          [-0.04,  0.00], // left
-          [-0.04, -0.03], // top-left
-        ];
         for (int i = 0; i < total; i++) {
           final double sz = 24.0 - (20.0 * i / (total - 1)); // 24 → 4
-          final List<double> off = offsets[i % offsets.length];
-          final double sx = profileCX + off[0];
-          final double sy = profileCY + off[1];
           Future.delayed(Duration(milliseconds: i * 45), () {
             if (!mounted) return;
             _triggerChipFlight(
               spot: spot,
-              startX: sx,
-              startY: sy,
+              startX: profileCX,
+              startY: profileCY,
               chipColor: ChipSelectorWidget.getChipColor(betValue.toInt()),
               chipLabel: ChipSelectorWidget.getChipText(betValue.toInt()),
               chipValue: betValue.toInt(),
