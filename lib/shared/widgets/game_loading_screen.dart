@@ -118,12 +118,137 @@ _GameMeta _getMeta(String key) =>
 // ─────────────────────────────────────────────────────────────────────────────
 class _Star {
   double x, y, size, speed, alpha;
-  _Star({required this.x, required this.y, required this.size,
-    required this.speed, required this.alpha});
+  _Star({
+    required this.x,
+    required this.y,
+    required this.size,
+    required this.speed,
+    required this.alpha,
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Widget
+// Custom Clippers for Forest/Mountain Silhouettes
+// ─────────────────────────────────────────────────────────────────────────────
+class FarMountainClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final w = size.width;
+    final h = size.height;
+    path.moveTo(0, h);
+    path.lineTo(0, h * 0.60);
+    path.lineTo(w * 0.08, h * 0.45);
+    path.lineTo(w * 0.16, h * 0.58);
+    path.lineTo(w * 0.26, h * 0.38);
+    path.lineTo(w * 0.36, h * 0.55);
+    path.lineTo(w * 0.48, h * 0.30);
+    path.lineTo(w * 0.58, h * 0.52);
+    path.lineTo(w * 0.70, h * 0.40);
+    path.lineTo(w * 0.82, h * 0.58);
+    path.lineTo(w * 0.92, h * 0.42);
+    path.lineTo(w, h * 0.55);
+    path.lineTo(w, h);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class NearMountainClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final w = size.width;
+    final h = size.height;
+    path.moveTo(0, h);
+    path.lineTo(0, h * 0.70);
+    path.lineTo(w * 0.10, h * 0.50);
+    path.lineTo(w * 0.22, h * 0.68);
+    path.lineTo(w * 0.34, h * 0.45);
+    path.lineTo(w * 0.46, h * 0.65);
+    path.lineTo(w * 0.60, h * 0.48);
+    path.lineTo(w * 0.74, h * 0.66);
+    path.lineTo(w * 0.88, h * 0.50);
+    path.lineTo(w, h * 0.65);
+    path.lineTo(w, h);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class TreesClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final w = size.width;
+    final h = size.height;
+    path.moveTo(0, h);
+    path.lineTo(0, h * 0.60);
+    path.lineTo(w * 0.02, h * 0.40);
+    path.lineTo(w * 0.04, h * 0.60);
+    path.lineTo(w * 0.06, h * 0.35);
+    path.lineTo(w * 0.08, h * 0.60);
+    path.lineTo(w * 0.12, h);
+    path.lineTo(w * 0.14, h * 0.55);
+    path.lineTo(w * 0.16, h * 0.30);
+    path.lineTo(w * 0.18, h * 0.55);
+    path.lineTo(w * 0.20, h);
+    path.lineTo(w * 0.30, h);
+    path.lineTo(w * 0.32, h * 0.50);
+    path.lineTo(w * 0.34, h * 0.25);
+    path.lineTo(w * 0.36, h * 0.50);
+    path.lineTo(w * 0.38, h);
+    path.lineTo(w * 0.50, h);
+    path.lineTo(w * 0.52, h * 0.58);
+    path.lineTo(w * 0.54, h * 0.32);
+    path.lineTo(w * 0.56, h * 0.58);
+    path.lineTo(w * 0.58, h);
+    path.lineTo(w * 0.68, h);
+    path.lineTo(w * 0.70, h * 0.48);
+    path.lineTo(w * 0.72, h * 0.22);
+    path.lineTo(w * 0.74, h * 0.48);
+    path.lineTo(w * 0.76, h);
+    path.lineTo(w * 0.86, h);
+    path.lineTo(w * 0.88, h * 0.55);
+    path.lineTo(w * 0.90, h * 0.30);
+    path.lineTo(w * 0.92, h * 0.55);
+    path.lineTo(w * 0.94, h);
+    path.lineTo(w, h);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class WantedPosterClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final w = size.width;
+    final h = size.height;
+    path.moveTo(0, 0);
+    path.lineTo(w, 0);
+    path.lineTo(w, h * 0.85);
+    path.lineTo(w * 0.90, h);
+    path.lineTo(0, h);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Game Loading Screen Widget
 // ─────────────────────────────────────────────────────────────────────────────
 class GameLoadingScreen extends StatefulWidget {
   final String gameKey;
@@ -141,7 +266,6 @@ class GameLoadingScreen extends StatefulWidget {
 
 class _GameLoadingScreenState extends State<GameLoadingScreen>
     with TickerProviderStateMixin {
-
   // ── progress ────────────────────────────────────────────────────────────
   double _progress = 0.0;
   int _statusIndex = 0;
@@ -150,9 +274,7 @@ class _GameLoadingScreenState extends State<GameLoadingScreen>
   Timer? _statusTimer;
 
   // ── animations ──────────────────────────────────────────────────────────
-  late AnimationController _entryCtrl;   // fade + slide in
-  late AnimationController _pulseCtrl;   // emoji pulse
-  late AnimationController _rotCtrl;     // rotating ring
+  late AnimationController _entryCtrl; // fade + slide in
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
 
@@ -177,13 +299,13 @@ class _GameLoadingScreenState extends State<GameLoadingScreen>
     super.initState();
 
     // ── seed stars ──────────────────────────────────────────────────────
-    for (int i = 0; i < 80; i++) {
+    for (int i = 0; i < 40; i++) {
       _stars.add(_Star(
         x: _rng.nextDouble(),
         y: _rng.nextDouble(),
-        size: _rng.nextDouble() * 2.5 + 0.5,
-        speed: _rng.nextDouble() * 0.00008 + 0.00003,
-        alpha: _rng.nextDouble() * 0.6 + 0.2,
+        size: _rng.nextDouble() * 2.0 + 0.8,
+        speed: _rng.nextDouble() * 0.00004 + 0.00001,
+        alpha: _rng.nextDouble() * 0.7 + 0.2,
       ));
     }
 
@@ -191,29 +313,16 @@ class _GameLoadingScreenState extends State<GameLoadingScreen>
     _entryCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 600));
     _fadeAnim = CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOut);
-    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero)
+    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.04), end: Offset.zero)
         .animate(CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic));
     _entryCtrl.forward();
-
-    // ── pulse ────────────────────────────────────────────────────────────
-    _pulseCtrl = AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 900),
-        lowerBound: 0.92,
-        upperBound: 1.08)
-      ..repeat(reverse: true);
-
-    // ── ring spin ────────────────────────────────────────────────────────
-    _rotCtrl = AnimationController(
-        vsync: this, duration: const Duration(seconds: 2))
-      ..repeat();
 
     // ── star ticker ──────────────────────────────────────────────────────
     _starTicker = createTicker(_onStarTick)..start();
 
     // ── progress timer ───────────────────────────────────────────────────
-    const int totalMs = 1800;
-    const int intervalMs = 25;
+    const int totalMs = 2200;
+    const int intervalMs = 30;
     final int steps = totalMs ~/ intervalMs;
     int step = 0;
     _progressTimer = Timer.periodic(
@@ -224,13 +333,13 @@ class _GameLoadingScreenState extends State<GameLoadingScreen>
         _completed = true;
         timer.cancel();
         _statusTimer?.cancel();
-        Future.delayed(const Duration(milliseconds: 300),
+        Future.delayed(const Duration(milliseconds: 350),
             widget.onLoadingComplete);
       }
     });
 
     // ── status cycling ────────────────────────────────────────────────────
-    _statusTimer = Timer.periodic(const Duration(milliseconds: 280), (_) {
+    _statusTimer = Timer.periodic(const Duration(milliseconds: 320), (_) {
       if (_statusIndex < _statuses.length - 1 && mounted) {
         setState(() => _statusIndex++);
       }
@@ -245,11 +354,14 @@ class _GameLoadingScreenState extends State<GameLoadingScreen>
     _lastStarTick = elapsed;
     setState(() {
       for (var s in _stars) {
-        s.y -= s.speed * dt * 60;
-        if (s.y < 0.0) {
-          s.y = 1.0;
-          s.x = _rng.nextDouble();
+        // Drifting stars animation
+        s.x += s.speed * dt * 30;
+        if (s.x > 1.0) {
+          s.x = 0.0;
+          s.y = _rng.nextDouble();
         }
+        // Slight twinkle
+        s.alpha = (s.alpha + (_rng.nextDouble() * 0.1 - 0.05)).clamp(0.1, 0.95);
       }
     });
   }
@@ -259,234 +371,428 @@ class _GameLoadingScreenState extends State<GameLoadingScreen>
     _progressTimer?.cancel();
     _statusTimer?.cancel();
     _entryCtrl.dispose();
-    _pulseCtrl.dispose();
-    _rotCtrl.dispose();
     _starTicker?.dispose();
     super.dispose();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final meta = _getMeta(widget.gameKey);
     final int pct = (_progress * 100).round();
-    final String status = _statuses[_statusIndex];
+    final String statusStr = _statuses[_statusIndex];
+
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF060810),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // ── Starfield background ──────────────────────────────────────
-          CustomPaint(
-            painter: _StarfieldPainter(_stars, meta.primary, meta.secondary),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF3A4250), Color(0xFF5B6472)],
           ),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // ── Starfield background ──────────────────────────────────────
+            CustomPaint(
+              painter: _StarfieldPainter(_stars),
+            ),
 
-          // ── Radial gradient glow in center ────────────────────────────
-          Center(
-            child: Container(
-              width: 320,
-              height: 320,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    meta.primary.withOpacity(0.08),
-                    Colors.transparent,
+            // ── Moon ──────────────────────────────────────────────────────
+            Positioned(
+              top: screenHeight * 0.12,
+              right: screenWidth * 0.10,
+              child: Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFDCE1E6).withOpacity(0.20),
+                      blurRadius: 30.0,
+                      spreadRadius: 2.0,
+                    ),
                   ],
+                  gradient: const RadialGradient(
+                    center: Alignment(-0.35, -0.35),
+                    radius: 0.75,
+                    colors: [Color(0xFFE7EBEE), Color(0xFFB7C0C9)],
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // ── Main content ──────────────────────────────────────────────
-          Center(
-            child: FadeTransition(
-              opacity: _fadeAnim,
-              child: SlideTransition(
-                position: _slideAnim,
-                child: _buildContent(meta, pct, status),
+            // ── Silhouette layers (Mountains & Trees) ──────────────────────
+            // Far mountains
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: screenHeight * 0.38,
+              child: ClipPath(
+                clipper: FarMountainClipper(),
+                child: Container(
+                  color: const Color(0xFF4A515C).withOpacity(0.8),
+                ),
               ),
             ),
-          ),
-        ],
+
+            // Near mountains
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: screenHeight * 0.26,
+              child: ClipPath(
+                clipper: NearMountainClipper(),
+                child: Container(
+                  color: const Color(0xFF333A44),
+                ),
+              ),
+            ),
+
+            // Pine Trees
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: screenHeight * 0.20,
+              child: ClipPath(
+                clipper: TreesClipper(),
+                child: Container(
+                  color: const Color(0xFF1C2128),
+                ),
+              ),
+            ),
+
+
+            // ── Center Content ────────────────────────────────────────────
+            Center(
+              child: FadeTransition(
+                opacity: _fadeAnim,
+                child: SlideTransition(
+                  position: _slideAnim,
+                  child: _buildContent(meta, pct, statusStr),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
+  // ── Wanted Poster builder ──────────────────────────────────────────────────
+  Widget _buildWantedPoster() {
+    return Transform.rotate(
+      angle: -3 * math.pi / 180,
+      child: ClipPath(
+        clipper: WantedPosterClipper(),
+        child: Container(
+          width: 90,
+          height: 108,
+          color: const Color(0xFFD8D3C4),
+          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'WANTED',
+                style: GoogleFonts.baloo2(
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1C1C1C),
+                    letterSpacing: 1.0,
+                    height: 1.0,
+                  ),
+                ),
+              ),
+              Text(
+                'DEAD OR ALIVE',
+                style: GoogleFonts.baloo2(
+                  textStyle: const TextStyle(
+                    fontSize: 6,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF333333),
+                    letterSpacing: 0.5,
+                    height: 1.0,
+                  ),
+                ),
+              ),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFF555555),
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  '★',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFFEEEEEE),
+                    height: 1.0,
+                  ),
+                ),
+              ),
+              Text(
+                'REWARD\n150,000',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.baloo2(
+                  textStyle: const TextStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1C1C1C),
+                    height: 1.1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Main logo + progress bar builder ──────────────────────────────────────
   Widget _buildContent(_GameMeta meta, int pct, String status) {
+    const double benchWidth = 300.0;
+    const double plankHeight = 28.0;
+
     return SizedBox(
-      width: 380,
+      width: 360,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Spinning ring + emoji ────────────────────────────────────
-          SizedBox(
-            width: 110,
-            height: 110,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Outer rotating arc
-                AnimatedBuilder(
-                  animation: _rotCtrl,
-                  builder: (_, __) => Transform.rotate(
-                    angle: _rotCtrl.value * 2 * math.pi,
-                    child: CustomPaint(
-                      size: const Size(110, 110),
-                      painter: _ArcPainter(
-                        primary: meta.primary,
-                        secondary: meta.secondary,
-                      ),
-                    ),
+          // 1. Presenter Text
+          Text(
+            'SILENT PINES STUDIO PRESENTS',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.roboto(
+              textStyle: TextStyle(
+                color: const Color(0xFFC9D1D9).withOpacity(0.9),
+                letterSpacing: 3.0,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                shadows: const [
+                  Shadow(
+                    offset: Offset(1.5, 1.5),
+                    color: Colors.black45,
                   ),
-                ),
-                // Inner soft circle
-                Container(
-                  width: 78,
-                  height: 78,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: meta.primary.withOpacity(0.08),
-                    border: Border.all(
-                        color: meta.primary.withOpacity(0.18), width: 1),
-                  ),
-                ),
-                // Emoji
-                ScaleTransition(
-                  scale: _pulseCtrl,
-                  child: Text(meta.emoji,
-                      style: const TextStyle(fontSize: 36)),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 28),
-
-          // ── Game title ───────────────────────────────────────────────
-          ShaderMask(
-            blendMode: BlendMode.srcIn,
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [meta.primary, meta.secondary],
-            ).createShader(bounds),
-            child: Text(
-              meta.title,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.pressStart2p(
-                textStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
-                  color: Colors.white,
-                ),
+                ],
               ),
             ),
           ),
 
           const SizedBox(height: 10),
 
-          // ── Subtitle ─────────────────────────────────────────────────
-          Text(
-            meta.subtitle,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.roboto(
-              textStyle: TextStyle(
-                color: Colors.white.withOpacity(0.45),
-                fontSize: 11,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 32),
-
-          // ── Progress bar ─────────────────────────────────────────────
-          Column(
-            children: [
-              // Percent label
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    status,
-                    style: GoogleFonts.robotoMono(
-                      textStyle: TextStyle(
-                        color: meta.primary.withOpacity(0.75),
-                        fontSize: 8,
+          // 2. Custom Game Logo (no emoji)
+          Transform.rotate(
+            angle: -2 * math.pi / 180,
+            child: Stack(
+              children: [
+                // Dark border stroke background
+                Text(
+                  meta.title,
+                  style: GoogleFonts.baloo2(
+                    textStyle: TextStyle(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w800,
+                      fontStyle: FontStyle.italic,
+                      letterSpacing: 0.5,
+                      foreground: Paint()
+                        ..style = PaintingStyle.stroke
+                        ..strokeWidth = 5.0
+                        ..color = const Color(0xFF14171B),
+                    ),
+                  ),
+                ),
+                // Gradient fill foreground
+                ShaderMask(
+                  blendMode: BlendMode.srcIn,
+                  shaderCallback: (bounds) => const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFFE6EAEE),
+                      Color(0xFFB6BFC8),
+                      Color(0xFF838D97),
+                    ],
+                  ).createShader(bounds),
+                  child: Text(
+                    meta.title,
+                    style: GoogleFonts.baloo2(
+                      textStyle: const TextStyle(
+                        fontSize: 34,
+                        fontWeight: FontWeight.w800,
+                        fontStyle: FontStyle.italic,
                         letterSpacing: 0.5,
                       ),
                     ),
                   ),
-                  Text(
-                    '$pct%',
-                    style: GoogleFonts.robotoMono(
-                      textStyle: TextStyle(
-                        color: meta.primary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Track
-              Container(
-                height: 6,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.06),
-                  borderRadius: BorderRadius.circular(3),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: AnimatedFractionallySizedBox(
-                    duration: const Duration(milliseconds: 20),
-                    widthFactor: _progress,
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [meta.secondary, meta.primary],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: meta.primary.withOpacity(0.6),
-                            blurRadius: 8,
-                          ),
-                        ],
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 35),
+
+          // 3. Wooden Bench Progress Bar
+          SizedBox(
+            width: benchWidth,
+            height: plankHeight + 14,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Bench Legs
+                Positioned(
+                  bottom: 0,
+                  left: 14,
+                  child: Container(
+                    width: 7,
+                    height: 12,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF0D0F13),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(2),
+                        bottomRight: Radius.circular(2),
                       ),
                     ),
                   ),
                 ),
-              ),
+                Positioned(
+                  bottom: 0,
+                  right: 14,
+                  child: Container(
+                    width: 7,
+                    height: 12,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF0D0F13),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(2),
+                        bottomRight: Radius.circular(2),
+                      ),
+                    ),
+                  ),
+                ),
 
-              const SizedBox(height: 20),
-
-              // Dots progress indicator
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(7, (i) {
-                  final bool filled = (_progress * 7).round() > i;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    width: filled ? 20 : 6,
-                    height: 6,
-                    margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                // Wooden Plank
+                Positioned(
+                  top: 2,
+                  left: 0,
+                  right: 0,
+                  height: plankHeight,
+                  child: Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(3),
-                      color: filled
-                          ? meta.primary
-                          : Colors.white.withOpacity(0.12),
-                      boxShadow: filled
-                          ? [BoxShadow(color: meta.primary.withOpacity(0.5), blurRadius: 6)]
-                          : null,
+                      gradient: const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0xFF232830), Color(0xFF171B21)],
+                      ),
+                      border: Border.all(color: const Color(0xFF0D0F13), width: 3.0),
+                      borderRadius: BorderRadius.circular(8.0),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black45,
+                          offset: Offset(0, 4),
+                          blurRadius: 6.0,
+                        ),
+                      ],
                     ),
-                  );
-                }),
+                    child: Stack(
+                      children: [
+                        // Progress Fill
+                        FractionallySizedBox(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: _progress,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [Color(0xFF8B96A3), Color(0xFF5E6873)],
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Middle line separator
+                        Align(
+                          alignment: Alignment.center,
+                          child: Container(
+                            width: 3.0,
+                            color: const Color(0xFF0D0F13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Knobs
+                Positioned(
+                  top: -4,
+                  left: -3,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF3A4149),
+                      border: Border.all(color: const Color(0xFF0D0F13), width: 2.0),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: -4,
+                  right: -3,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF3A4149),
+                      border: Border.all(color: const Color(0xFF0D0F13), width: 2.0),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: -6,
+                  left: benchWidth / 2 - 7,
+                  child: Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF3A4149),
+                      border: Border.all(color: const Color(0xFF0D0F13), width: 2.0),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          // 4. Loading Text & Percent
+          Text(
+            pct >= 100 ? 'READY!' : 'LOADING... $pct%',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.robotoMono(
+              textStyle: TextStyle(
+                color: const Color(0xFF8B96A3).withOpacity(0.85),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2.0,
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -499,72 +805,20 @@ class _GameLoadingScreenState extends State<GameLoadingScreen>
 // ─────────────────────────────────────────────────────────────────────────────
 class _StarfieldPainter extends CustomPainter {
   final List<_Star> stars;
-  final Color primary;
-  final Color secondary;
-  _StarfieldPainter(this.stars, this.primary, this.secondary);
+  _StarfieldPainter(this.stars);
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (int i = 0; i < stars.length; i++) {
-      final s = stars[i];
-      final Color c = i.isEven ? primary : secondary;
+    final paint = Paint()..color = Colors.white;
+    for (var s in stars) {
       canvas.drawCircle(
         Offset(s.x * size.width, s.y * size.height),
         s.size,
-        Paint()..color = c.withOpacity(s.alpha),
+        paint..color = Colors.white.withOpacity(s.alpha),
       );
     }
   }
 
   @override
   bool shouldRepaint(covariant _StarfieldPainter old) => true;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Spinning arc painter
-// ─────────────────────────────────────────────────────────────────────────────
-class _ArcPainter extends CustomPainter {
-  final Color primary;
-  final Color secondary;
-  _ArcPainter({required this.primary, required this.secondary});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double cx = size.width / 2;
-    final double cy = size.height / 2;
-    final double r = cx - 4;
-    final rect = Rect.fromCircle(center: Offset(cx, cy), radius: r);
-
-    // Main arc (270°)
-    canvas.drawArc(
-      rect,
-      -math.pi / 2,
-      math.pi * 1.5,
-      false,
-      Paint()
-        ..shader = SweepGradient(
-          colors: [secondary, primary, Colors.transparent],
-          stops: const [0.0, 0.75, 1.0],
-        ).createShader(rect)
-        ..strokeWidth = 3.0
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round,
-    );
-
-    // Trailing glow dot at the end of the arc
-    final double tipAngle = -math.pi / 2 + math.pi * 1.5;
-    final double tipX = cx + r * math.cos(tipAngle);
-    final double tipY = cy + r * math.sin(tipAngle);
-    canvas.drawCircle(
-      Offset(tipX, tipY),
-      5.5,
-      Paint()
-        ..color = primary
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
-    );
-    canvas.drawCircle(Offset(tipX, tipY), 3.5, Paint()..color = primary);
-  }
-
-  @override
-  bool shouldRepaint(covariant _ArcPainter old) => false;
 }

@@ -255,23 +255,23 @@ class TieBetPanel extends StatelessWidget {
                 '8.2',
                 style: TextStyle(
                     color: Color(0xFF00E5FF),
-                    fontSize: 10.0,
+                    fontSize: 9.0,
                     fontWeight: FontWeight.bold),
               ),
               const Text(
                 'TIE',
                 style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16.0,
+                    fontSize: 14.0,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5),
+                    letterSpacing: 1.0),
               ),
               if (isBetting)
                 const Text(
                   'Start betting',
                   style: TextStyle(
                       color: Color(0xFF00E676),
-                      fontSize: 8.0,
+                      fontSize: 7.5,
                       fontWeight: FontWeight.bold),
                 )
               else
@@ -279,7 +279,7 @@ class TieBetPanel extends StatelessWidget {
                   'Betting Closed',
                   style: TextStyle(
                       color: Colors.grey,
-                      fontSize: 8.0,
+                      fontSize: 7.5,
                       fontWeight: FontWeight.bold),
                 ),
             ],

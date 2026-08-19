@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../shared/widgets/game_button.dart';
 import '../../shared/widgets/animated_character.dart';
 import '../../shared/widgets/bounceable.dart';
+import '../../shared/widgets/night_forest_background.dart';
 import '../../utils/sound_helper.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
@@ -56,73 +57,29 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF060810),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // ── Full-screen background image instead of video ────────────────
-          Positioned.fill(
-            child: Image.asset(
-              'assets/startlogo.png',
-              fit: BoxFit.cover,
+      body: NightForestBackground(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Dark tint overlay for readability
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.18),
+              ),
             ),
-          ),
 
-          // ── Dark tint overlay ───────────────────────────────────────────
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withOpacity(0.4),
-            ),
-          ),
-
-          // ── Gradient overlays (darken image so UI is readable) ─────────
-          // Deep dark vignette
-          Container(
-            decoration: const BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.center,
-                radius: 1.0,
-                colors: [
-                  Colors.transparent,
-                  Color(0xCC000000),
-                ],
+            // ── Main UI ────────────────────────────────────────────────────
+            SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnim,
+                child: SlideTransition(
+                  position: _slideAnim,
+                  child: _buildLayout(context),
+                ),
               ),
             ),
-          ),
-          // Horizontal dark edge fade
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xBB000000), Colors.transparent, Color(0xBB000000)],
-                stops: [0.0, 0.5, 1.0],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-            ),
-          ),
-          // Bottom gradient dark bar
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xDD060810), Colors.transparent, Color(0xDD060810)],
-                stops: [0.0, 0.4, 1.0],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-
-          // ── Main UI ────────────────────────────────────────────────────
-          SafeArea(
-            child: FadeTransition(
-              opacity: _fadeAnim,
-              child: SlideTransition(
-                position: _slideAnim,
-                child: _buildLayout(context),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -142,57 +99,85 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Stack(
+          clipBehavior: Clip.none,
           alignment: Alignment.center,
           children: [
             Container(
-              width: 240,
-              height: 70,
+              width: 280,
+              height: 80,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(40),
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF00E5FF).withOpacity(0.15),
+                    const Color(0xFFFFA726).withOpacity(0.15),
                     Colors.transparent,
                   ],
                 ),
               ),
             ),
-            Text(
-              'COREGAME',
-              style: GoogleFonts.alfaSlabOne(
-                textStyle: const TextStyle(
-                  fontSize: 46.0,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: 3,
-                  height: 1.0,
-                  shadows: [
-                    Shadow(
-                        color: Color(0xFF00E5FF),
-                        blurRadius: 20.0,
-                        offset: Offset(0, 0)),
-                    Shadow(
+            ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [Color(0xFFFFEE58), Color(0xFFF57C00)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ).createShader(bounds),
+              child: Text(
+                'COREGAME',
+                style: GoogleFonts.alfaSlabOne(
+                  textStyle: const TextStyle(
+                    fontSize: 48.0,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 2,
+                    height: 1.0,
+                    shadows: [
+                      Shadow(
                         color: Colors.black,
-                        blurRadius: 6.0,
-                        offset: Offset(2.0, 3.0)),
-                  ],
+                        offset: Offset(0.0, 4.0),
+                        blurRadius: 2.0,
+                      ),
+                      Shadow(
+                        color: Colors.black,
+                        offset: Offset(3.0, 3.0),
+                        blurRadius: 0.0,
+                      ),
+                      Shadow(
+                        color: Colors.black,
+                        offset: Offset(-1.0, -1.0),
+                        blurRadius: 0.0,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: -32.0,
+              left: 20.0,
+              child: Transform.rotate(
+                angle: -0.22,
+                child: Image.asset(
+                  'assets/cowboy_hat.png',
+                  width: 55.0,
+                  height: 55.0,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10.0),
+        const SizedBox(height: 12.0),
         Container(
           width: 180,
           height: 4,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF00E5FF), Color(0xFFE040FB)],
+              colors: [Color(0xFFFFA726), Color(0xFFE65100)],
             ),
             borderRadius: BorderRadius.circular(2),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF00E5FF).withOpacity(0.5),
+                color: const Color(0xFFFFA726).withOpacity(0.5),
                 blurRadius: 8.0,
               ),
             ],
@@ -280,6 +265,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     bankName: 'KOTAK MAHINDRA BANK',
                     bankAccountNumber: '6055376770',
                     activeGateway: 'UmPay',
+                    nickname: 'superhit',
+                    avatarPath: 'assets/userprofile/user7.png',
+                    onNicknameChanged: (_) {},
+                    onAvatarChanged: (_) {},
                     onPlayGame: (_) {},
                     onBalanceChanged: (_) {},
                     onVipLevelChanged: (_) {},
@@ -348,8 +337,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const AnimatedCharacter(width: 130.0, height: 130.0),
-                const SizedBox(height: 16.0),
                 _buildLogo(),
               ],
             ),
@@ -377,8 +364,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 20.0),
-              const AnimatedCharacter(width: 150.0, height: 150.0),
-              const SizedBox(height: 16.0),
               _buildLogo(),
               const SizedBox(height: 48.0),
               _buildButtons(context),

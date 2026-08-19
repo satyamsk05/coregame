@@ -19,6 +19,8 @@ class AndarBaharGameScreen extends StatefulWidget {
   final bool musicOn;
   final ValueChanged<double> onBalanceChanged;
   final VoidCallback onBackPressed;
+  final String nickname;
+  final String avatarPath;
 
   const AndarBaharGameScreen({
     super.key,
@@ -27,6 +29,8 @@ class AndarBaharGameScreen extends StatefulWidget {
     required this.musicOn,
     required this.onBalanceChanged,
     required this.onBackPressed,
+    required this.nickname,
+    required this.avatarPath,
   });
 
   @override
@@ -668,7 +672,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
 
               // 2. Left Mock Players
               Positioned(
-                top: h * 0.25,
+                top: h * 0.18,
                 left: w * 0.02,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -685,7 +689,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                       winAmount: _billionaireWinAmount,
                       winTrigger: _billionaireWinTrigger,
                     ),
-                    SizedBox(height: h * 0.045),
+                    const SizedBox(height: 12.0),
                     MockPlayerWidget(
                       name: 'Richie',
                       balance: _richieBalance,
@@ -698,7 +702,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                       winAmount: _richieWinAmount,
                       winTrigger: _richieWinTrigger,
                     ),
-                    SizedBox(height: h * 0.045),
+                    const SizedBox(height: 12.0),
                     MockPlayerWidget(
                       name: 'High Roller',
                       balance: _highRollerBalance,
@@ -717,7 +721,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
 
               // 3. Right Mock Players
               Positioned(
-                top: h * 0.25,
+                top: h * 0.18,
                 right: w * 0.02,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -734,7 +738,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                       winAmount: _masterWinAmount,
                       winTrigger: _masterWinTrigger,
                     ),
-                    SizedBox(height: h * 0.045),
+                    const SizedBox(height: 12.0),
                     MockPlayerWidget(
                       name: 'Pro King',
                       balance: _proKingBalance,
@@ -747,7 +751,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                       winAmount: _proKingWinAmount,
                       winTrigger: _proKingWinTrigger,
                     ),
-                    SizedBox(height: h * 0.045),
+                    const SizedBox(height: 12.0),
                     MockPlayerWidget(
                       name: 'Elite Player',
                       balance: _elitePlayerBalance,
@@ -764,23 +768,24 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                 ),
               ),
 
-              // 4. Bottom User
+              // 4. Bottom User (Left of Chip Selector / 10 Chip)
               Positioned(
-                bottom: h * 0.05,
-                left: w * 0.02,
+                bottom: h * 0.03,
+                left: w * 0.15,
                 child: UserAvatarWidget(
                   balance: widget.balance,
-                  avatarPath: 'assets/userprofile/user7.png',
+                  avatarPath: widget.avatarPath,
+                  nickname: widget.nickname,
                   betTrigger: _triggerUser,
                   winAmount: _userWinAmount,
                   winTrigger: _userWinTrigger,
                 ),
               ),
 
-              // 4b. Bottom Active Users Count (Bottom Right)
+              // 4b. Bottom Active Users Count (Right of Chip Selector)
               Positioned(
-                bottom: h * 0.05,
-                right: w * 0.02,
+                bottom: h * 0.03,
+                right: w * 0.15,
                 child: GestureDetector(
                   onTap: _showActiveUsersDialog,
                   child: Container(

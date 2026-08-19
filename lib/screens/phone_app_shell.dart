@@ -51,6 +51,8 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
   String _bankName = 'KOTAK MAHINDRA BANK';
   String _bankAccountNumber = '6055376770';
   String _activeGateway = 'UmPay';
+  String _nickname = 'superhit';
+  String _avatarPath = 'assets/userprofile/user7.png';
 
   @override
   void initState() {
@@ -98,6 +100,10 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           bankName: _bankName,
           bankAccountNumber: _bankAccountNumber,
           activeGateway: _activeGateway,
+          nickname: _nickname,
+          avatarPath: _avatarPath,
+          onNicknameChanged: (val) => setState(() => _nickname = val),
+          onAvatarChanged: (val) => setState(() => _avatarPath = val),
           onLogoutPressed: () {
             SoundManager.playClick();
             setState(() => _currentScreen = 'welcome');
@@ -227,6 +233,8 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,
+          nickname: _nickname,
+          avatarPath: _avatarPath,
           onBalanceChanged: (val) => setState(() => _balance = val),
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
@@ -237,6 +245,8 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,
+          nickname: _nickname,
+          avatarPath: _avatarPath,
           onBalanceChanged: (val) => setState(() => _balance = val),
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );

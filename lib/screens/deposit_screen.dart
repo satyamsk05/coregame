@@ -148,7 +148,7 @@ class _DepositScreenState extends State<DepositScreen> {
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final int crossAxisCount = screenWidth < 680 ? 4 : 5;
-    final double childAspectRatio = screenWidth < 680 ? 1.25 : 1.12;
+    final double childAspectRatio = screenWidth < 680 ? 1.25 : 1.38;
 
     return Scaffold(
       backgroundColor: const Color(0xFF161618),
@@ -336,7 +336,7 @@ class _DepositScreenState extends State<DepositScreen> {
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 12.0),
+                              const SizedBox(height: 6.0),
                               
                               // Input field + formula indicator + recharge button
                               Row(
@@ -431,7 +431,7 @@ class _DepositScreenState extends State<DepositScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 16.0),
+                              const SizedBox(height: 8.0),
                               
                               // Packages Grid
                               Expanded(
@@ -440,7 +440,7 @@ class _DepositScreenState extends State<DepositScreen> {
                                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: crossAxisCount,
                                     crossAxisSpacing: 10.0,
-                                    mainAxisSpacing: 10.0,
+                                    mainAxisSpacing: 8.0,
                                     childAspectRatio: childAspectRatio,
                                   ),
                                   itemBuilder: (context, index) {
@@ -472,8 +472,8 @@ class _DepositScreenState extends State<DepositScreen> {
                                               // Coin Image
                                               Image.asset(
                                                 'assets/coin.png',
-                                                width: 24.0,
-                                                height: 24.0,
+                                                width: 18.0,
+                                                height: 18.0,
                                               ),
                                               // Buy Button
                                               Bounceable(
@@ -485,8 +485,8 @@ class _DepositScreenState extends State<DepositScreen> {
                                                 },
                                                 child: Container(
                                                   width: double.infinity,
-                                                  margin: const EdgeInsets.symmetric(horizontal: 10.0),
-                                                  height: 26.0,
+                                                  margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                  height: 22.0,
                                                   decoration: BoxDecoration(
                                                     gradient: const LinearGradient(
                                                       colors: [Color(0xFFFE9E22), Color(0xFFD87C04)],
@@ -498,7 +498,7 @@ class _DepositScreenState extends State<DepositScreen> {
                                                   alignment: Alignment.center,
                                                   child: Text(
                                                     '₹${pack['price']}',
-                                                    style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w900),
+                                                    style: const TextStyle(color: Colors.white, fontSize: 10.0, fontWeight: FontWeight.w900),
                                                   ),
                                                 ),
                                               ),

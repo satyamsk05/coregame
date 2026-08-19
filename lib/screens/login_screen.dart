@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/bounceable.dart';
+import '../shared/widgets/night_forest_background.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback? onBackPressed;
@@ -158,155 +159,150 @@ class _LoginScreenState extends State<LoginScreen> {
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // 1. Beautiful startlogo background image spanning full screen
-          Positioned.fill(
-            child: Image.asset(
-              'assets/startlogo.png',
-              fit: BoxFit.cover,
+      body: NightForestBackground(
+        child: Stack(
+          children: [
+            // Dark tint overlay for readability
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.18),
+              ),
             ),
-          ),
-          // Dark tint overlay for readability
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withOpacity(0.35),
-            ),
-          ),
-          
-          // 2. Glassmorphic login card centered
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20.0),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
-                      child: Container(
-                        width: double.infinity,
-                        constraints: BoxConstraints(
-                          maxWidth: isLandscape ? 440.0 : 330.0,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0x301E2024), // Highly transparent dark slate
-                          borderRadius: BorderRadius.circular(20.0),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.15),
-                            width: 1.5,
+            
+            // 2. Glassmorphic login card centered
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20.0),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                        child: Container(
+                          width: double.infinity,
+                          constraints: BoxConstraints(
+                            maxWidth: isLandscape ? 440.0 : 330.0,
                           ),
-                        ),
-                        padding: const EdgeInsets.all(24.0),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Glowing header
-                              Center(
-                                child: Text(
-                                  'LOGIN',
-                                  style: GoogleFonts.pressStart2p(
-                                    textStyle: const TextStyle(
-                                      fontSize: 16.0,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.0,
-                                      shadows: [
-                                        Shadow(
-                                          color: Color(0xFF24EE89),
-                                          blurRadius: 10.0,
-                                        ),
-                                      ],
+                          decoration: BoxDecoration(
+                            color: const Color(0x301E2024), // Highly transparent dark slate
+                            borderRadius: BorderRadius.circular(20.0),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.15),
+                              width: 1.5,
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(24.0),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Glowing header
+                                Center(
+                                  child: Text(
+                                    'LOGIN',
+                                    style: GoogleFonts.pressStart2p(
+                                      textStyle: const TextStyle(
+                                        fontSize: 16.0,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.0,
+                                        shadows: [
+                                          Shadow(
+                                            color: Color(0xFF24EE89),
+                                            blurRadius: 10.0,
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 24.0),
-                              
-                              _buildPhoneField(),
-                              const SizedBox(height: 14.0),
-                              _buildPasswordField(),
-                              const SizedBox(height: 24.0),
-                              
-                              // Action Buttons
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Bounceable(
-                                      onTap: _handleLogin,
-                                      child: Container(
-                                        height: 40.0,
-                                        decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [Color(0xFF24EE89), Color(0xFF00C853)],
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
+                                const SizedBox(height: 24.0),
+                                
+                                _buildPhoneField(),
+                                const SizedBox(height: 14.0),
+                                _buildPasswordField(),
+                                const SizedBox(height: 24.0),
+                                
+                                // Action Buttons
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Bounceable(
+                                        onTap: _handleLogin,
+                                        child: Container(
+                                          height: 40.0,
+                                          decoration: BoxDecoration(
+                                            gradient: const LinearGradient(
+                                              colors: [Color(0xFF24EE89), Color(0xFF00C853)],
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                            ),
+                                            borderRadius: BorderRadius.circular(10.0),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: const Color(0xFF24EE89).withOpacity(0.3),
+                                                blurRadius: 8.0,
+                                                offset: const Offset(0, 2),
+                                              )
+                                            ]
                                           ),
-                                          borderRadius: BorderRadius.circular(10.0),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: const Color(0xFF24EE89).withOpacity(0.3),
-                                              blurRadius: 8.0,
-                                              offset: const Offset(0, 2),
-                                            )
-                                          ]
-                                        ),
-                                        alignment: Alignment.center,
-                                        child: Text(
-                                          'LOGIN',
-                                          style: GoogleFonts.montserrat(
-                                            textStyle: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 13.0,
-                                              fontWeight: FontWeight.bold,
-                                              letterSpacing: 0.5,
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            'LOGIN',
+                                            style: GoogleFonts.montserrat(
+                                              textStyle: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 13.0,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 0.5,
+                                              ),
                                             ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 12.0),
-                                  Expanded(
-                                    child: Bounceable(
-                                      onTap: () {
-                                        if (widget.onBackPressed != null) {
-                                          widget.onBackPressed!();
-                                        } else {
-                                          Navigator.pop(context);
-                                        }
-                                      },
-                                      child: Container(
-                                        height: 40.0,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0x30FFFFFF),
-                                          borderRadius: BorderRadius.circular(10.0),
-                                          border: Border.all(
-                                            color: Colors.white24,
-                                            width: 1.0,
+                                    const SizedBox(width: 12.0),
+                                    Expanded(
+                                      child: Bounceable(
+                                        onTap: () {
+                                          if (widget.onBackPressed != null) {
+                                            widget.onBackPressed!();
+                                          } else {
+                                            Navigator.pop(context);
+                                          }
+                                        },
+                                        child: Container(
+                                          height: 40.0,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0x30FFFFFF),
+                                            borderRadius: BorderRadius.circular(10.0),
+                                            border: Border.all(
+                                              color: Colors.white24,
+                                              width: 1.0,
+                                            ),
                                           ),
-                                        ),
-                                        alignment: Alignment.center,
-                                        child: Text(
-                                          'BACK',
-                                          style: GoogleFonts.montserrat(
-                                            textStyle: const TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 13.0,
-                                              fontWeight: FontWeight.bold,
-                                              letterSpacing: 0.5,
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            'BACK',
+                                            style: GoogleFonts.montserrat(
+                                              textStyle: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 13.0,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 0.5,
+                                              ),
                                             ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -315,8 +311,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

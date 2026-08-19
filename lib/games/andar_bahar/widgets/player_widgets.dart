@@ -1,6 +1,111 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// Displays mock player avatar, name tag, and balance.
+/// Renders a gold-gradient styled winning text overlay (+15,000) matching the target design.
+Widget _buildWinText(double amount) {
+  // Format number with commas (e.g. 15000 -> 15,000)
+  final String formattedAmount = amount.toInt().toString().replaceAllMapped(
+    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+    (Match m) => '${m[1]},',
+  );
+
+  return Row(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      // Thinner '+' sign stack
+      Stack(
+        alignment: Alignment.center,
+        children: [
+          Text(
+            '+',
+            style: GoogleFonts.poppins(
+              textStyle: TextStyle(
+                fontSize: 13.0,
+                fontWeight: FontWeight.w400, // Thinner weight for '+'
+                height: 1.0,
+                foreground: Paint()
+                  ..style = PaintingStyle.stroke
+                  ..strokeWidth = 2.0
+                  ..color = const Color(0xFF4A2A00), // Dark bronze outline
+              ),
+            ),
+          ),
+          ShaderMask(
+            blendMode: BlendMode.srcIn,
+            shaderCallback: (bounds) => const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFFFFF9C4), // Light gold top
+                Color(0xFFFFD54F), // Gold middle
+                Color(0xFFFFB300), // Warm gold bottom
+                Color(0xFFD84315), // Dark amber bottom edge
+              ],
+              stops: [0.0, 0.4, 0.8, 1.0],
+            ).createShader(bounds),
+            child: Text(
+              '+',
+              style: GoogleFonts.poppins(
+                textStyle: const TextStyle(
+                  fontSize: 13.0,
+                  fontWeight: FontWeight.w400,
+                  height: 1.0,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(width: 0.5),
+      // Bold numbers stack
+      Stack(
+        alignment: Alignment.center,
+        children: [
+          Text(
+            formattedAmount,
+            style: GoogleFonts.poppins(
+              textStyle: TextStyle(
+                fontSize: 13.0,
+                fontWeight: FontWeight.w700, // Bold weight for numbers
+                height: 1.0,
+                foreground: Paint()
+                  ..style = PaintingStyle.stroke
+                  ..strokeWidth = 2.4
+                  ..color = const Color(0xFF4A2A00),
+              ),
+            ),
+          ),
+          ShaderMask(
+            blendMode: BlendMode.srcIn,
+            shaderCallback: (bounds) => const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFFFFF9C4),
+                Color(0xFFFFD54F),
+                Color(0xFFFFB300),
+                Color(0xFFD84315),
+              ],
+              stops: [0.0, 0.4, 0.8, 1.0],
+            ).createShader(bounds),
+            child: Text(
+              formattedAmount,
+              style: GoogleFonts.poppins(
+                textStyle: const TextStyle(
+                  fontSize: 13.0,
+                  fontWeight: FontWeight.w700,
+                  height: 1.0,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
 /// Displays mock player avatar, name tag, and balance with a nudge animation when betting.
 class MockPlayerWidget extends StatefulWidget {
   final String name;
@@ -38,9 +143,7 @@ class _MockPlayerWidgetState extends State<MockPlayerWidget>
   late Animation<double> _anim;
 
   late AnimationController _winController;
-  late Animation<double> _winOffset;
   late Animation<double> _winOpacity;
-  late Animation<double> _winScale;
   double _lastDisplayedWinAmount = 0.0;
   bool _showWinText = false;
 
@@ -57,24 +160,13 @@ class _MockPlayerWidgetState extends State<MockPlayerWidget>
 
     _winController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1600),
+      duration: const Duration(milliseconds: 1500),
     );
-    _winOffset = Tween<double>(begin: 0.0, end: -70.0).animate(
-      CurvedAnimation(
-        parent: _winController,
-        curve: const Interval(0.0, 1.0, curve: Curves.easeOutCubic),
-      ),
-    );
+    
     _winOpacity = TweenSequence<double>([
       TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 15),
-      TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 55),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.0), weight: 30),
-    ]).animate(_winController);
-
-    _winScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween<double>(begin: 0.5, end: 1.2), weight: 20),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.2, end: 1.0), weight: 15),
       TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 65),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.0), weight: 20),
     ]).animate(_winController);
   }
 
@@ -109,60 +201,123 @@ class _MockPlayerWidgetState extends State<MockPlayerWidget>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        AnimatedBuilder(
-          animation: _anim,
-          builder: (context, child) {
-            final double offset = widget.isLeft ? _anim.value : -_anim.value;
-            return Transform.translate(
-              offset: Offset(offset, 0.0),
-              child: child,
-            );
-          },
-          child: Column(
+    // Map mock name to title, username, gradient, and showTitle status
+    String statusTitle = "";
+    String username = "";
+    List<Color> titleGradient = [Colors.white, Colors.grey];
+    bool showTitle = false;
+    bool hasCrown = false;
+
+    if (widget.name == 'Billionaire') {
+      statusTitle = "Millionaire";
+      username = "name304250";
+      titleGradient = [const Color(0xFF8C9EFF), const Color(0xFFE040FB)];
+      showTitle = true;
+    } else if (widget.name == 'Richie') {
+      statusTitle = "Richie Rich";
+      username = "kFOJx";
+      titleGradient = [const Color(0xFFFF4081), const Color(0xFFE040FB)];
+      showTitle = true;
+      hasCrown = true;
+    } else if (widget.name == 'High Roller') {
+      statusTitle = "High Roller";
+      username = "name136668";
+      showTitle = false;
+    } else if (widget.name == 'Master') {
+      statusTitle = "Grand Master";
+      username = "proMaster99";
+      titleGradient = [const Color(0xFF00E5FF), const Color(0xFF00B0FF)];
+      showTitle = true;
+    } else if (widget.name == 'Pro King') {
+      statusTitle = "Pro King";
+      username = "kingSlot88";
+      titleGradient = [const Color(0xFF00E676), const Color(0xFF00B0FF)];
+      showTitle = true;
+    } else if (widget.name == 'Elite Player') {
+      statusTitle = "Elite Pro";
+      username = "eliteGamer";
+      showTitle = false;
+    } else {
+      statusTitle = widget.name;
+      username = widget.name.toLowerCase();
+      showTitle = widget.showNameTag;
+    }
+
+    Widget titleWidget = const SizedBox(height: 2.0);
+    if (showTitle) {
+      titleWidget = Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Star decorations
+          Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (widget.showNameTag) ...[
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (widget.isLeft)
-                      Icon(widget.iconData, color: widget.color, size: 10.0)
-                    else
-                      const SizedBox(),
-                    const SizedBox(width: 4.0),
-                    Text(
-                      widget.name,
-                      style: TextStyle(
-                        color: widget.color,
-                        fontSize: 8.5,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 4.0),
-                    if (!widget.isLeft)
-                      Icon(widget.iconData, color: widget.color, size: 10.0)
-                    else
-                      const SizedBox(),
-                  ],
+              const Text('★', style: TextStyle(color: Color(0xFFE040FB), fontSize: 5.0, height: 1.0)),
+              const SizedBox(width: 1.5),
+              Text(hasCrown ? '👑' : '★', style: const TextStyle(fontSize: 5.5, height: 1.0)),
+              const SizedBox(width: 1.5),
+              const Text('★', style: TextStyle(color: Color(0xFFE040FB), fontSize: 5.0, height: 1.0)),
+            ],
+          ),
+          const SizedBox(height: 0.5),
+          // Shiny gradient font
+          ShaderMask(
+            blendMode: BlendMode.srcIn,
+            shaderCallback: (bounds) => LinearGradient(
+              colors: titleGradient,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ).createShader(bounds),
+            child: Text(
+              statusTitle,
+              style: GoogleFonts.baloo2(
+                textStyle: const TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w800,
+                  fontStyle: FontStyle.italic,
+                  height: 1.0,
                 ),
-                const SizedBox(height: 2.0),
-              ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 1.5),
+        ],
+      );
+    }
 
-              // Circular portrait
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, child) {
+        final double offset = widget.isLeft ? _anim.value : -_anim.value;
+        return Transform.translate(
+          offset: Offset(offset, 0.0),
+          child: child,
+        );
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          titleWidget,
+
+          // Rounded rectangle portrait with golden border
+          Stack(
+            children: [
               Container(
                 width: 36.0,
                 height: 36.0,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: widget.color, width: 1.2),
+                  borderRadius: BorderRadius.circular(9.0),
+                  border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
                   boxShadow: const [
-                    BoxShadow(color: Colors.black26, blurRadius: 3.0)
+                    BoxShadow(
+                      color: Colors.black45,
+                      blurRadius: 3.0,
+                      offset: Offset(0, 1.5),
+                    )
                   ],
                 ),
-                child: ClipOval(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(7.0),
                   child: Container(
                     color: const Color(0xFF1E2240),
                     alignment: Alignment.center,
@@ -176,89 +331,71 @@ class _MockPlayerWidgetState extends State<MockPlayerWidget>
                         : Icon(
                             widget.isLeft ? Icons.person : Icons.person_3,
                             color: Colors.white70,
-                            size: 20.0,
+                            size: 21.0,
                           ),
                   ),
                 ),
               ),
-              const SizedBox(height: 2.0),
-
-              // Balance Box
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6.0, vertical: 1.5),
-                decoration: BoxDecoration(
-                  color: const Color(0x66000000),
-                  borderRadius: BorderRadius.circular(8.0),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.monetization_on,
-                        color: Color(0xFFFFD700), size: 9.0),
-                    const SizedBox(width: 2.0),
-                    Text(
-                      widget.balance.toStringAsFixed(0),
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 8.0,
-                          fontWeight: FontWeight.bold),
+              
+              // Win text overlay centered directly on the avatar face (no zoom animation)
+              if (_showWinText)
+                Positioned.fill(
+                  child: Center(
+                    child: AnimatedBuilder(
+                      animation: _winController,
+                      builder: (context, child) {
+                        return Opacity(
+                          opacity: _winOpacity.value,
+                          child: _buildWinText(_lastDisplayedWinAmount),
+                        );
+                      },
                     ),
-                  ],
+                  ),
                 ),
-              ),
             ],
           ),
-        ),
-        if (_showWinText)
-          Positioned(
-            top: -25.0,
-            left: widget.isLeft ? 45.0 : -95.0,
-            child: AnimatedBuilder(
-              animation: _winController,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(0.0, _winOffset.value),
-                  child: Transform.scale(
-                    scale: _winScale.value,
-                    child: Opacity(
-                      opacity: _winOpacity.value,
-                      child: child,
-                    ),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFD700), Color(0xFFFFA000)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(10.0),
-                  border: Border.all(color: Colors.white, width: 2.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFFD700).withValues(alpha: 0.5),
-                      blurRadius: 6.0,
-                      spreadRadius: 1.0,
-                    ),
-                  ],
-                ),
-                child: Text(
-                  '+${_lastDisplayedWinAmount.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
+
+          const SizedBox(height: 2.0),
+
+          // Username Tag Box
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 1.0),
+            decoration: BoxDecoration(
+              color: const Color(0xCC171B21),
+              borderRadius: BorderRadius.circular(5.0),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Text(
+              username,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 7.0,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
-      ],
+
+          const SizedBox(height: 1.0),
+
+          // Balance Box
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 1.0),
+            decoration: BoxDecoration(
+              color: const Color(0xCC171B21),
+              borderRadius: BorderRadius.circular(5.0),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Text(
+              widget.balance.toStringAsFixed(0),
+              style: const TextStyle(
+                color: Color(0xFFFFD700),
+                fontSize: 7.0,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -267,6 +404,7 @@ class _MockPlayerWidgetState extends State<MockPlayerWidget>
 class UserAvatarWidget extends StatefulWidget {
   final double balance;
   final String? avatarPath;
+  final String? nickname;
   final int betTrigger;
   final double winAmount;
   final int winTrigger;
@@ -275,6 +413,7 @@ class UserAvatarWidget extends StatefulWidget {
     super.key,
     required this.balance,
     this.avatarPath,
+    this.nickname,
     this.betTrigger = 0,
     this.winAmount = 0.0,
     this.winTrigger = 0,
@@ -290,9 +429,7 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
   late Animation<double> _anim;
 
   late AnimationController _winController;
-  late Animation<double> _winOffset;
   late Animation<double> _winOpacity;
-  late Animation<double> _winScale;
   double _lastDisplayedWinAmount = 0.0;
   bool _showWinText = false;
 
@@ -309,24 +446,13 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
 
     _winController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1600),
+      duration: const Duration(milliseconds: 1500),
     );
-    _winOffset = Tween<double>(begin: 0.0, end: -70.0).animate(
-      CurvedAnimation(
-        parent: _winController,
-        curve: const Interval(0.0, 1.0, curve: Curves.easeOutCubic),
-      ),
-    );
+
     _winOpacity = TweenSequence<double>([
       TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 15),
-      TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 55),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.0), weight: 30),
-    ]).animate(_winController);
-
-    _winScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween<double>(begin: 0.5, end: 1.2), weight: 20),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.2, end: 1.0), weight: 15),
       TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 65),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.0), weight: 20),
     ]).animate(_winController);
   }
 
@@ -337,7 +463,6 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
       _controller.forward().then((_) => _controller.reverse());
     }
     if (widget.winTrigger != oldWidget.winTrigger && widget.winTrigger > 0) {
-      debugPrint('Andar Bahar User Win Animation triggered. Amount: ${widget.winAmount}, Trigger: ${widget.winTrigger}');
       setState(() {
         _lastDisplayedWinAmount = widget.winAmount;
         _showWinText = true;
@@ -362,29 +487,36 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        AnimatedBuilder(
-          animation: _anim,
-          builder: (context, child) {
-            // Nudge right and slightly up
-            return Transform.translate(
-              offset: Offset(_anim.value, -_anim.value * 0.5),
-              child: child,
-            );
-          },
-          child: Row(
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(_anim.value, -_anim.value * 0.5),
+          child: child,
+        );
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // User Avatar with gold border and win overlay
+          Stack(
             children: [
               Container(
                 width: 36.0,
                 height: 36.0,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border:
-                      Border.all(color: const Color(0xFF00E5FF), width: 1.2),
+                  borderRadius: BorderRadius.circular(9.0),
+                  border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black45,
+                      blurRadius: 3.0,
+                      offset: Offset(0, 1.5),
+                    )
+                  ],
                 ),
-                child: ClipOval(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(7.0),
                   child: Container(
                     color: const Color(0xFF1E2240),
                     alignment: Alignment.center,
@@ -395,110 +527,74 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
                             width: 36.0,
                             height: 36.0,
                           )
-                        : const Icon(Icons.face,
-                            color: Colors.white70, size: 22.0),
+                        : const Icon(
+                            Icons.face,
+                            color: Colors.white70,
+                            size: 21.0,
+                          ),
                   ),
                 ),
               ),
-              const SizedBox(width: 6.0),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Satyamsk',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 9.0,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 2.0),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6.0, vertical: 1.5),
-                    decoration: BoxDecoration(
-                      color: const Color(0x4D000000),
-                      borderRadius: BorderRadius.circular(6.0),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.monetization_on,
-                            color: Color(0xFFFFD700), size: 10.0),
-                        const SizedBox(width: 2.0),
-                        Text(
-                          widget.balance.toStringAsFixed(2),
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 8.5,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ],
+              if (_showWinText)
+                Positioned.fill(
+                  child: Center(
+                    child: AnimatedBuilder(
+                      animation: _winController,
+                      builder: (context, child) {
+                        return Opacity(
+                          opacity: _winOpacity.value,
+                          child: _buildWinText(_lastDisplayedWinAmount),
+                        );
+                      },
                     ),
                   ),
-                ],
+                ),
+            ],
+          ),
+          const SizedBox(width: 5.0),
+          
+          // User Name & Balance boxes
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: const Color(0xCC171B21),
+                  borderRadius: BorderRadius.circular(5.0),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Text(
+                  widget.nickname ?? 'Satyamsk',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 7.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 2.0),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: const Color(0xCC171B21),
+                  borderRadius: BorderRadius.circular(5.0),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Text(
+                  widget.balance.toStringAsFixed(0),
+                  style: const TextStyle(
+                    color: Color(0xFFFFD700),
+                    fontSize: 7.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
-        ),
-        if (_showWinText)
-          Positioned(
-            top: -25.0,
-            left: 0,
-            child: AnimatedBuilder(
-              animation: _winController,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(10.0, _winOffset.value),
-                  child: Transform.scale(
-                    scale: _winScale.value,
-                    child: Opacity(
-                      opacity: _winOpacity.value,
-                      child: child,
-                    ),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFD700), Color(0xFFFFA000)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12.0),
-                  border: Border.all(color: Colors.white, width: 2.2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFFD700).withValues(alpha: 0.5),
-                      blurRadius: 8.0,
-                      spreadRadius: 2.0,
-                    ),
-                  ],
-                ),
-                child: Text(
-                  '+${_lastDisplayedWinAmount.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    color: Color(0xFF3E2723),
-                    fontSize: 22.0,
-                    fontWeight: FontWeight.w900,
-                    shadows: [
-                      Shadow(
-                        color: Colors.white,
-                        blurRadius: 2.0,
-                        offset: Offset(0.5, 0.5),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-      ],
+        ],
+      ),
     );
   }
 }
-
-

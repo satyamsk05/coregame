@@ -19,6 +19,8 @@ class SevenUpDownGameScreen extends StatefulWidget {
   final bool musicOn;
   final ValueChanged<double> onBalanceChanged;
   final VoidCallback onBackPressed;
+  final String nickname;
+  final String avatarPath;
 
   const SevenUpDownGameScreen({
     Key? key,
@@ -27,6 +29,8 @@ class SevenUpDownGameScreen extends StatefulWidget {
     required this.musicOn,
     required this.onBalanceChanged,
     required this.onBackPressed,
+    required this.nickname,
+    required this.avatarPath,
   }) : super(key: key);
 
   @override
@@ -884,7 +888,8 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
                   left: w * 0.02,
                   child: UserAvatarWidget(
                     balance: widget.balance,
-                    avatarPath: 'assets/userprofile/user7.png',
+                    avatarPath: widget.avatarPath,
+                    nickname: widget.nickname,
                     betTrigger: _triggerUser,
                     winAmount: _userWinAmount,
                     winTrigger: _userWinTrigger,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../utils/sound_manager.dart';
+import '../shared/widgets/bounceable.dart';
 
 class LobbyScreen extends StatefulWidget {
   final VoidCallback onLogoutPressed;
@@ -16,6 +17,10 @@ class LobbyScreen extends StatefulWidget {
   final String bankName;
   final String bankAccountNumber;
   final String activeGateway;
+  final String nickname;
+  final String avatarPath;
+  final ValueChanged<String> onNicknameChanged;
+  final ValueChanged<String> onAvatarChanged;
   final Function(String) onPlayGame;
   final ValueChanged<double> onBalanceChanged;
   final ValueChanged<int> onVipLevelChanged;
@@ -40,6 +45,10 @@ class LobbyScreen extends StatefulWidget {
     required this.bankName,
     required this.bankAccountNumber,
     required this.activeGateway,
+    required this.nickname,
+    required this.avatarPath,
+    required this.onNicknameChanged,
+    required this.onAvatarChanged,
     required this.onPlayGame,
     required this.onBalanceChanged,
     required this.onVipLevelChanged,
@@ -68,6 +77,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
   String get _bankName => widget.bankName;
   String get _bankAccountNumber => widget.bankAccountNumber;
   String get _activeGateway => widget.activeGateway;
+  String get _nickname => widget.nickname;
+  String get _avatarPath => widget.avatarPath;
 
   String _selectedCategory = 'All';
 
@@ -205,9 +216,11 @@ class _LobbyScreenState extends State<LobbyScreen> {
         ),
         child: SafeArea(
           child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: paddingHorizontal,
-              vertical: paddingVertical,
+            padding: EdgeInsets.only(
+              left: 4.0, // Shifted closer to the bezel to match photo
+              right: paddingHorizontal,
+              top: paddingVertical,
+              bottom: paddingVertical,
             ),
             child: Stack(
               children: [
@@ -240,7 +253,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                   Center(
                                     child: ClipOval(
                                       child: Image.asset(
-                                        'assets/avatar.png',
+                                        'assets/userprofile/user7.png',
                                         width: 36.0,
                                         height: 36.0,
                                         fit: BoxFit.cover,
@@ -1163,10 +1176,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                 ),
                               ],
                             ),
-                            child: const CircleAvatar(
+                            child: CircleAvatar(
                               radius: 36,
-                              backgroundColor: Color(0xFF181A1F),
-                              child: Icon(Icons.face, size: 52, color: Colors.white70),
+                              backgroundColor: const Color(0xFF181A1F),
+                              backgroundImage: AssetImage(_avatarPath),
                             ),
                           ),
                           // VIP Level Ribbon
@@ -1196,7 +1209,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       _buildMiniCasinoButton(
                         text: 'EDIT AVATAR',
                         color: const Color(0xFF2E3135),
-                        onTap: () {},
+                        onTap: () {
+                          _showAvatarGridDialog();
+                        },
                       ),
                     ],
                   ),
@@ -1209,7 +1224,19 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildProfileDetailRow('NICKNAME:', 'superhit'),
+                      Row(
+                        children: [
+                          Expanded(child: _buildProfileDetailRow('NICKNAME:', _nickname)),
+                          const SizedBox(width: 8.0),
+                          _buildMiniCasinoButton(
+                            text: 'EDIT',
+                            color: const Color(0xFF00C853),
+                            onTap: () {
+                              _showEditNicknameDialog();
+                            },
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 10.0),
                       Row(
                         children: [
@@ -1264,6 +1291,125 @@ class _LobbyScreenState extends State<LobbyScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showEditNicknameDialog() {
+    final TextEditingController controller = TextEditingController(text: _nickname);
+    _showCustomCasinoDialog(
+      title: 'EDIT NICKNAME',
+      maxHeight: 180.0,
+      maxWidth: 400.0,
+      content: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            height: 42.0,
+            decoration: BoxDecoration(
+              color: const Color(0xFF161618),
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(color: const Color(0xFF2E3135), width: 1.2),
+            ),
+            child: TextField(
+              controller: controller,
+              style: const TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                hintText: 'Enter nickname...',
+                hintStyle: TextStyle(color: Colors.white24, fontSize: 13.0),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              _buildMiniCasinoButton(
+                text: 'CANCEL',
+                color: const Color(0xFF323539),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(width: 12.0),
+              _buildMiniCasinoButton(
+                text: 'SAVE',
+                color: const Color(0xFF00C853),
+                onTap: () {
+                  final newName = controller.text.trim();
+                  if (newName.isNotEmpty) {
+                    widget.onNicknameChanged(newName);
+                    Navigator.pop(context);
+                    Navigator.pop(context);
+                    Future.delayed(const Duration(milliseconds: 100), () {
+                      _showProfileDialog();
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAvatarGridDialog() {
+    _showCustomCasinoDialog(
+      title: 'CHOOSE AVATAR',
+      maxHeight: 220.0,
+      maxWidth: 450.0,
+      content: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 7,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          crossAxisSpacing: 12.0,
+          mainAxisSpacing: 12.0,
+          childAspectRatio: 1.0,
+        ),
+        itemBuilder: (context, index) {
+          final String path = 'assets/userprofile/user${index + 1}.png';
+          final bool isSelected = _avatarPath == path;
+          return Bounceable(
+            onTap: () {
+              widget.onAvatarChanged(path);
+              Navigator.pop(context);
+              Navigator.pop(context);
+              Future.delayed(const Duration(milliseconds: 100), () {
+                _showProfileDialog();
+              });
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12.0),
+                border: Border.all(
+                  color: isSelected ? const Color(0xFFFFD700) : const Color(0xFF2E3135),
+                  width: isSelected ? 2.5 : 1.2,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFFFFD700).withOpacity(0.3),
+                          blurRadius: 6.0,
+                          spreadRadius: 1.0,
+                        )
+                      ]
+                    : null,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10.0),
+                child: Image.asset(
+                  path,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
