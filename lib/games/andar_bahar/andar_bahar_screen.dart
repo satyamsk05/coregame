@@ -239,8 +239,9 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
     final bool isOtherPlayer = _random.nextDouble() < 0.40;
 
     if (isOtherPlayer) {
-      double startX = 0.95;
-      double startY = 0.92;
+      // Matches the actual bottom-right corner position of the active users widget
+      const double startX = 0.98;
+      const double startY = 0.88;
 
       setState(() {
         if (spot == 'andar') {
@@ -935,10 +936,10 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                 ),
               ),
 
-              // 4b. Bottom Active Users Count (Right of Chip Selector)
+              // 4b. Bottom Active Users Count (true bottom-right corner)
               Positioned(
                 bottom: h * 0.03,
-                right: w * 0.15,
+                right: w * 0.02,
                 child: GestureDetector(
                   onTap: _showActiveUsersDialog,
                   child: Container(
@@ -1059,8 +1060,13 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                             final double t = chip.controller.value;
                             final double currentX =
                                 chip.startX + (chip.endX - chip.startX) * t;
-                            final double currentY =
+                            // For star trail: parabolic arc (quadratic bezier mid-point lift)
+                            final double linearY =
                                 chip.startY + (chip.endY - chip.startY) * t;
+                            final double arcLift = chip.isStar
+                                ? -0.18 * 4.0 * t * (1.0 - t) // peak lift at t=0.5
+                                : 0.0;
+                            final double currentY = linearY + arcLift;
                             return Stack(
                               children: [
                                 Positioned(

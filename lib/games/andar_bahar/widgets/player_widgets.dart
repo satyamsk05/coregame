@@ -535,8 +535,8 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
           Stack(
             children: [
               Container(
-                width: 37.0,
-                height: 37.0,
+                width: 38.0,
+                height: 38.0,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(9.0),
                   border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
@@ -557,13 +557,13 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
                         ? Image.asset(
                             widget.avatarPath!,
                             fit: BoxFit.cover,
-                            width: 37.0,
-                            height: 37.0,
+                            width: 38.0,
+                            height: 38.0,
                           )
                         : const Icon(
                             Icons.face,
                             color: Colors.white70,
-                            size: 22.0,
+                            size: 23.0,
                           ),
                   ),
                 ),
@@ -602,7 +602,7 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
                   widget.nickname ?? 'Satyamsk',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 7.7,
+                    fontSize: 7.9,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -619,7 +619,7 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
                   widget.balance.toStringAsFixed(0),
                   style: const TextStyle(
                     color: Color(0xFFFFD700),
-                    fontSize: 7.7,
+                    fontSize: 7.9,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
