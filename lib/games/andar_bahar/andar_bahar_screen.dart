@@ -322,6 +322,12 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       }
 
       if (playerKey == 'R0') {
+        // Profile center for Grand Master (right side, index 0)
+        // Fractional coords matching Positioned(top: h*0.18, right: w*0.02)
+        // Avatar is ~37px wide; screen ~390h → avatar center Y ≈ 0.18 + 18.5/h
+        const double profileCX = 0.96; // X center of right-side profile
+        const double profileCY = 0.22; // Y center of Grand Master avatar
+
         // Pre-compute a single fixed landing spot for all 20 stars
         double trailEndX;
         double trailEndY;
@@ -335,17 +341,33 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
           trailEndX = 0.32 + _random.nextDouble() * 0.36;
           trailEndY = 0.36 + _random.nextDouble() * 0.08;
         }
-        // Spawn 20 stars: first is largest (24px), last is smallest (4px)
-        // All go to the same endpoint so they form one ordered line
+
+        // 20 stars: first is largest (24px), last is smallest (4px).
+        // Each star originates from a slightly different point around the
+        // profile card (left/right/top/bottom edges) — 4-directional spread.
         const int total = 20;
+        // 4 origin positions cycling: top, right, bottom, left of avatar
+        const List<List<double>> offsets = [
+          [ 0.00, -0.06], // top
+          [ 0.04, -0.03], // top-right
+          [ 0.04,  0.00], // right
+          [ 0.04,  0.03], // bottom-right
+          [ 0.00,  0.06], // bottom
+          [-0.04,  0.03], // bottom-left
+          [-0.04,  0.00], // left
+          [-0.04, -0.03], // top-left
+        ];
         for (int i = 0; i < total; i++) {
           final double sz = 24.0 - (20.0 * i / (total - 1)); // 24 → 4
+          final List<double> off = offsets[i % offsets.length];
+          final double sx = profileCX + off[0];
+          final double sy = profileCY + off[1];
           Future.delayed(Duration(milliseconds: i * 45), () {
             if (!mounted) return;
             _triggerChipFlight(
               spot: spot,
-              startX: startX,
-              startY: startY,
+              startX: sx,
+              startY: sy,
               chipColor: ChipSelectorWidget.getChipColor(betValue.toInt()),
               chipLabel: ChipSelectorWidget.getChipText(betValue.toInt()),
               chipValue: betValue.toInt(),
