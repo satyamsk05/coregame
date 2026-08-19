@@ -27,6 +27,7 @@ class FlyingChip {
   final String label;
   final AnimationController controller;
   final int value;
+  final bool isStar;
 
   FlyingChip({
     required this.startX,
@@ -37,6 +38,7 @@ class FlyingChip {
     required this.label,
     required this.controller,
     required this.value,
+    this.isStar = false,
   });
 }
 

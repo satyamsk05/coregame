@@ -327,6 +327,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
         chipColor: ChipSelectorWidget.getChipColor(betValue.toInt()),
         chipLabel: ChipSelectorWidget.getChipText(betValue.toInt()),
         chipValue: betValue.toInt(),
+        isStar: playerKey == 'R0',
       );
     }
   }
@@ -641,6 +642,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
     required Color chipColor,
     required String chipLabel,
     required int chipValue,
+    bool isStar = false,
   }) {
     double endX = 0.5;
     double endY = 0.5;
@@ -667,6 +669,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
         duration: const Duration(milliseconds: 550),
       ),
       value: chipValue,
+      isStar: isStar,
     );
 
     setState(() => _flyingChips.add(newChip));
@@ -1014,11 +1017,38 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                                 Positioned(
                                   left: currentX * w - 9.0,
                                   top: currentY * h - 9.0,
-                                  child: PokerChipWidget(
-                                    value: chip.value,
-                                    size: 18.0,
-                                    selected: true,
-                                  ),
+                                  child: chip.isStar
+                                      ? Container(
+                                          width: 18.0,
+                                          height: 18.0,
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black38,
+                                                blurRadius: 3.0,
+                                                offset: Offset(0, 1.5),
+                                              )
+                                            ],
+                                          ),
+                                          child: ShaderMask(
+                                            shaderCallback: (bounds) => const LinearGradient(
+                                              colors: [Color(0xFFFFB74D), Color(0xFFFF3D00)],
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                            ).createShader(bounds),
+                                            child: const Icon(
+                                              Icons.star,
+                                              size: 18.0,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        )
+                                      : PokerChipWidget(
+                                          value: chip.value,
+                                          size: 18.0,
+                                          selected: true,
+                                        ),
                                 ),
                               ],
                             );

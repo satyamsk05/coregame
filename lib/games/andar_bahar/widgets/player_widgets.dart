@@ -301,6 +301,7 @@ class _MockPlayerWidgetState extends State<MockPlayerWidget>
 
           // Rounded rectangle portrait with golden border
           Stack(
+            clipBehavior: Clip.none,
             children: [
               Container(
                 width: 36.0,
@@ -349,6 +350,38 @@ class _MockPlayerWidgetState extends State<MockPlayerWidget>
                           child: _buildWinText(_lastDisplayedWinAmount),
                         );
                       },
+                    ),
+                  ),
+                ),
+              if (widget.name == 'Master')
+                Positioned(
+                  top: -8.0,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black45,
+                            blurRadius: 2.0,
+                            offset: Offset(0, 1.0),
+                          )
+                        ],
+                      ),
+                      child: ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [Color(0xFFFFB74D), Color(0xFFFF3D00)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ).createShader(bounds),
+                        child: const Icon(
+                          Icons.star,
+                          size: 13.0,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 ),
