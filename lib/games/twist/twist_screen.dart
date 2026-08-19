@@ -304,13 +304,14 @@ class _TwistGameScreenState extends State<TwistGameScreen>
           GestureDetector(
             onTap: widget.onBackPressed,
             child: Container(
-              padding: const EdgeInsets.all(6.0),
+              padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
-                color: Colors.white10,
+                color: const Color(0x33000000),
                 borderRadius: BorderRadius.circular(8.0),
+                border: Border.all(color: Colors.white24),
               ),
-              child: const Icon(Icons.arrow_back_ios_new_rounded,
-                  color: Colors.white70, size: 14.0),
+              child: const Icon(Icons.arrow_back_ios_new,
+                  color: Colors.white, size: 16.0),
             ),
           ),
           const SizedBox(width: 8.0),

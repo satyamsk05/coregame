@@ -470,9 +470,18 @@ class _DiceGameScreenState extends State<DiceGameScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: _isPlaying ? null : widget.onBackPressed,
+                  GestureDetector(
+                    onTap: _isPlaying ? null : widget.onBackPressed,
+                    child: Container(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        color: const Color(0x33000000),
+                        borderRadius: BorderRadius.circular(8.0),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: const Icon(Icons.arrow_back_ios_new,
+                          color: Colors.white, size: 16.0),
+                    ),
                   ),
                   Text(
                     'CLASSIC DICE',
@@ -906,29 +915,7 @@ class _DiceGameScreenState extends State<DiceGameScreen>
               ),
             ),
           ],
-          const SizedBox(height: 10.0),
 
-          // Demo Notice Capsule
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
-            decoration: BoxDecoration(
-              color: const Color(0xFF181A1F),
-              borderRadius: BorderRadius.circular(6.0),
-              border: Border.all(color: const Color(0xFF2C2F36), width: 1.0),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, color: Colors.grey[400], size: 14.0),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: Text(
-                    'Betting with 0 will enter demo mode.',
-                    style: TextStyle(color: Colors.grey[400], fontSize: 10.0, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
      ),

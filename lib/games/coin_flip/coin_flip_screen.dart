@@ -5,7 +5,7 @@ import '../../shared/widgets/bounceable.dart';
 import '../../shared/widgets/win_lose_toast.dart';
 import '../../shared/widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../shared/widgets/animated_game_background.dart';
+import '../../shared/widgets/night_forest_background.dart';
 import '../../utils/sound_manager.dart';
 
 class CoinFlipGameScreen extends StatefulWidget {
@@ -234,43 +234,26 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
 
     return Scaffold(
       backgroundColor: const Color(0xFF161618),
-      body: AnimatedGameBackground(
+      body: NightForestBackground(
         child: SafeArea(
           child: Column(
             children: [
               // Header bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
                 child: Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: _isFlipping ? null : widget.onBackPressed,
-                    ),
-                    Text(
-                      'COIN FLIP',
-                      style: GoogleFonts.alfaSlabOne(
-                        textStyle: const TextStyle(color: Colors.white, fontSize: 16.0, letterSpacing: 0.5),
-                      ),
-                    ),
-                    const Spacer(),
-                    // Balance Capsule
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E2024),
-                        borderRadius: BorderRadius.circular(20.0),
-                        border: Border.all(color: const Color(0xFF37474F), width: 1.5),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.monetization_on, color: Color(0xFFFFD700), size: 16.0),
-                          const SizedBox(width: 6.0),
-                          Text(
-                            '₹${widget.balance.toStringAsFixed(2)}',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12.5),
-                          ),
-                        ],
+                    GestureDetector(
+                      onTap: _isFlipping ? null : widget.onBackPressed,
+                      child: Container(
+                        padding: const EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          color: const Color(0x33000000),
+                          borderRadius: BorderRadius.circular(8.0),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: const Icon(Icons.arrow_back_ios_new,
+                            color: Colors.white, size: 16.0),
                       ),
                     ),
                   ],
@@ -337,6 +320,37 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Wallet Balance Box
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+            decoration: BoxDecoration(
+              color: const Color(0xFF181A1F),
+              borderRadius: BorderRadius.circular(10.0),
+              border: Border.all(color: const Color(0xFF2C2F36), width: 1.0),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Wallet Balance',
+                  style: TextStyle(color: Color(0xFF90A4AE), fontWeight: FontWeight.bold, fontSize: 10.5),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.monetization_on, color: Color(0xFFFFD700), size: 13.0),
+                    const SizedBox(width: 4.0),
+                    Text(
+                      '₹${widget.balance.toStringAsFixed(2)}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11.5),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10.0),
+
           // Bet Amount Label
           Row(
             children: [
@@ -574,29 +588,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
               ),
             ),
           ),
-          const SizedBox(height: 10.0),
 
-          // Demo Mode notice capsule
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
-            decoration: BoxDecoration(
-              color: const Color(0xFF181A1F),
-              borderRadius: BorderRadius.circular(10.0),
-              border: Border.all(color: const Color(0xFF2C2F36), width: 1.0),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, color: Colors.grey[400], size: 14.0),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: Text(
-                    'Betting with 0 will enter demo mode.',
-                    style: TextStyle(color: Colors.grey[400], fontSize: 10.0, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

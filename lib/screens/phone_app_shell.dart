@@ -205,6 +205,8 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           musicOn: _musicOn,
           onBalanceChanged: (val) => setState(() => _balance = val),
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
+          nickname: _nickname,
+          avatarPath: _avatarPath,
         );
         break;
       case 'mines':

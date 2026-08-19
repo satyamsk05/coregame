@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
-import '../../shared/widgets/bounceable.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../shared/widgets/win_overlay_card.dart';
 import 'package:lottie/lottie.dart';
@@ -123,9 +121,22 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
   
   // Animation controllers
   late AnimationController _lottieController;
+  late AnimationController _blinkController;
   
   // History outcomes
   final List<int> _history = [9, 8, 9, 10, 10, 12, 11, 10, 8, 7, 7, 3];
+
+  // User specific bets
+  int _userBetOn2to6 = 0;
+  int _userBetOn7 = 0;
+  int _userBetOn8to12 = 0;
+  
+  int _lastUserBet2to6 = 0;
+  int _lastUserBet7 = 0;
+  int _lastUserBet8to12 = 0;
+  
+  final Set<String> _masterBetSpots = {};
+  String _winnerSpot = '';
 
 
 
@@ -136,6 +147,10 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
       duration: const Duration(seconds: 4),
       vsync: this,
     );
+    _blinkController = AnimationController(
+      duration: const Duration(milliseconds: 350),
+      vsync: this,
+    );
     _startCountdown();
   }
 
@@ -143,6 +158,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
   void dispose() {
     _countdownTimer?.cancel();
     _lottieController.dispose();
+    _blinkController.dispose();
     super.dispose();
   }
 
@@ -166,6 +182,15 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
       _masterWinAmount = 0.0;
       _proKingWinAmount = 0.0;
       _elitePlayerWinAmount = 0.0;
+
+      // Reset user specific bets, master bets, winner spot, and stop blinker
+      _userBetOn2to6 = 0;
+      _userBetOn7 = 0;
+      _userBetOn8to12 = 0;
+      _masterBetSpots.clear();
+      _winnerSpot = '';
+      _blinkController.stop();
+      _blinkController.reset();
     });
 
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -274,6 +299,9 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
 
     if (placeBet) {
       setState(() {
+        if (playerKey == 'R0') {
+          _masterBetSpots.add(spot);
+        }
         if (spot == '2-6') {
           _betOn2to6 += betValue.toInt();
           _mockBets2to6[playerKey] = (_mockBets2to6[playerKey] ?? 0.0) + betValue;
@@ -312,7 +340,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
       endY = 0.40 + _random.nextDouble() * 0.12;
     } else if (spot == '7') {
       endX = 0.44 + _random.nextDouble() * 0.12;
-      endY = 0.40 + _random.nextDouble() * 0.12;
+      endY = 0.64 + _random.nextDouble() * 0.10;
     } else if (spot == '8-12') {
       endX = 0.64 + _random.nextDouble() * 0.12;
       endY = 0.40 + _random.nextDouble() * 0.12;
@@ -364,10 +392,13 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
     setState(() {
       if (spot == '2-6') {
         _betOn2to6 += _selectedChipValue;
+        _userBetOn2to6 += _selectedChipValue;
       } else if (spot == '7') {
         _betOn7 += _selectedChipValue;
+        _userBetOn7 += _selectedChipValue;
       } else if (spot == '8-12') {
         _betOn8to12 += _selectedChipValue;
+        _userBetOn8to12 += _selectedChipValue;
       }
     });
 
@@ -402,6 +433,10 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
     _lastBetOn2to6 = _betOn2to6;
     _lastBetOn7 = _betOn7;
     _lastBetOn8to12 = _betOn8to12;
+
+    _lastUserBet2to6 = _userBetOn2to6;
+    _lastUserBet7 = _userBetOn7;
+    _lastUserBet8to12 = _userBetOn8to12;
 
     // Start Lottie animation
     _lottieController.forward(from: 0.0);
@@ -520,12 +555,19 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
       _history.insert(0, sum);
       if (_history.length > 12) _history.removeLast();
       
-      // Clear current bets
-      _betOn2to6 = 0;
-      _betOn7 = 0;
-      _betOn8to12 = 0;
-      
+      _winnerSpot = winnerSpot;
       _isRolling = false;
+    });
+
+    _blinkController.repeat(reverse: true);
+    Timer(const Duration(milliseconds: 2500), () {
+      if (mounted) {
+        setState(() {
+          _winnerSpot = '';
+        });
+        _blinkController.stop();
+        _blinkController.reset();
+      }
     });
 
     _lottieController.reset();
@@ -549,7 +591,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
           startY = 0.5;
         } else if (spot == '7') {
           startX = 0.5;
-          startY = 0.5;
+          startY = 0.70;
         } else if (spot == '8-12') {
           startX = 0.68;
           startY = 0.5;
@@ -689,6 +731,10 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
       _betOn2to6 = _lastBetOn2to6;
       _betOn7 = _lastBetOn7;
       _betOn8to12 = _lastBetOn8to12;
+
+      _userBetOn2to6 = _lastUserBet2to6;
+      _userBetOn7 = _lastUserBet7;
+      _userBetOn8to12 = _lastUserBet8to12;
     });
   }
 
@@ -702,6 +748,10 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
       _betOn2to6 = 0;
       _betOn7 = 0;
       _betOn8to12 = 0;
+
+      _userBetOn2to6 = 0;
+      _userBetOn7 = 0;
+      _userBetOn8to12 = 0;
     });
   }
 
@@ -720,6 +770,10 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
       _betOn2to6 *= 2;
       _betOn7 *= 2;
       _betOn8to12 *= 2;
+
+      _userBetOn2to6 *= 2;
+      _userBetOn7 *= 2;
+      _userBetOn8to12 *= 2;
     });
   }
 
@@ -743,6 +797,10 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
       _betOn2to6 = newBet2to6;
       _betOn7 = newBet7;
       _betOn8to12 = newBet8to12;
+
+      _userBetOn2to6 = _userBetOn2to6 ~/ 2;
+      _userBetOn7 = _userBetOn7 ~/ 2;
+      _userBetOn8to12 = _userBetOn8to12 ~/ 2;
     });
   }
 
@@ -1111,19 +1169,14 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
           GestureDetector(
             onTap: widget.onBackPressed,
             child: Container(
-              width: 53.0,
-              height: 41.0,
+              padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
-                color: const Color(0xFF3A4142),
+                color: const Color(0x33000000),
                 borderRadius: BorderRadius.circular(8.0),
+                border: Border.all(color: Colors.white24),
               ),
-              alignment: Alignment.center,
-              child: Image.asset(
-                'assets/icons/home_icon.png',
-                width: 23.0,
-                height: 23.0,
-                fit: BoxFit.contain,
-              ),
+              child: const Icon(Icons.arrow_back_ios_new,
+                  color: Colors.white, size: 16.0),
             ),
           ),
           const SizedBox(width: 16.0),
@@ -1136,41 +1189,6 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
           ),
           const Spacer(),
 
-          // Recent History Bar
-          Row(
-            children: _history.map((val) {
-              final isSeven = val == 7;
-              final isUnder = val < 7;
-              Color badgeColor = const Color(0xFF0D5102); // Over 7 (Green)
-              if (isSeven) {
-                badgeColor = const Color(0xFF0B32A7); // Lucky 7 (Blue)
-              } else if (isUnder) {
-                badgeColor = const Color(0xFFA7100B); // Under 7 (Red)
-              }
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 2.0),
-                width: 25.0,
-                height: 20.0,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: badgeColor,
-                  borderRadius: BorderRadius.circular(4.0),
-                ),
-                child: Text(
-                  '$val',
-                  style: GoogleFonts.inter(
-                    textStyle: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const Spacer(),
-
           // Info and Settings Icon
           const Icon(Icons.info_outline, color: Colors.grey, size: 20.0),
           const SizedBox(width: 12.0),
@@ -1180,254 +1198,162 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
     );
   }
 
-  Widget _buildGameBoard() {
-    final bool hasBet2to6 = _betOn2to6 > 0;
-    final bool hasBet7 = _betOn7 > 0;
-    final bool hasBet8to12 = _betOn8to12 > 0;
+  Widget _buildTableHistoryBar() {
+    final displayHistory = _history.take(11).toList().reversed.toList();
+    
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: displayHistory.map((val) {
+        final isSeven = val == 7;
+        final isUnder = val < 7;
+        Color badgeColor = const Color(0xFF0D5102); // Over 7 (Green)
+        if (isSeven) {
+          badgeColor = const Color(0xFF0B32A7); // Lucky 7 (Blue)
+        } else if (isUnder) {
+          badgeColor = const Color(0xFFA7100B); // Under 7 (Red)
+        }
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 1.0),
+          width: 14.0,
+          height: 14.0,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: badgeColor,
+            borderRadius: BorderRadius.circular(2.0),
+            border: Border.all(color: Colors.white.withOpacity(0.15), width: 0.5),
+          ),
+          child: Text(
+            '$val',
+            style: GoogleFonts.inter(
+              textStyle: const TextStyle(
+                color: Colors.white,
+                fontSize: 8.0,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
 
+  Widget _buildGameBoard() {
     return Column(
       children: [
         Expanded(
           child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF151821),
-              borderRadius: BorderRadius.circular(16.0),
-              border: Border.all(color: const Color(0xFF2C2F36), width: 1.5),
+            decoration: const BoxDecoration(
+              color: Colors.transparent,
             ),
             child: Stack(
               alignment: Alignment.center,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // 1. Left Betting Box (2-6) - Full Height
                     Expanded(
-                      child: GestureDetector(
-                        onTap: () => _placeBet('2-6'),
-                        behavior: HitTestBehavior.opaque,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          margin: const EdgeInsets.all(8.0),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF590D0B),
-                            borderRadius: BorderRadius.circular(18.0),
-                            border: Border.all(
-                              color: hasBet2to6 ? const Color(0xFF24EE89) : Colors.transparent,
-                              width: hasBet2to6 ? 2.5 : 1.0,
-                            ),
-                            boxShadow: hasBet2to6 ? [
-                              BoxShadow(
-                                color: const Color(0xFF24EE89).withOpacity(0.35),
-                                blurRadius: 10.0,
-                                spreadRadius: 1.0,
-                              )
-                            ] : null,
-                          ),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Opacity(
-                                opacity: 0.04,
-                                child: Text(
-                                  '2-6',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 64.0,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '7 DOWN',
-                                    style: GoogleFonts.inter(
-                                      textStyle: TextStyle(
-                                        color: Colors.white.withOpacity(0.6),
-                                        fontSize: 10.0,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4.0),
-                                  Text(
-                                    '2-6',
-                                    style: GoogleFonts.inter(
-                                      textStyle: const TextStyle(color: Colors.white, fontSize: 32.0, fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2.0),
-                                  Text(
-                                    '2.0x Payout',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.6),
-                                      fontSize: 10.0,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8.0),
-                                  if (_betOn2to6 > 0) _buildBetChipsBadge(_betOn2to6),
-                                ],
-                              ),
-                            ],
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
+                        child: GestureDetector(
+                          onTap: () => _placeBet('2-6'),
+                          child: SevenUpDownBetPanel(
+                            label: '2 - 6',
+                            totalBet: _betOn2to6.toDouble(),
+                            userBet: _userBetOn2to6.toDouble(),
+                            baseColor: const Color(0xFFC62828), // Andar Bahar Red
+                            multiplier: '2.0',
+                            isLeft: true,
+                            isWinner: _winnerSpot == '2-6',
+                            blinkAnimation: _blinkController,
+                            hasMasterBet: _masterBetSpots.contains('2-6'),
                           ),
                         ),
                       ),
                     ),
+
+                    // 2. Center Column
                     Expanded(
-                      child: GestureDetector(
-                        onTap: () => _placeBet('7'),
-                        behavior: HitTestBehavior.opaque,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          margin: const EdgeInsets.all(8.0),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF04334A),
-                            borderRadius: BorderRadius.circular(18.0),
-                            border: Border.all(
-                              color: hasBet7 ? const Color(0xFF24EE89) : Colors.transparent,
-                              width: hasBet7 ? 2.5 : 1.0,
-                            ),
-                            boxShadow: hasBet7 ? [
-                              BoxShadow(
-                                color: const Color(0xFF24EE89).withOpacity(0.35),
-                                blurRadius: 10.0,
-                                spreadRadius: 1.0,
-                              )
-                            ] : null,
-                          ),
-                          child: Stack(
-                            alignment: Alignment.center,
+                      child: Column(
+                        children: [
+                          // History Bar at the top of the table
+                          _buildTableHistoryBar(),
+                          const Spacer(),
+                          // "7 UP DOWN" logo text
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Opacity(
-                                opacity: 0.04,
-                                child: Text(
-                                  '7',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 64.0,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
+                              Icon(Icons.eco, color: const Color(0xFF00C853).withOpacity(0.3), size: 14.0),
+                              const SizedBox(width: 4.0),
+                              Text(
+                                '7 UP DOWN',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white.withOpacity(0.2),
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.5,
                                 ),
                               ),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'LUCKY',
-                                    style: GoogleFonts.inter(
-                                      textStyle: TextStyle(
-                                        color: Colors.white.withOpacity(0.6),
-                                        fontSize: 10.0,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4.0),
-                                  Text(
-                                    '7',
-                                    style: GoogleFonts.inter(
-                                      textStyle: const TextStyle(color: Color(0xFFFFD700), fontSize: 34.0, fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2.0),
-                                  Text(
-                                    '5.0x Payout',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.6),
-                                      fontSize: 10.0,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8.0),
-                                  if (_betOn7 > 0) _buildBetChipsBadge(_betOn7),
-                                ],
-                              ),
+                              const SizedBox(width: 4.0),
+                              Icon(Icons.eco, color: const Color(0xFF00C853).withOpacity(0.3), size: 14.0),
                             ],
                           ),
-                        ),
+                          const Spacer(),
+                          // Center Betting Box (7) - Shorter height
+                          SizedBox(
+                            height: 85.0, // Adjust height as needed to fit nicely
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
+                              child: GestureDetector(
+                                onTap: () => _placeBet('7'),
+                                child: SevenUpDownBetPanel(
+                                  label: '7',
+                                  totalBet: _betOn7.toDouble(),
+                                  userBet: _userBetOn7.toDouble(),
+                                  baseColor: const Color(0xFF0B32A7), // Andar Bahar Blue
+                                  multiplier: '5.0',
+                                  isLeft: true,
+                                  isWinner: _winnerSpot == '7',
+                                  blinkAnimation: _blinkController,
+                                  hasMasterBet: _masterBetSpots.contains('7'),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+
+                    // 3. Right Betting Box (8-12) - Full Height
                     Expanded(
-                      child: GestureDetector(
-                        onTap: () => _placeBet('8-12'),
-                        behavior: HitTestBehavior.opaque,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          margin: const EdgeInsets.all(8.0),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0D5102),
-                            borderRadius: BorderRadius.circular(18.0),
-                            border: Border.all(
-                              color: hasBet8to12 ? const Color(0xFF24EE89) : Colors.transparent,
-                              width: hasBet8to12 ? 2.5 : 1.0,
-                            ),
-                            boxShadow: hasBet8to12 ? [
-                              BoxShadow(
-                                color: const Color(0xFF24EE89).withOpacity(0.35),
-                                blurRadius: 10.0,
-                                spreadRadius: 1.0,
-                              )
-                            ] : null,
-                          ),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Opacity(
-                                opacity: 0.04,
-                                child: Text(
-                                  '8-12',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 64.0,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '7 UP',
-                                    style: GoogleFonts.inter(
-                                      textStyle: TextStyle(
-                                        color: Colors.white.withOpacity(0.6),
-                                        fontSize: 10.0,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4.0),
-                                  Text(
-                                    '8-12',
-                                    style: GoogleFonts.inter(
-                                      textStyle: const TextStyle(color: Colors.white, fontSize: 32.0, fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2.0),
-                                  Text(
-                                    '2.0x Payout',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.6),
-                                      fontSize: 10.0,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8.0),
-                                  if (_betOn8to12 > 0) _buildBetChipsBadge(_betOn8to12),
-                                ],
-                              ),
-                            ],
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
+                        child: GestureDetector(
+                          onTap: () => _placeBet('8-12'),
+                          child: SevenUpDownBetPanel(
+                            label: '8 - 12',
+                            totalBet: _betOn8to12.toDouble(),
+                            userBet: _userBetOn8to12.toDouble(),
+                            baseColor: const Color(0xFF2E7D32), // Andar Bahar Green
+                            multiplier: '2.0',
+                            isLeft: false,
+                            isWinner: _winnerSpot == '8-12',
+                            blinkAnimation: _blinkController,
+                            hasMasterBet: _masterBetSpots.contains('8-12'),
                           ),
                         ),
                       ),
                     ),
                   ],
                 ),
+
+                // Dice roll animation overlays in the center
                 Center(
                   child: IgnorePointer(
                     child: SizedBox(
-                      width: 240.0,
-                      height: 240.0,
+                      width: 200.0,
+                      height: 200.0,
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
@@ -1451,7 +1377,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
                               );
                             },
                             child: Positioned(
-                              bottom: 45.0,
+                              bottom: 35.0,
                               left: 0,
                               right: 0,
                               child: Center(
@@ -1462,7 +1388,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         _buildDiceWidget(_dice1Value),
-                                        const SizedBox(width: 12.0),
+                                        const SizedBox(width: 8.0),
                                         _buildDiceWidget(_dice2Value),
                                       ],
                                     ),
@@ -1477,7 +1403,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
                                         'Total = $_diceSum',
                                         style: const TextStyle(
                                           color: Color(0xFFFFD700),
-                                          fontSize: 10.0,
+                                          fontSize: 9.0,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -1530,20 +1456,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
     );
   }
 
-  Widget _buildBetChipsBadge(int amount) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 3.0),
-      decoration: BoxDecoration(
-        color: Colors.orange,
-        borderRadius: BorderRadius.circular(12.0),
-        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 2.0)],
-      ),
-      child: Text(
-        '₹$amount',
-        style: const TextStyle(color: Colors.white, fontSize: 9.0, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
+
 
   Widget _buildQuickActionBtn(String label, VoidCallback onTap, {Color? color}) {
     return GestureDetector(
@@ -1659,6 +1572,237 @@ class _ActiveUserRow7 extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class SevenUpDownBetPanel extends StatefulWidget {
+  final String label;
+  final double totalBet;
+  final double userBet;
+  final Color baseColor;
+  final String multiplier;
+  final bool isLeft;
+  final bool isWinner;
+  final Animation<double> blinkAnimation;
+  final bool hasMasterBet;
+
+  const SevenUpDownBetPanel({
+    super.key,
+    required this.label,
+    required this.totalBet,
+    required this.userBet,
+    required this.baseColor,
+    required this.multiplier,
+    required this.isLeft,
+    required this.isWinner,
+    required this.blinkAnimation,
+    this.hasMasterBet = false,
+  });
+
+  @override
+  State<SevenUpDownBetPanel> createState() => _SevenUpDownBetPanelState();
+}
+
+class _SevenUpDownBetPanelState extends State<SevenUpDownBetPanel>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _glowCtrl;
+  late Animation<double> _glowAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _glowCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _glowAnim = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _glowCtrl.dispose();
+    super.dispose();
+  }
+
+  BoxDecoration _getPanelDecoration(bool winner) {
+    final Color startColor = Color.lerp(Colors.black, widget.baseColor, 0.45)!;
+    final Color endColor = Color.lerp(Colors.black, widget.baseColor, 0.22)!;
+
+    if (winner) {
+      final double val = widget.blinkAnimation.value;
+      return BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color.lerp(startColor, const Color(0xFFB8860B), val)!,
+            Color.lerp(endColor, const Color(0xFF5C4033), val)!,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(10.0),
+        border: Border.all(
+          color: Color.lerp(widget.baseColor, const Color(0xFFFFD700), val)!,
+          width: 1.5 + 2.0 * val,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFFD700).withValues(alpha: 0.8 * val),
+            blurRadius: 12.0 * val,
+            spreadRadius: 2.0 * val,
+          ),
+        ],
+      );
+    }
+    return BoxDecoration(
+      gradient: LinearGradient(
+        colors: [startColor, endColor],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(10.0),
+      border: Border.all(color: widget.baseColor, width: 1.5),
+      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4.0)],
+    );
+  }
+
+  Widget _buildContent() {
+    return Stack(
+      children: [
+        // Total Bet (Top-Left)
+        Positioned(
+          top: 4.0,
+          left: 4.0,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.monetization_on,
+                  color: Color(0xFFFFD700), size: 10.0),
+              const SizedBox(width: 2.0),
+              Text(
+                '${widget.totalBet.toInt()}',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+
+        // Multiplier Ratio (Top-Right)
+        Positioned(
+          top: 4.0,
+          right: 4.0,
+          child: Text(
+            widget.multiplier,
+            style: const TextStyle(
+                color: Color(0xFF00E5FF),
+                fontSize: 9.0,
+                fontWeight: FontWeight.bold),
+          ),
+        ),
+
+        // Center Label
+        Center(
+          child: Text(
+            widget.label,
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15.0,
+                fontWeight: FontWeight.bold),
+          ),
+        ),
+
+        // User's own bet (Bottom-Left)
+        if (widget.userBet > 0)
+          Positioned(
+            bottom: 4.0,
+            left: 4.0,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 4.0, vertical: 1.0),
+              decoration: BoxDecoration(
+                color: Colors.black45,
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              child: Text(
+                'Mine: ${widget.userBet.toInt()}',
+                style: const TextStyle(
+                    color: Color(0xFFFFD700),
+                    fontSize: 8.0,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+
+        // Glowing star badge (Bottom-Right)
+        Positioned(
+          bottom: 4.0,
+          right: 4.0,
+          child: widget.hasMasterBet
+              ? AnimatedBuilder(
+                  animation: _glowAnim,
+                  builder: (context, _) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF6F00)
+                                .withValues(alpha: _glowAnim.value * 0.85),
+                            blurRadius: 10.0 * _glowAnim.value,
+                            spreadRadius: 3.0 * _glowAnim.value,
+                          ),
+                        ],
+                      ),
+                      child: ShaderMask(
+                        shaderCallback: (bounds) => LinearGradient(
+                          colors: [
+                            Color.lerp(const Color(0xFFFFB74D),
+                                const Color(0xFFFF3D00), _glowAnim.value)!,
+                            const Color(0xFFFF3D00),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ).createShader(bounds),
+                        child: Icon(
+                          Icons.star,
+                          size: 13.0 + 2.0 * _glowAnim.value,
+                          color: Colors.white,
+                        ),
+                      ),
+                    );
+                  },
+                )
+              : Icon(Icons.star_border,
+                  color: Colors.yellow.withValues(alpha: 0.3), size: 13.0),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.isWinner) {
+      return AnimatedBuilder(
+        animation: widget.blinkAnimation,
+        builder: (context, child) {
+          return Container(
+            decoration: _getPanelDecoration(true),
+            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
+            child: child,
+          );
+        },
+        child: _buildContent(),
+      );
+    }
+    return Container(
+      decoration: _getPanelDecoration(false),
+      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
+      child: _buildContent(),
     );
   }
 }

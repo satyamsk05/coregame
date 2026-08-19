@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../../shared/widgets/bounceable.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../utils/sound_helper.dart';
 import '../../shared/widgets/win_overlay_card.dart';
+import '../andar_bahar/widgets/chip_widgets.dart';
+import '../andar_bahar/widgets/player_widgets.dart';
 
 class RouletteGameScreen extends StatefulWidget {
   final double balance;
@@ -12,6 +15,8 @@ class RouletteGameScreen extends StatefulWidget {
   final bool musicOn;
   final ValueChanged<double> onBalanceChanged;
   final VoidCallback onBackPressed;
+  final String nickname;
+  final String avatarPath;
 
   const RouletteGameScreen({
     super.key,
@@ -20,6 +25,8 @@ class RouletteGameScreen extends StatefulWidget {
     required this.musicOn,
     required this.onBalanceChanged,
     required this.onBackPressed,
+    required this.nickname,
+    required this.avatarPath,
   });
 
   @override
@@ -51,16 +58,24 @@ class RouletteParticle {
 }
 
 class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTickerProviderStateMixin {
+  // Game phase: 'betting' → 'spinning' → 'result' → loop
+  String _gamePhase = 'betting';
+  int _timerSeconds = 15;
+  Timer? _gameTimer;
+
   // Gameplay state
-  double _betAmount = 1.0;
-  String _betType = 'color'; // 'color', 'parity', 'number'
-  String _betValue = 'red'; // 'red', 'black', 'even', 'odd', or string number '0'-'36'
+  double _betAmount = 0.0;
+  String _betType = ''; // 'color', 'parity', 'number', 'dozen', 'column', 'half'
+  String _betValue = ''; // 'red', 'black', 'even', 'odd', '1'/'2'/'3', or string number '0'-'36'
+  int _selectedChipValue = 10;
+  int _triggerUserBet = 0;
+  int _triggerUserWin = 0;
   
   bool _isSpinning = false;
   int _winningNumber = 0;
   double _winAmount = 0.0;
   bool _showWinOverlay = false;
-  String _statusText = 'PLACE YOUR BETS AND SPIN!';
+  String _statusText = 'PLACE YOUR BETS!';
   
   // Animation controllers
   late AnimationController _animationController;
@@ -102,7 +117,7 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
     
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3200),
+      duration: const Duration(milliseconds: 3900),
     );
 
     _spinAnimation = CurvedAnimation(
@@ -127,10 +142,10 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
         }
       }
       
-      // Additional ball drop bounce sounds at the end
-      if (t >= 0.85 && t < 0.98) {
-        final double settleT = (t - 0.85) / 0.13;
-        final int bounceTick = (settleT * 6).floor();
+      // Additional ball drop bounce sounds during settle phase
+      if (t >= 0.6 && t < 0.95) {
+        final double settleT = (t - 0.6) / 0.35;
+        final int bounceTick = (settleT * 8).floor();
         if (bounceTick != _lastSectorIndex && widget.soundOn) {
           _lastSectorIndex = bounceTick;
           playTick();
@@ -145,12 +160,49 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
         _finishSpin();
       }
     });
+
+    // Start the auto-countdown game loop
+    _startBettingPhase();
   }
 
   @override
   void dispose() {
+    _gameTimer?.cancel();
+    _outcomeTimer?.cancel();
     _animationController.dispose();
     super.dispose();
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // Auto-Countdown Game Loop (like Andar Bahar)
+  // ════════════════════════════════════════════════════════════════════════════
+
+  void _startBettingPhase() {
+    setState(() {
+      _gamePhase = 'betting';
+      _timerSeconds = 15;
+      _isSpinning = false;
+      _showWinOverlay = false;
+      _showOutcomeCard = false;
+      _betAmount = 0.0;
+      _betType = '';
+      _betValue = '';
+      _winAmount = 0.0;
+      _statusText = 'PLACE YOUR BETS!';
+    });
+
+    _gameTimer?.cancel();
+    _gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_timerSeconds > 0) {
+        setState(() {
+          _timerSeconds--;
+        });
+      } else {
+        _gameTimer?.cancel();
+        _startSpin();
+      }
+    });
   }
 
   bool _isRed(int n) {
@@ -169,29 +221,45 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
     return _isRed(n) ? const Color(0xFFFF5252) : const Color(0xFF1E2024);
   }
 
-  void _onBetTypeChanged(String type) {
-    if (_isSpinning) return;
+  void _placeBet(String type, String value) {
+    if (_gamePhase != 'betting') return;
+    if (widget.balance < _selectedChipValue) return;
     setState(() {
-      _betType = type;
-      if (type == 'color') _betValue = 'red';
-      if (type == 'parity') _betValue = 'even';
-      if (type == 'number') _betValue = '7';
+      if (_betType == type && _betValue == value) {
+        _betAmount += _selectedChipValue;
+      } else {
+        _betType = type;
+        _betValue = value;
+        _betAmount = _selectedChipValue.toDouble();
+      }
+      _showWinOverlay = false;
+      _triggerUserBet++;
+    });
+  }
+
+  void _clearBet() {
+    if (_gamePhase != 'betting') return;
+    setState(() {
+      _betAmount = 0.0;
+      _betType = '';
+      _betValue = '';
       _showWinOverlay = false;
     });
   }
 
   void _startSpin() {
-    if (_isSpinning) return;
-
-    if (widget.balance < _betAmount) {
-      _showErrorDialog('INSUFFICIENT BALANCE', 'Please top up your balance from the lobby.');
-      return;
+    // Deduct bet amount if user has placed a bet
+    if (_betAmount > 0.0 && widget.balance >= _betAmount) {
+      widget.onBalanceChanged(widget.balance - _betAmount);
+    } else {
+      // No valid bet, just spin without deduction
+      _betAmount = 0.0;
+      _betType = '';
+      _betValue = '';
     }
 
-    // Deduct bet amount
-    widget.onBalanceChanged(widget.balance - _betAmount);
-
     setState(() {
+      _gamePhase = 'spinning';
       _isSpinning = true;
       _showWinOverlay = false;
       _winAmount = 0.0;
@@ -236,33 +304,78 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
         isWin = true;
         payoutMultiplier = 35.0; // Standard single number payout
       }
+    } else if (_betType == 'dozen') {
+      if (_winningNumber != 0) {
+        if (_betValue == '1' && _winningNumber >= 1 && _winningNumber <= 12) {
+          isWin = true;
+          payoutMultiplier = 3.0;
+        } else if (_betValue == '2' && _winningNumber >= 13 && _winningNumber <= 24) {
+          isWin = true;
+          payoutMultiplier = 3.0;
+        } else if (_betValue == '3' && _winningNumber >= 25 && _winningNumber <= 36) {
+          isWin = true;
+          payoutMultiplier = 3.0;
+        }
+      }
+    } else if (_betType == 'column') {
+      if (_winningNumber != 0) {
+        if (_betValue == '1' && _winningNumber % 3 == 0) {
+          isWin = true;
+          payoutMultiplier = 3.0;
+        } else if (_betValue == '2' && _winningNumber % 3 == 2) {
+          isWin = true;
+          payoutMultiplier = 3.0;
+        } else if (_betValue == '3' && _winningNumber % 3 == 1) {
+          isWin = true;
+          payoutMultiplier = 3.0;
+        }
+      }
+    } else if (_betType == 'half') {
+      if (_winningNumber != 0) {
+        if (_betValue == '1' && _winningNumber >= 1 && _winningNumber <= 18) {
+          isWin = true;
+          payoutMultiplier = 2.0;
+        } else if (_betValue == '2' && _winningNumber >= 19 && _winningNumber <= 36) {
+          isWin = true;
+          payoutMultiplier = 2.0;
+        }
+      }
     }
 
     setState(() {
+      _gamePhase = 'result';
       _isSpinning = false;
       _history.add(_winningNumber);
       if (_history.length > 8) {
         _history.removeAt(0);
       }
 
-      if (isWin) {
+      if (isWin && _betAmount > 0.0) {
         _winAmount = _betAmount * payoutMultiplier;
         widget.onBalanceChanged(widget.balance + _winAmount);
         _showWinOverlay = true;
         _statusText = 'WON! LANDED ON $_winningNumber';
         _spawnParticles();
         _triggerOutcomeOverlay(payoutMultiplier, _winAmount, true);
+        _triggerUserWin++;
         if (widget.soundOn) {
           playWin();
         }
-      } else {
+      } else if (_betAmount > 0.0) {
         _winAmount = 0.0;
         _statusText = 'LOST. LANDED ON $_winningNumber';
         _triggerOutcomeOverlay(0.0, 0.0, false);
         if (widget.soundOn) {
           playLose();
         }
+      } else {
+        _statusText = 'LANDED ON $_winningNumber';
       }
+    });
+
+    // Auto-restart betting phase after result display
+    Future.delayed(const Duration(milliseconds: 3800), () {
+      if (mounted) _startBettingPhase();
     });
   }
 
@@ -345,6 +458,96 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
     );
   }
 
+  Widget _buildWheelContainer() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF15171C),
+        borderRadius: BorderRadius.circular(16.0),
+        border: Border.all(color: const Color(0xFF2C2F36), width: 1.5),
+      ),
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        children: [
+          // Recent history list (compact style at the top of the wheel panel)
+          Container(
+            height: 28.0,
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            decoration: BoxDecoration(
+              color: Colors.black26,
+              borderRadius: BorderRadius.circular(6.0),
+            ),
+            child: Row(
+              children: [
+                const Text(
+                  'RECENT:',
+                  style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 8.0),
+                ),
+                const SizedBox(width: 6.0),
+                Expanded(
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _history.length,
+                    itemBuilder: (context, index) {
+                      final int val = _history[_history.length - 1 - index];
+                      final Color col = _getNumberColor(val);
+                      return Container(
+                        width: 18.0,
+                        height: 18.0,
+                        margin: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 5.0),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(color: col, shape: BoxShape.circle),
+                        child: Text(
+                          '$val',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 8.0),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          // Spinner
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: CustomPaint(
+                size: Size.infinite,
+                painter: _RouletteWheelPainter(
+                  progress: _spinAnimation.value,
+                  winningNumber: _winningNumber,
+                  isSpinning: _isSpinning,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          // Status text display
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFF13083B),
+              borderRadius: BorderRadius.circular(6.0),
+            ),
+            child: Text(
+              _statusText,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.pressStart2p(
+                textStyle: TextStyle(
+                  color: _statusText.contains('WON') ? const Color(0xFF00C853) : Colors.white,
+                  fontSize: 7.0,
+                  height: 1.2,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -353,7 +556,7 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
       body: Container(
         decoration: const BoxDecoration(
           gradient: RadialGradient(
-            colors: [Color(0xFF0F0A30), Color(0xFF050312)],
+            colors: [Color(0xFF141A29), Color(0xFF0A0D14)],
             center: Alignment.center,
             radius: 1.2,
           ),
@@ -369,13 +572,19 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                     _buildHeaderRow(),
                     const SizedBox(height: 8.0),
 
-                    // Main Layout Area Split (Left Controls, Right Game Playfield)
+                    // Main Layout Area Split (Left Wheel, Right Board)
                     Expanded(
                       child: Row(
                         children: [
-                          _buildLeftControlsPanel(),
+                          Expanded(
+                            flex: 5,
+                            child: _buildWheelContainer(),
+                          ),
                           const SizedBox(width: 12.0),
-                          Expanded(child: _buildRightGamePanel()),
+                          Expanded(
+                            flex: 9,
+                            child: _buildInteractiveBoard(),
+                          ),
                         ],
                       ),
                     ),
@@ -458,504 +667,665 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
 
   Widget _buildHeaderRow() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Exit to Lobby button
-        _buildCapsuleButton(
-          icon: Icons.arrow_back,
-          label: 'LOBBY',
-          color: const Color(0xFFFF5252),
+        GestureDetector(
           onTap: () {
             if (_isSpinning) return;
             widget.onBackPressed();
           },
-        ),
-
-        // Double shadow game title
-        Text(
-          'ROULETTE RUSH',
-          style: GoogleFonts.alfaSlabOne(
-            textStyle: const TextStyle(
-              fontSize: 22.0,
-              color: Color(0xFF00E5FF),
-              letterSpacing: 1.5,
-              shadows: [
-                Shadow(color: Color(0xFF006064), offset: Offset(2.0, 2.0), blurRadius: 1.0),
-                Shadow(color: Colors.black, offset: Offset(3.5, 3.5), blurRadius: 2.0),
-              ],
+          child: Container(
+            padding: const EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              color: const Color(0x33000000),
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(color: Colors.white24),
             ),
+            child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16.0),
           ),
         ),
+        const SizedBox(width: 8.0),
 
-        // User Wallet balance
+        // Total Bet Box
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 5.0),
+          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
           decoration: BoxDecoration(
-            color: const Color(0xFF160E45),
-            borderRadius: BorderRadius.circular(20.0),
-            border: Border.all(color: const Color(0xFF9E84FF), width: 1.5),
+            color: const Color(0x1F000000),
+            borderRadius: BorderRadius.circular(8.0),
+            border: Border.all(color: Colors.white12),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.monetization_on, color: Color(0xFFFFD700), size: 16.0),
-              const SizedBox(width: 6.0),
+              const Text(
+                'TOTAL BET',
+                style: TextStyle(color: Colors.grey, fontSize: 7.0, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 1.0),
               Text(
-                widget.balance.toStringAsFixed(2),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12.0,
-                  letterSpacing: 0.5,
+                '₹${_betAmount.toStringAsFixed(0)}',
+                style: const TextStyle(color: Color(0xFFFF5252), fontSize: 10.5, fontWeight: FontWeight.w900),
+              ),
+            ],
+          ),
+        ),
+        
+        const Spacer(),
+        
+        // Stylized Roulette Title
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: 'R O U',
+                style: GoogleFonts.robotoCondensed(
+                  textStyle: const TextStyle(color: Colors.white, fontSize: 18.0, fontWeight: FontWeight.w900, letterSpacing: 2.0),
+                ),
+              ),
+              TextSpan(
+                text: ' L E T T E',
+                style: GoogleFonts.robotoCondensed(
+                  textStyle: const TextStyle(color: Color(0xFFFF2A54), fontSize: 18.0, fontWeight: FontWeight.w900, letterSpacing: 2.0),
                 ),
               ),
             ],
           ),
         ),
+        
+        const Spacer(),
+
+        // User Wallet balance
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+          decoration: BoxDecoration(
+            color: const Color(0x33000000),
+            borderRadius: BorderRadius.circular(8.0),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.monetization_on, color: Color(0xFFFFD700), size: 14.0),
+              const SizedBox(width: 4.0),
+              Text(
+                '₹${widget.balance.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 11.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8.0),
+
+        // Trends Icon
+        Container(
+          padding: const EdgeInsets.all(6.0),
+          decoration: BoxDecoration(
+            color: const Color(0x33000000),
+            borderRadius: BorderRadius.circular(8.0),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: const Icon(Icons.trending_up, color: Colors.white70, size: 16.0),
+        ),
+        const SizedBox(width: 8.0),
+
+        // Settings Icon
+        Container(
+          padding: const EdgeInsets.all(6.0),
+          decoration: BoxDecoration(
+            color: const Color(0x33000000),
+            borderRadius: BorderRadius.circular(8.0),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: const Icon(Icons.settings, color: Colors.white70, size: 16.0),
+        ),
       ],
     );
   }
 
-  Widget _buildCapsuleButton({
-    required IconData icon,
-    required String label,
+  Widget _buildChipOverlay(double amount) {
+    return Center(
+      child: PokerChipWidget(
+        value: amount.toInt(),
+        size: 20.0,
+      ),
+    );
+  }
+
+  Widget _buildBoardCell({
+    String? label,
+    Widget? child,
     required Color color,
+    required double width,
+    required double height,
     required VoidCallback onTap,
+    required bool hasChip,
+    double fontSize = 9.0,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: _isSpinning ? null : onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+        width: width,
+        height: height,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: const Color(0xFF160E45),
-          borderRadius: BorderRadius.circular(16.0),
-          border: Border.all(color: color, width: 1.5),
+          color: color,
+          borderRadius: BorderRadius.circular(4.0),
+          border: Border.all(color: Colors.white10, width: 0.8),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+        child: Stack(
+          alignment: Alignment.center,
           children: [
-            Icon(icon, color: color, size: 14.0),
-            const SizedBox(width: 4.0),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 10.0,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.5,
+            if (child != null) Center(child: child),
+            if (label != null)
+              Center(
+                child: Text(
+                  label,
+                  style: GoogleFonts.roboto(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: fontSize,
+                  ),
+                ),
               ),
-            ),
+            if (hasChip && _betAmount > 0.0) _buildChipOverlay(_betAmount),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLeftControlsPanel() {
-    return Container(
-      width: 200.0,
-      padding: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        color: const Color(0xFF160E45).withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: const Color(0xFF9E84FF), width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Bet display
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F0736),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: Column(
+  Widget _buildInteractiveBoard() {
+    const double cellHeight = 28.0;
+    const double cellWidth = 32.0;
+    
+    return Column(
+      mainAxisSize: MainAxisSize.max,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Grid Row (0, Numbers Grid, 2 TO 1 Column)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'BET AMOUNT',
-                  style: TextStyle(color: Color(0xFF9E84FF), fontSize: 8.0, fontWeight: FontWeight.bold),
+                // 0 Cell
+                _buildBoardCell(
+                  label: '0',
+                  color: const Color(0xFF2E7D32),
+                  width: cellWidth,
+                  height: cellHeight * 3 + 4.0, // accounting for borders
+                  onTap: () => _placeBet('number', '0'),
+                  hasChip: _betType == 'number' && _betValue == '0',
                 ),
-                Text(
-                  '₹${_betAmount.toStringAsFixed(2)}',
-                  style: GoogleFonts.alfaSlabOne(color: const Color(0xFFFFD700), fontSize: 13.0),
+                const SizedBox(width: 2.0),
+                
+                // Numbers Grid (Column with 3 Rows)
+                Column(
+                  children: [
+                    // Row 1 (top row): 3, 6, 9... 36
+                    Row(
+                      children: List.generate(12, (index) {
+                        final num = 3 * (index + 1);
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 1.0, vertical: 1.0),
+                          child: _buildBoardCell(
+                            label: '$num',
+                            color: _getNumberColor(num),
+                            width: cellWidth,
+                            height: cellHeight,
+                            onTap: () => _placeBet('number', '$num'),
+                            hasChip: _betType == 'number' && _betValue == '$num',
+                          ),
+                        );
+                      }),
+                    ),
+                    // Row 2 (middle row): 2, 5, 8... 35
+                    Row(
+                      children: List.generate(12, (index) {
+                        final num = 3 * index + 2;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 1.0, vertical: 1.0),
+                          child: _buildBoardCell(
+                            label: '$num',
+                            color: _getNumberColor(num),
+                            width: cellWidth,
+                            height: cellHeight,
+                            onTap: () => _placeBet('number', '$num'),
+                            hasChip: _betType == 'number' && _betValue == '$num',
+                          ),
+                        );
+                      }),
+                    ),
+                    // Row 3 (bottom row): 1, 4, 7... 34
+                    Row(
+                      children: List.generate(12, (index) {
+                        final num = 3 * index + 1;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 1.0, vertical: 1.0),
+                          child: _buildBoardCell(
+                            label: '$num',
+                            color: _getNumberColor(num),
+                            width: cellWidth,
+                            height: cellHeight,
+                            onTap: () => _placeBet('number', '$num'),
+                            hasChip: _betType == 'number' && _betValue == '$num',
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 2.0),
+                
+                // 2 TO 1 Column
+                Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 1.0),
+                      child: _buildBoardCell(
+                        label: '2 TO 1',
+                        color: const Color(0xFF1E2024),
+                        width: cellWidth + 8.0,
+                        height: cellHeight,
+                        fontSize: 7.5,
+                        onTap: () => _placeBet('column', '1'),
+                        hasChip: _betType == 'column' && _betValue == '1',
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 1.0),
+                      child: _buildBoardCell(
+                        label: '2 TO 1',
+                        color: const Color(0xFF1E2024),
+                        width: cellWidth + 8.0,
+                        height: cellHeight,
+                        fontSize: 7.5,
+                        onTap: () => _placeBet('column', '2'),
+                        hasChip: _betType == 'column' && _betValue == '2',
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 1.0),
+                      child: _buildBoardCell(
+                        label: '2 TO 1',
+                        color: const Color(0xFF1E2024),
+                        width: cellWidth + 8.0,
+                        height: cellHeight,
+                        fontSize: 7.5,
+                        onTap: () => _placeBet('column', '3'),
+                        hasChip: _betType == 'column' && _betValue == '3',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 2.0),
+            
+            // Dozens Row (1ST 12, 2ND 12, 3RD 12)
+            Row(
+              children: [
+                SizedBox(width: cellWidth + 3.0), // alignment offset for 0 cell
+                _buildBoardCell(
+                  label: '1ST 12',
+                  color: const Color(0xFF1E2024),
+                  width: cellWidth * 4 + 6.0,
+                  height: cellHeight,
+                  onTap: () => _placeBet('dozen', '1'),
+                  hasChip: _betType == 'dozen' && _betValue == '1',
+                ),
+                const SizedBox(width: 2.0),
+                _buildBoardCell(
+                  label: '2ND 12',
+                  color: const Color(0xFF1E2024),
+                  width: cellWidth * 4 + 6.0,
+                  height: cellHeight,
+                  onTap: () => _placeBet('dozen', '2'),
+                  hasChip: _betType == 'dozen' && _betValue == '2',
+                ),
+                const SizedBox(width: 2.0),
+                _buildBoardCell(
+                  label: '3RD 12',
+                  color: const Color(0xFF1E2024),
+                  width: cellWidth * 4 + 6.0,
+                  height: cellHeight,
+                  onTap: () => _placeBet('dozen', '3'),
+                  hasChip: _betType == 'dozen' && _betValue == '3',
+                ),
+              ],
+            ),
+            const SizedBox(height: 2.0),
+            
+            // Halves & Color Diamonds Row
+            Row(
+              children: [
+                SizedBox(width: cellWidth + 3.0), // alignment offset
+                _buildBoardCell(
+                  label: '1 TO 18',
+                  color: const Color(0xFF1E2024),
+                  width: cellWidth * 2 + 2.0,
+                  height: cellHeight,
+                  fontSize: 8.5,
+                  onTap: () => _placeBet('half', '1'),
+                  hasChip: _betType == 'half' && _betValue == '1',
+                ),
+                const SizedBox(width: 2.0),
+                _buildBoardCell(
+                  label: 'EVEN',
+                  color: const Color(0xFF1E2024),
+                  width: cellWidth * 2 + 2.0,
+                  height: cellHeight,
+                  fontSize: 8.5,
+                  onTap: () => _placeBet('parity', 'even'),
+                  hasChip: _betType == 'parity' && _betValue == 'even',
+                ),
+                const SizedBox(width: 2.0),
+                
+                // RED diamond
+                _buildBoardCell(
+                  child: Transform.rotate(
+                    angle: pi / 4,
+                    child: Container(
+                      width: 10.0,
+                      height: 10.0,
+                      color: const Color(0xFFFF5252),
+                    ),
+                  ),
+                  color: const Color(0xFF1E2024),
+                  width: cellWidth * 2 + 2.0,
+                  height: cellHeight,
+                  onTap: () => _placeBet('color', 'red'),
+                  hasChip: _betType == 'color' && _betValue == 'red',
+                ),
+                const SizedBox(width: 2.0),
+                
+                // BLACK diamond
+                _buildBoardCell(
+                  child: Transform.rotate(
+                    angle: pi / 4,
+                    child: Container(
+                      width: 10.0,
+                      height: 10.0,
+                      color: const Color(0xFF15171C),
+                    ),
+                  ),
+                  color: const Color(0xFF1E2024),
+                  width: cellWidth * 2 + 2.0,
+                  height: cellHeight,
+                  onTap: () => _placeBet('color', 'black'),
+                  hasChip: _betType == 'color' && _betValue == 'black',
+                ),
+                const SizedBox(width: 2.0),
+                
+                _buildBoardCell(
+                  label: 'ODD',
+                  color: const Color(0xFF1E2024),
+                  width: cellWidth * 2 + 2.0,
+                  height: cellHeight,
+                  fontSize: 8.5,
+                  onTap: () => _placeBet('parity', 'odd'),
+                  hasChip: _betType == 'parity' && _betValue == 'odd',
+                ),
+                const SizedBox(width: 2.0),
+                _buildBoardCell(
+                  label: '19 TO 36',
+                  color: const Color(0xFF1E2024),
+                  width: cellWidth * 2 + 2.0,
+                  height: cellHeight,
+                  fontSize: 8.5,
+                  onTap: () => _placeBet('half', '2'),
+                  hasChip: _betType == 'half' && _betValue == '2',
+                ),
+              ],
+            ),
+          ],
+        ),
+        const Spacer(),
+        
+        // Chips list & action buttons
+        _buildBottomActionRow(),
+      ],
+    );
+  }
+
+  Widget _buildBottomActionRow() {
+    final chips = [10, 50, 100, 500, 1000, 5000];
+    final bool canInteract = _gamePhase == 'betting';
+    
+    return Row(
+      children: [
+        Transform.scale(
+          scale: 1.2,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 6.0),
+            child: UserAvatarWidget(
+              balance: widget.balance,
+              avatarPath: widget.avatarPath,
+              nickname: widget.nickname,
+              betTrigger: _triggerUserBet,
+              winAmount: _winAmount,
+              winTrigger: _triggerUserWin,
+            ),
+          ),
+        ),
+        const SizedBox(width: 14.0),
+
+        const Icon(Icons.chevron_left, color: Colors.grey, size: 20.0),
+        
+        ...chips.map((val) {
+          final isSelected = _selectedChipValue == val;
+          return GestureDetector(
+            onTap: canInteract ? () => setState(() => _selectedChipValue = val) : null,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              margin: const EdgeInsets.symmetric(horizontal: 4.0),
+              transform: Matrix4.translationValues(0.0, isSelected ? -4.0 : 0.0, 0.0),
+              child: Opacity(
+                opacity: canInteract ? 1.0 : 0.5,
+                child: Transform.scale(
+                  scale: isSelected ? 1.08 : 1.0,
+                  child: PokerChipWidget(
+                    value: val,
+                    size: 34.0,
+                    selected: isSelected,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+        
+        const Icon(Icons.chevron_right, color: Colors.grey, size: 20.0),
+        const Spacer(),
+        
+        // Clear Bet Action Button
+        GestureDetector(
+          onTap: canInteract ? _clearBet : null,
+          child: Opacity(
+            opacity: canInteract ? 1.0 : 0.5,
+            child: Container(
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: const Color(0x22FFFFFF),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 16.0),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8.0),
+        
+        // Countdown Timer Capsule (replaces SPIN button)
+        _buildTimerCapsule(),
+      ],
+    );
+  }
+
+  Widget _buildTimerCapsule() {
+    final bool isUrgent = _timerSeconds <= 3 && _gamePhase == 'betting';
+    final Color timerColor = isUrgent ? const Color(0xFFFF3D00) : const Color(0xFFFFB300);
+    final Color borderColor = isUrgent ? const Color(0xFFFF3D00) : const Color(0xFFFF9100);
+
+    String displayText;
+    if (_gamePhase == 'betting') {
+      displayText = '00:${_timerSeconds.toString().padLeft(2, '0')}';
+    } else if (_gamePhase == 'spinning') {
+      displayText = 'SPINNING';
+    } else {
+      displayText = 'RESULT';
+    }
+
+    return Stack(
+      alignment: Alignment.centerLeft,
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 110.0,
+          height: 32.0,
+          decoration: BoxDecoration(
+            color: const Color(0xCC263238),
+            borderRadius: BorderRadius.circular(16.0),
+            border: Border.all(color: Colors.white12, width: 1.0),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black38,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.only(left: 14.0),
+          alignment: Alignment.centerLeft,
+          child: Text(
+            displayText,
+            style: GoogleFonts.robotoMono(
+              textStyle: TextStyle(
+                fontSize: _gamePhase == 'betting' ? 17.0 : 10.0,
+                fontWeight: FontWeight.w900,
+                color: timerColor,
+                letterSpacing: 0.5,
+                shadows: const [
+                  Shadow(
+                    color: Colors.black,
+                    offset: Offset(1.5, 1.5),
+                    blurRadius: 0.0,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Mini clock face
+        Positioned(
+          right: 4.0,
+          child: Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              border: Border.all(
+                color: borderColor,
+                width: 2.5,
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 3.0,
+                  offset: Offset(0, 1.5),
+                ),
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // 12 o'clock tick
+                Positioned(
+                  top: 2.0,
+                  left: 12.5,
+                  child: Container(width: 2.0, height: 3.0, color: borderColor),
+                ),
+                // 6 o'clock tick
+                Positioned(
+                  bottom: 2.0,
+                  left: 12.5,
+                  child: Container(width: 2.0, height: 3.0, color: borderColor),
+                ),
+                // 9 o'clock tick
+                Positioned(
+                  left: 2.0,
+                  top: 12.5,
+                  child: Container(width: 3.0, height: 2.0, color: borderColor),
+                ),
+                // 3 o'clock tick
+                Positioned(
+                  right: 2.0,
+                  top: 12.5,
+                  child: Container(width: 3.0, height: 2.0, color: borderColor),
+                ),
+                // Hour hand
+                Positioned(
+                  top: 8.0,
+                  left: 12.5,
+                  child: Transform.rotate(
+                    angle: -2.3 - (_timerSeconds * 0.15),
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      width: 2.0,
+                      height: 5.5,
+                      decoration: BoxDecoration(
+                        color: borderColor,
+                        borderRadius: BorderRadius.circular(1.0),
+                      ),
+                    ),
+                  ),
+                ),
+                // Minute hand
+                Positioned(
+                  top: 6.5,
+                  left: 12.5,
+                  child: Transform.rotate(
+                    angle: 1.1 + (_timerSeconds * 0.4),
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      width: 2.0,
+                      height: 7.0,
+                      decoration: BoxDecoration(
+                        color: borderColor,
+                        borderRadius: BorderRadius.circular(1.0),
+                      ),
+                    ),
+                  ),
+                ),
+                // Center dot
+                Positioned(
+                  top: 11.5,
+                  left: 11.5,
+                  child: Container(
+                    width: 4.0,
+                    height: 4.0,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: borderColor,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 6.0),
-
-          // Wager presets
-          Row(
-            children: [
-              _buildPresetBtn('MIN', () => setState(() => _betAmount = 0.5)),
-              const SizedBox(width: 4.0),
-              _buildPresetBtn('x2', () => setState(() => _betAmount = (_betAmount * 2).clamp(0.5, 200.0))),
-              const SizedBox(width: 4.0),
-              _buildPresetBtn('/2', () => setState(() => _betAmount = (_betAmount / 2).clamp(0.5, 200.0))),
-            ],
-          ),
-          const SizedBox(height: 8.0),
-
-          // Bet categories header
-          const Text(
-            'BET TYPE',
-            style: TextStyle(color: Color(0xFF9E84FF), fontSize: 8.0, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4.0),
-
-          // Bet type selectors
-          Row(
-            children: [
-              _buildCategorySelect('COLOR', _betType == 'color', () => _onBetTypeChanged('color')),
-              _buildCategorySelect('PARITY', _betType == 'parity', () => _onBetTypeChanged('parity')),
-              _buildCategorySelect('NUMBER', _betType == 'number', () => _onBetTypeChanged('number')),
-            ],
-          ),
-          const SizedBox(height: 10.0),
-
-          // Bet Value Selection Area
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(4.0),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F0736),
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: _buildBetValueSelector(),
-            ),
-          ),
-          const SizedBox(height: 6.0),
-
-          // Action Spin button
-          GestureDetector(
-            onTap: _isSpinning ? null : _startSpin,
-            child: Container(
-              height: 40.0,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: _isSpinning ? const Color(0xFF5E5E6E) : const Color(0xFF00C853),
-                borderRadius: BorderRadius.circular(10.0),
-                boxShadow: _isSpinning
-                    ? []
-                    : [
-                        BoxShadow(
-                          color: const Color(0xFF00C853).withValues(alpha: 0.4),
-                          blurRadius: 8.0,
-                        ),
-                      ],
-              ),
-              child: Text(
-                _isSpinning ? 'SPINNING...' : 'SPIN WHEEL',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12.0,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPresetBtn(String label, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: _isSpinning ? null : onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 6.0),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1154),
-            borderRadius: BorderRadius.circular(4.0),
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(color: Colors.white, fontSize: 9.0, fontWeight: FontWeight.bold),
-          ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildCategorySelect(String label, bool active, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 1.5),
-          padding: const EdgeInsets.symmetric(vertical: 6.0),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: active ? const Color(0xFF9E84FF) : const Color(0xFF0D062B),
-            borderRadius: BorderRadius.circular(4.0),
-            border: Border.all(color: active ? Colors.white : Colors.transparent, width: 1.0),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: active ? Colors.black : Colors.white70,
-              fontSize: 8.5,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildBetValueSelector() {
-    if (_betType == 'color') {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildSelectionTile('RED (2.0x)', _betValue == 'red', const Color(0xFFFF5252), () => setState(() => _betValue = 'red')),
-          const SizedBox(height: 8.0),
-          _buildSelectionTile('BLACK (2.0x)', _betValue == 'black', const Color(0xFF1A1D20), () => setState(() => _betValue = 'black')),
-        ],
-      );
-    } else if (_betType == 'parity') {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildSelectionTile('EVEN (2.0x)', _betValue == 'even', const Color(0xFF9E84FF), () => setState(() => _betValue = 'even')),
-          const SizedBox(height: 8.0),
-          _buildSelectionTile('ODD (2.0x)', _betValue == 'odd', const Color(0xFF00E5FF), () => setState(() => _betValue = 'odd')),
-        ],
-      );
-    } else {
-      // Grid of 0-36 numbers
-      return Scrollbar(
-        thumbVisibility: true,
-        child: GridView.builder(
-          padding: const EdgeInsets.all(4.0),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            crossAxisSpacing: 4.0,
-            mainAxisSpacing: 4.0,
-            childAspectRatio: 1.0,
-          ),
-          itemCount: 37,
-          itemBuilder: (context, index) {
-            final String numStr = index.toString();
-            final bool isSelected = _betValue == numStr;
-            final Color color = _getNumberColor(index);
-            
-            return GestureDetector(
-              onTap: _isSpinning ? null : () => setState(() => _betValue = numStr),
-              child: Container(
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isSelected ? Colors.white : Colors.transparent,
-                    width: 2.0,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            blurRadius: 4.0,
-                          )
-                        ]
-                      : [],
-                ),
-                child: Text(
-                  numStr,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: index == 0 ? 11.0 : 10.0,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      );
-    }
-  }
-
-  Widget _buildSelectionTile(String label, bool active, Color color, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: _isSpinning ? null : onTap,
-      child: Container(
-        height: 34.0,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: active ? 1.0 : 0.3),
-          borderRadius: BorderRadius.circular(6.0),
-          border: Border.all(color: active ? Colors.white : color, width: active ? 2.0 : 1.0),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: active ? Colors.white : Colors.white70,
-            fontWeight: FontWeight.w900,
-            fontSize: 10.0,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRightGamePanel() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF181A1F),
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: const Color(0xFF2C2F36), width: 1.5),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          // Background layout
-          Column(
-            children: [
-              // Top recent spin results display
-              Container(
-                height: 38.0,
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                color: const Color(0xFF212529).withValues(alpha: 0.8),
-                child: Row(
-                  children: [
-                    const Text(
-                      'RECENT:',
-                      style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 9.0),
-                    ),
-                    const SizedBox(width: 8.0),
-                    Expanded(
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _history.length,
-                        itemBuilder: (context, index) {
-                          final int val = _history[_history.length - 1 - index];
-                          final Color col = _getNumberColor(val);
-                          return Container(
-                            width: 24.0,
-                            height: 24.0,
-                            margin: const EdgeInsets.symmetric(horizontal: 3.0, vertical: 7.0),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(color: col, shape: BoxShape.circle),
-                            child: Text(
-                              '$val',
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 9.5),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Game Main graphics row
-              Expanded(
-                child: Row(
-                  children: [
-                    // Spinning Wheel graphic (Left)
-                    Expanded(
-                      flex: 6,
-                      child: Center(
-                        child: AspectRatio(
-                          aspectRatio: 1.0,
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: CustomPaint(
-                              painter: _RouletteWheelPainter(
-                                progress: _spinAnimation.value,
-                                winningNumber: _winningNumber,
-                                isSpinning: _isSpinning,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Bet placement info panel (Right)
-                    Expanded(
-                      flex: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(0, 12.0, 14.0, 12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _buildInfoValueRow('ACTIVE BET', _betType.toUpperCase()),
-                            const SizedBox(height: 6.0),
-                            _buildInfoValueRow('BET SELECTION', _betValue.toUpperCase()),
-                            const SizedBox(height: 6.0),
-                            _buildInfoValueRow(
-                              'PAYOUT MULTIPLIER',
-                              _betType == 'color' || _betType == 'parity' ? '2.00x' : '35.00x',
-                            ),
-                            const SizedBox(height: 12.0),
-
-                            // Display status bar
-                            Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF13083B),
-                                borderRadius: BorderRadius.circular(8.0),
-                                border: Border.all(color: const Color(0xFF9E84FF).withValues(alpha: 0.3)),
-                              ),
-                              child: Text(
-                                _statusText,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.pressStart2p(
-                                  textStyle: TextStyle(
-                                    color: _statusText.contains('WON') ? const Color(0xFF00C853) : Colors.white,
-                                    fontSize: 8.0,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoValueRow(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
-      decoration: BoxDecoration(
-        color: const Color(0xFF13151A),
-        borderRadius: BorderRadius.circular(6.0),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(color: Colors.grey, fontSize: 8.5, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            value,
-            style: GoogleFonts.alfaSlabOne(color: Colors.white, fontSize: 10.0, letterSpacing: 0.5),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _RouletteWheelPainter extends CustomPainter {
@@ -971,68 +1341,121 @@ class _RouletteWheelPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double center = size.width / 2;
-    final double radius = size.width / 2;
-    final centerOffset = Offset(center, center);
+    final double side = min(size.width, size.height);
+    final double radius = (side / 2) * 0.95;
+    final centerOffset = Offset(size.width / 2, size.height / 2);
 
-    // 1. Draw outer gold decorative rim ring
+    // 1. Draw outer dark metallic ring
     final rimPaint = Paint()
-      ..color = const Color(0xFF0C0A0E)
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFF5B5D66),
+          const Color(0xFF292C33),
+          const Color(0xFF111319),
+          const Color(0xFF07080A),
+        ],
+        stops: const [0.0, 0.45, 0.8, 1.0],
+        center: const Alignment(-0.2, -0.3),
+      ).createShader(Rect.fromCircle(center: centerOffset, radius: radius))
       ..style = PaintingStyle.fill;
     canvas.drawCircle(centerOffset, radius, rimPaint);
 
     final goldEdgePaint = Paint()
-      ..color = const Color(0xFFFFD700)
+      ..color = const Color(0xFFD0A43E)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0;
-    canvas.drawCircle(centerOffset, radius - 1.5, goldEdgePaint);
+      ..strokeWidth = side * 0.007;
+    canvas.drawCircle(centerOffset, radius - (side * 0.0035), goldEdgePaint);
 
-    // Draw little gold studs around rim
-    final studPaint = Paint()
-      ..color = const Color(0xFFFFB300)
-      ..style = PaintingStyle.fill;
-    for (int i = 0; i < 12; i++) {
-      final double studAngle = i * (2 * pi / 12);
-      final double studX = center + (radius - 5.0) * cos(studAngle);
-      final double studY = center + (radius - 5.0) * sin(studAngle);
-      canvas.drawCircle(Offset(studX, studY), 2.0, studPaint);
+    // 2. Draw outer "twist" ticks
+    final double wheelRotation = progress * 6 * pi;
+    final tickPaintEven = Paint()
+      ..color = const Color(0xFFE1B84F)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = side * 0.003;
+    final tickPaintOdd = Paint()
+      ..color = const Color(0xFF6B5424)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = side * 0.003;
+
+    for (int i = 0; i < 24; i++) {
+      final double a = i * 2 * pi / 24 + wheelRotation * 0.15;
+      final double x1 = centerOffset.dx + cos(a) * (radius * 0.94);
+      final double y1 = centerOffset.dy + sin(a) * (radius * 0.94);
+      final double x2 = centerOffset.dx + cos(a) * (radius * 0.88);
+      final double y2 = centerOffset.dy + sin(a) * (radius * 0.88);
+      
+      canvas.drawLine(
+        Offset(x1, y1),
+        Offset(x2, y2),
+        (i % 2 == 0) ? tickPaintEven : tickPaintOdd,
+      );
     }
 
-    // 2. Draw Wheel slices
-    // Current wheel rotation angle (radians clockwise)
-    final double wheelRotation = progress * 6 * pi;
-    const double sectorAngle = 2 * pi / 37;
-
-    final redPaint = Paint()..color = const Color(0xFFFF5252);
-    final blackPaint = Paint()..color = const Color(0xFF1E2024);
-    final greenPaint = Paint()..color = const Color(0xFF00C853);
-    final dividerPaint = Paint()
-      ..color = const Color(0xFFFFD700).withValues(alpha: 0.4)
+    // 3. Main number ring backing
+    final double numRingOuter = radius * 0.78;
+    final double numRingInner = radius * 0.54;
+    final backingPaint = Paint()
+      ..color = const Color(0xFFC99B36)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
+      ..strokeWidth = (numRingOuter - numRingInner) + (side * 0.018);
+    canvas.drawCircle(centerOffset, (numRingOuter + numRingInner) / 2, backingPaint);
+
+    const double sectorAngle = 2 * pi / 37;
+    final dividerPaint = Paint()
+      ..color = const Color(0xFFECBD4F).withValues(alpha: 0.8)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = side * 0.0017;
 
     // Draw 37 colored sectors
     for (int i = 0; i < 37; i++) {
       final double startAngle = wheelRotation + (i * sectorAngle) - (pi / 2) - (sectorAngle / 2);
       final int number = _RouletteGameScreenState.rouletteNumbers[i];
-      final Paint sectorPaint = number == 0
-          ? greenPaint
-          : (_isRedNumber(number) ? redPaint : blackPaint);
+      
+      final double midAngle = startAngle + sectorAngle / 2;
+      final Offset p1 = Offset(
+        centerOffset.dx + cos(midAngle) * numRingInner,
+        centerOffset.dy + sin(midAngle) * numRingInner,
+      );
+      final Offset p2 = Offset(
+        centerOffset.dx + cos(midAngle) * numRingOuter,
+        centerOffset.dy + sin(midAngle) * numRingOuter,
+      );
+
+      final sectorPaint = Paint()..style = PaintingStyle.fill;
+      if (number == 0) {
+        sectorPaint.shader = ui.Gradient.linear(
+          p1, p2,
+          [const Color(0xFF38AD55), const Color(0xFF08602E)],
+        );
+      } else if (_isRedNumber(number)) {
+        sectorPaint.shader = ui.Gradient.linear(
+          p1, p2,
+          [const Color(0xFFED4A47), const Color(0xFF9E161B)],
+        );
+      } else {
+        sectorPaint.shader = ui.Gradient.linear(
+          p1, p2,
+          [const Color(0xFF34363C), const Color(0xFF101216)],
+        );
+      }
 
       canvas.drawArc(
-        Rect.fromCircle(center: centerOffset, radius: radius - 6.0),
+        Rect.fromCircle(center: centerOffset, radius: numRingOuter),
         startAngle,
         sectorAngle,
         true,
         sectorPaint,
       );
 
-      // Draw Golden divider lines
-      canvas.drawArc(
-        Rect.fromCircle(center: centerOffset, radius: radius - 6.0),
-        startAngle,
-        sectorAngle,
-        true,
+      // Draw Gold divider lines
+      final double spokeX = centerOffset.dx + cos(startAngle + sectorAngle / 2) * numRingOuter;
+      final double spokeY = centerOffset.dy + sin(startAngle + sectorAngle / 2) * numRingOuter;
+      final double spokeInnerX = centerOffset.dx + cos(startAngle + sectorAngle / 2) * numRingInner;
+      final double spokeInnerY = centerOffset.dy + sin(startAngle + sectorAngle / 2) * numRingInner;
+      
+      canvas.drawLine(
+        Offset(spokeInnerX, spokeInnerY),
+        Offset(spokeX, spokeY),
         dividerPaint,
       );
     }
@@ -1043,7 +1466,7 @@ class _RouletteWheelPainter extends CustomPainter {
       final int number = _RouletteGameScreenState.rouletteNumbers[i];
       
       canvas.save();
-      canvas.translate(center, center);
+      canvas.translate(centerOffset.dx, centerOffset.dy);
       canvas.rotate(angle);
       
       // Paint text vertically oriented inside sector slice
@@ -1055,77 +1478,191 @@ class _RouletteWheelPainter extends CustomPainter {
         textDirection: TextDirection.ltr,
       )..layout();
 
-      // Position near outer rim
-      textPainter.paint(canvas, Offset(-textPainter.width / 2, -radius + 14.0));
+      // Position centered inside the number ring
+      textPainter.paint(canvas, Offset(-textPainter.width / 2, -(numRingInner + numRingOuter) / 2 - textPainter.height / 2));
       canvas.restore();
     }
 
-    // 3. Inner spinner bowl center
+    // 4. Inner metallic bowl center
+    final double bowlRadius = numRingInner - (side * 0.025);
     final bowlPaint = Paint()
-      ..color = const Color(0xFF110C1B)
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFF4B4F5A),
+          const Color(0xFF262932),
+          const Color(0xFF0C0E13),
+        ],
+        stops: const [0.0, 0.42, 1.0],
+        center: const Alignment(-0.2, -0.24),
+      ).createShader(Rect.fromCircle(center: centerOffset, radius: bowlRadius))
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(centerOffset, radius * 0.65, bowlPaint);
+    canvas.drawCircle(centerOffset, bowlRadius, bowlPaint);
 
-    final innerGoldRim = Paint()
-      ..color = const Color(0xFFFFD700)
+    final bowlEdgePaint = Paint()
+      ..color = const Color(0xFFD4A43D)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawCircle(centerOffset, radius * 0.65, innerGoldRim);
+      ..strokeWidth = side * 0.006;
+    canvas.drawCircle(centerOffset, bowlRadius, bowlEdgePaint);
 
-    // Draw central golden brass turret dome spinner
-    final domePaint = Paint()
-      ..color = const Color(0xFFFFB300)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(centerOffset, 12.0, domePaint);
-
-    // Draw spinner handles/pins (4 spokes)
-    final handlePaint = Paint()
-      ..color = const Color(0xFFFFD700)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-    for (int i = 0; i < 4; i++) {
-      final double handleAngle = wheelRotation + i * (2 * pi / 4);
-      final double hx = center + 22.0 * cos(handleAngle);
-      final double hy = center + 22.0 * sin(handleAngle);
-      canvas.drawLine(centerOffset, Offset(hx, hy), handlePaint);
-      canvas.drawCircle(Offset(hx, hy), 3.0, domePaint);
+    // 5. Draw opposite rotating curved bands inside the bowl
+    canvas.save();
+    canvas.translate(centerOffset.dx, centerOffset.dy);
+    final double rotB = -wheelRotation * 1.5;
+    canvas.rotate(rotB);
+    
+    for (int i = 0; i < 8; i++) {
+      final double a = i * pi / 4;
+      final bandPaint = Paint()
+        ..color = (i % 2 == 0)
+            ? const Color(0x33DEA341) // rgba(222,171,65,.20)
+            : const Color(0x0FFFFFFF) // rgba(255,255,255,.06)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = side * 0.028;
+      
+      canvas.drawArc(
+        Rect.fromCircle(center: Offset.zero, radius: bowlRadius * 0.75),
+        a + 0.08,
+        (pi / 4) - 0.16,
+        false,
+        bandPaint,
+      );
     }
+    canvas.restore();
 
-    // 4. Draw Ball!
-    // Ball physics trajectory mapping (Rim orbit -> spiraling settle down with bounce)
+    // 6. Central spindle base
+    final double hRadius = bowlRadius * 0.19;
+    final hubPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFFFFF0A1),
+          const Color(0xFFF0BE4C),
+          const Color(0xFFB5761D),
+          const Color(0xFF4D2B07),
+        ],
+        stops: const [0.0, 0.3, 0.7, 1.0],
+        center: const Alignment(-0.3, -0.3),
+      ).createShader(Rect.fromCircle(center: centerOffset, radius: hRadius))
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(centerOffset, hRadius, hubPaint);
+
+    final hubEdgePaint = Paint()
+      ..color = const Color(0xFFFFE08A)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = side * 0.005;
+    canvas.drawCircle(centerOffset, hRadius, hubEdgePaint);
+
+    // 7. Rotating handles (twist arms)
+    canvas.save();
+    canvas.translate(centerOffset.dx, centerOffset.dy);
+    canvas.rotate(-rotB * 1.8);
+    
+    final spokePaint = Paint()
+      ..color = const Color(0xFFDCA439)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = side * 0.008
+      ..strokeCap = StrokeCap.round;
+      
+    final knobPaint = Paint()
+      ..color = const Color(0xFFF3C45C)
+      ..style = PaintingStyle.fill;
+      
+    for (int i = 0; i < 4; i++) {
+      final double a = i * pi / 2;
+      final double x1 = cos(a) * (hRadius * 0.35);
+      final double y1 = sin(a) * (hRadius * 0.35);
+      final double x2 = cos(a) * (hRadius * 1.65);
+      final double y2 = sin(a) * (hRadius * 1.65);
+      
+      canvas.drawLine(Offset(x1, y1), Offset(x2, y2), spokePaint);
+      canvas.drawCircle(Offset(x2, y2), side * 0.012, knobPaint);
+    }
+    canvas.restore();
+
+    // 8. Draw Ball!
     final int winningIndex = _RouletteGameScreenState.rouletteNumbers.indexOf(winningNumber);
     final double winningAngle = (winningIndex * sectorAngle) - (pi / 2);
 
     double ballAngle;
     double ballDist;
 
-    if (progress < 0.85) {
-      // Phase 1: High speed reverse orbit
-      final double ballT = progress / 0.85;
-      ballAngle = -10 * pi * (1.0 - ballT) + wheelRotation + winningAngle;
-      ballDist = radius * 0.82;
+    // Outer track radius where ball spins freely
+    final double outerTrackR = radius * 0.83;
+    // Pocket center radius where ball settles
+    final double pocketR = (numRingInner + numRingOuter) / 2;
+
+    // Total ball spin: spins opposite direction to wheel, many full rotations
+    final double totalBallSpin = -12.0 * pi;
+
+    if (progress < 0.6) {
+      // Phase 1: Ball spinning fast on outer track
+      final double ballT = progress / 0.6;
+      // Ease out the ball rotation
+      final double ballEase = 1.0 - pow(1.0 - ballT, 3).toDouble();
+      ballAngle = totalBallSpin * ballEase;
+      ballDist = outerTrackR;
     } else {
-      // Phase 2: Drop into slot and bounce-settle
-      final double settleT = (progress - 0.85) / 0.15;
-      ballAngle = wheelRotation + winningAngle + sin((1.0 - settleT) * 4 * pi) * 0.15 * (1.0 - settleT);
-      ballDist = radius * (0.82 - 0.14 * settleT + cos(settleT * 3 * pi).abs() * 0.05 * (1.0 - settleT));
+      // Phase 2: Ball drops inward into the winning pocket
+      final double dropP = (progress - 0.6) / 0.4;
+      // Smooth Hermite ease for the drop
+      final double dropEase = dropP * dropP * (3.0 - 2.0 * dropP);
+
+      // Interpolate radius from outer track to pocket center
+      ballDist = outerTrackR + (pocketR - outerTrackR) * dropEase;
+
+      // Ball angle at start of drop phase
+      final double ballAngleAtDrop = totalBallSpin * (1.0 - pow(1.0 - 1.0, 3).toDouble());
+      // Continue some rotation during drop but slow down
+      final double extraSpin = totalBallSpin * (1.0 - pow(1.0 - (0.6 + dropP * 0.4) / 0.6.clamp(0.0, 1.0), 3).toDouble());
+
+      // Target angle: the winning pocket center, aligned to wheel rotation
+      final double targetAngle = wheelRotation + winningAngle;
+      // Current free-spinning angle
+      final double freeAngle = totalBallSpin * (1.0 - pow(1.0 - progress, 3).toDouble());
+
+      // Smoothly blend from free spinning towards locked-in pocket
+      ballAngle = freeAngle + (targetAngle - freeAngle) * dropEase;
+
+      // Add subtle bounce oscillation as ball settles into pocket
+      if (dropP > 0.3) {
+        final double bounceP = (dropP - 0.3) / 0.7;
+        ballDist += cos(bounceP * 3.0 * pi) * (outerTrackR - pocketR) * 0.08 * (1.0 - bounceP);
+      }
     }
 
-    final double bx = center + ballDist * cos(ballAngle);
-    final double by = center + ballDist * sin(ballAngle);
+    final double bx = centerOffset.dx + ballDist * cos(ballAngle);
+    final double by = centerOffset.dy + ballDist * sin(ballAngle);
 
-    // Ball shadows
+    // Ball shadow
     canvas.drawCircle(
       Offset(bx + 1.0, by + 1.0),
-      4.5,
+      side * 0.012,
       Paint()..color = Colors.black.withValues(alpha: 0.6),
     );
-    // Draw ball itself
-    canvas.drawCircle(
-      Offset(bx, by),
-      4.0,
+
+    // Ball gradient
+    final ballPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          Colors.white,
+          const Color(0xFFEEEEEE),
+          const Color(0xFF999999),
+        ],
+        stops: const [0.0, 0.55, 1.0],
+        center: const Alignment(-0.35, -0.35),
+      ).createShader(Rect.fromCircle(center: Offset(bx, by), radius: side * 0.014))
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(bx, by), side * 0.014, ballPaint);
+
+    // 9. Draw Pointer!
+    final pointerPath = Path()
+      ..moveTo(centerOffset.dx, centerOffset.dy - radius - side * 0.015)
+      ..lineTo(centerOffset.dx - side * 0.018, centerOffset.dy - radius + side * 0.02)
+      ..lineTo(centerOffset.dx + side * 0.018, centerOffset.dy - radius + side * 0.02)
+      ..close();
+    canvas.drawPath(
+      pointerPath,
       Paint()
-        ..color = Colors.white
+        ..color = const Color(0xFFF3C64F)
         ..style = PaintingStyle.fill,
     );
   }

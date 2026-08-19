@@ -475,13 +475,14 @@ class _TopBar extends StatelessWidget {
           GestureDetector(
             onTap: onBack,
             child: Container(
-              width: 32, height: 32,
+              padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
-                color: const Color(0xFF141825),
-                borderRadius: BorderRadius.circular(8),
+                color: const Color(0x33000000),
+                borderRadius: BorderRadius.circular(8.0),
+                border: Border.all(color: Colors.white24),
               ),
               child: const Icon(Icons.arrow_back_ios_new,
-                  color: Colors.white54, size: 14),
+                  color: Colors.white, size: 16.0),
             ),
           ),
           const SizedBox(width: 12),
