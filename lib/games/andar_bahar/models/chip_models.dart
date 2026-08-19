@@ -6,6 +6,7 @@ class TableChip {
   final Color color;
   final String label;
   final int value;
+  final String spot;
 
   TableChip({
     required this.x,
@@ -13,6 +14,7 @@ class TableChip {
     required this.color,
     required this.label,
     required this.value,
+    required this.spot,
   });
 }
 

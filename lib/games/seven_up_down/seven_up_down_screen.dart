@@ -344,6 +344,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
           color: newChip.color,
           label: newChip.label,
           value: newChip.value,
+          spot: spot,
         ));
       });
     });

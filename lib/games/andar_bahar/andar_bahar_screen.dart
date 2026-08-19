@@ -46,7 +46,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
   // 'dealing' → dealing cards, betting closed
   // 'winner'  → winner revealed, overlay + winnings count-up
   String _gamePhase = 'betting';
-  int _timerSeconds = 12;
+  int _timerSeconds = 15;
   Timer? _gameTimer;
 
   // ── User Bets ────────────────────────────────────────────────────────────────
@@ -399,8 +399,88 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       _history.insert(
           0, winner == 'Andar' ? 'A' : (winner == 'Bahar' ? 'B' : 'T'));
       if (_history.length > 20) _history.removeLast();
-      _tableChips.clear();
+    });
 
+    final String winningSpot = winner.toLowerCase();
+
+    // 1. Gather Phase: Move chips from losing spots to the winning spot
+    final List<TableChip> losingChips = [];
+    final List<TableChip> winningChips = [];
+
+    for (var chip in _tableChips) {
+      if (chip.spot != winningSpot) {
+        losingChips.add(chip);
+      } else {
+        winningChips.add(chip);
+      }
+    }
+
+    // Clear losing chips from table display immediately, keeping winning chips visible
+    setState(() {
+      _tableChips.clear();
+      _tableChips.addAll(winningChips);
+    });
+
+    // Animate losing chips to the winning spot (takes exactly 1 second)
+    for (var chip in losingChips) {
+      double targetX = 0.5;
+      double targetY = 0.5;
+      if (winningSpot == 'andar') {
+        targetX = 0.22 + _random.nextDouble() * 0.22;
+        targetY = 0.59 + _random.nextDouble() * 0.12;
+      } else if (winningSpot == 'bahar') {
+        targetX = 0.56 + _random.nextDouble() * 0.22;
+        targetY = 0.59 + _random.nextDouble() * 0.12;
+      } else if (winningSpot == 'tie') {
+        targetX = 0.32 + _random.nextDouble() * 0.36;
+        targetY = 0.36 + _random.nextDouble() * 0.08;
+      }
+
+      final controller = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 1000), // Gather phase duration: 1 second
+      );
+
+      final flyingLosingChip = FlyingChip(
+        startX: chip.x,
+        startY: chip.y,
+        endX: targetX,
+        endY: targetY,
+        color: chip.color,
+        label: chip.label,
+        controller: controller,
+        value: chip.value,
+      );
+
+      setState(() => _flyingChips.add(flyingLosingChip));
+      controller.forward().then((_) {
+        if (!mounted) return;
+        setState(() {
+          _flyingChips.remove(flyingLosingChip);
+          // Join the winning chips on the table
+          _tableChips.add(TableChip(
+            x: targetX,
+            y: targetY,
+            color: chip.color,
+            label: chip.label,
+            value: chip.value,
+            spot: winningSpot,
+          ));
+        });
+        controller.dispose();
+      });
+    }
+
+    // 2. Payout Phase: Starts exactly 1 second later (when losing chips have gathered)
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      if (!mounted) return;
+
+      // Clear all chips from the table as they begin flying to the winning players
+      setState(() {
+        _tableChips.clear();
+      });
+
+      // Calculate user winnings and trigger flight
       double winnings = 0.0;
       if (winner == 'Andar' && _userBetAndar > 0) {
         winnings = _userBetAndar * 1.9;
@@ -411,17 +491,19 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       }
 
       if (winnings > 0) {
-        _userWinAmount = winnings;
-        _userWinTrigger++;
+        setState(() {
+          _userWinAmount = winnings;
+          _userWinTrigger++;
+        });
         widget.onBalanceChanged(widget.balance + winnings);
         _triggerWinningsFlight(
-            spot: winner.toLowerCase(),
-            targetX: 0.05,
-            targetY: 0.92,
+            spot: winningSpot,
+            targetX: 0.15, // Land on user profile
+            targetY: 0.95,
             value: winnings);
       }
 
-
+      // Calculate mock player winnings and trigger flights
       final Map<String, double> winningBets = winner == 'Andar'
           ? _mockBetsAndar
           : (winner == 'Bahar' ? _mockBetsBahar : _mockBetsTie);
@@ -433,55 +515,73 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
 
           if (playerKey == 'activeUsers') {
             _triggerWinningsFlight(
-                spot: winner.toLowerCase(),
-                targetX: 0.95,
-                targetY: 0.92,
+                spot: winningSpot,
+                targetX: 0.85, // Land on online users badge
+                targetY: 0.95,
                 value: playerWinnings);
             return;
           }
 
           final bool isLeft = playerKey.startsWith('L');
           final int index = int.parse(playerKey.substring(1));
+          
+          double targetX = 0.05;
+          double targetY = 0.3;
           if (isLeft) {
-            if (index == 0) {
-              _billionaireBalance += playerWinnings;
-              _billionaireWinAmount = playerWinnings;
-              _billionaireWinTrigger++;
-            } else if (index == 1) {
-              _richieBalance += playerWinnings;
-              _richieWinAmount = playerWinnings;
-              _richieWinTrigger++;
-            } else {
-              _highRollerBalance += playerWinnings;
-              _highRollerWinAmount = playerWinnings;
-              _highRollerWinTrigger++;
-            }
+            targetX = 0.06;
+            targetY = 0.18 + index * 0.20;
           } else {
-            if (index == 0) {
-              _masterBalance += playerWinnings;
-              _masterWinAmount = playerWinnings;
-              _masterWinTrigger++;
-            } else if (index == 1) {
-              _proKingBalance += playerWinnings;
-              _proKingWinAmount = playerWinnings;
-              _proKingWinTrigger++;
-            } else {
-              _elitePlayerBalance += playerWinnings;
-              _elitePlayerWinAmount = playerWinnings;
-              _elitePlayerWinTrigger++;
-            }
+            targetX = 0.94;
+            targetY = 0.18 + index * 0.20;
           }
+
           _triggerWinningsFlight(
-              spot: winner.toLowerCase(),
-              targetX: isLeft ? 0.05 : 0.95,
-              targetY: 0.30 + 0.08 + index * 0.145,
+              spot: winningSpot,
+              targetX: targetX,
+              targetY: targetY,
               value: playerWinnings);
+
+          // Update balances when chips arrive
+          Future.delayed(const Duration(milliseconds: 600), () {
+            if (!mounted) return;
+            setState(() {
+              if (isLeft) {
+                if (index == 0) {
+                  _billionaireBalance += playerWinnings;
+                  _billionaireWinAmount = playerWinnings;
+                  _billionaireWinTrigger++;
+                } else if (index == 1) {
+                  _richieBalance += playerWinnings;
+                  _richieWinAmount = playerWinnings;
+                  _richieWinTrigger++;
+                } else if (index == 2) {
+                  _highRollerBalance += playerWinnings;
+                  _highRollerWinAmount = playerWinnings;
+                  _highRollerWinTrigger++;
+                }
+              } else {
+                if (index == 0) {
+                  _masterBalance += playerWinnings;
+                  _masterWinAmount = playerWinnings;
+                  _masterWinTrigger++;
+                } else if (index == 1) {
+                  _proKingBalance += playerWinnings;
+                  _proKingWinAmount = playerWinnings;
+                  _proKingWinTrigger++;
+                } else if (index == 2) {
+                  _elitePlayerBalance += playerWinnings;
+                  _elitePlayerWinAmount = playerWinnings;
+                  _elitePlayerWinTrigger++;
+                }
+              }
+            });
+          });
         }
       });
     });
 
-    // Reset game and return to betting after exactly 3 blinks (2100 milliseconds)
-    Future.delayed(const Duration(milliseconds: 2100), () {
+    // Reset game and return to betting phase after all animations finish (3800 milliseconds)
+    Future.delayed(const Duration(milliseconds: 3800), () {
       if (mounted) _startBettingPhase();
     });
   }
@@ -581,6 +681,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
           color: newChip.color,
           label: newChip.label,
           value: newChip.value,
+          spot: spot,
         ));
       });
       newChip.controller.dispose();
@@ -929,41 +1030,152 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                 ),
               ),
 
-              // 10. Lottie 10-sec countdown
-              if (_gamePhase == 'betting' &&
-                  _timerSeconds <= 10 &&
-                  _timerSeconds > 3)
+              // 10. Custom Cartoon Capsule Timer
+              if (_gamePhase == 'betting')
                 Positioned(
                   left: w * 0.66,
                   top: h * 0.04,
-                  child: IgnorePointer(
-                    child: SizedBox(
-                      width: 130.0,
-                      height: 52.0,
-                      child: Lottie.asset(
-                        'assets/10_second_countdown_timer.json',
-                        repeat: false,
-                      ),
-                    ),
-                  ),
-                ),
-
-
-              // 11. Lottie last-3-sec countdown (and dealing/winner loop phase)
-              if ((_gamePhase == 'betting' && _timerSeconds <= 3 && _timerSeconds > 0) ||
-                  _gamePhase == 'dealing' ||
-                  _gamePhase == 'winner')
-                Positioned(
-                  left: w * 0.66,
-                  top: h * 0.04,
-                  child: IgnorePointer(
-                    child: SizedBox(
-                      width: 130.0,
-                      height: 52.0,
-                      child: Lottie.asset(
-                        'assets/10_second_countdown_timer_react_end_loop.json',
-                        repeat: true,
-                      ),
+                  child: SizedBox(
+                    width: 120.0,
+                    height: 36.0,
+                    child: Stack(
+                      alignment: Alignment.centerLeft,
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 105.0,
+                          height: 30.0,
+                          decoration: BoxDecoration(
+                            color: const Color(0xCC263238),
+                            borderRadius: BorderRadius.circular(15.0),
+                            border: Border.all(color: Colors.white12, width: 1.0),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black38,
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.only(left: 14.0),
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '00:${_timerSeconds.toString().padLeft(2, '0')}',
+                            style: GoogleFonts.robotoMono(
+                              textStyle: TextStyle(
+                                fontSize: 17.0,
+                                fontWeight: FontWeight.w900,
+                                color: _timerSeconds <= 3 
+                                    ? const Color(0xFFFF3D00)
+                                    : const Color(0xFFFFB300),
+                                letterSpacing: 0.5,
+                                shadows: const [
+                                  Shadow(
+                                    color: Colors.black,
+                                    offset: Offset(1.5, 1.5),
+                                    blurRadius: 0.0,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 6.0,
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                              border: Border.all(
+                                color: _timerSeconds <= 3 
+                                    ? const Color(0xFFFF3D00) 
+                                    : const Color(0xFFFF9100), 
+                                width: 2.5,
+                              ),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 3.0,
+                                  offset: Offset(0, 1.5),
+                                )
+                              ]
+                            ),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Positioned(
+                                  top: 2, 
+                                  child: Container(
+                                    width: 1.5, 
+                                    height: 2, 
+                                    color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 2, 
+                                  child: Container(
+                                    width: 1.5, 
+                                    height: 2, 
+                                    color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
+                                  ),
+                                ),
+                                Positioned(
+                                  left: 2, 
+                                  child: Container(
+                                    width: 2, 
+                                    height: 1.5, 
+                                    color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
+                                  ),
+                                ),
+                                Positioned(
+                                  right: 2, 
+                                  child: Container(
+                                    width: 2, 
+                                    height: 1.5, 
+                                    color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
+                                  ),
+                                ),
+                                Container(
+                                  width: 4,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
+                                  ),
+                                ),
+                                Transform.rotate(
+                                  angle: -2.3 - (_timerSeconds * 0.15),
+                                  alignment: Alignment.bottomCenter,
+                                  child: Container(
+                                    width: 1.8,
+                                    height: 6.0,
+                                    margin: const EdgeInsets.only(bottom: 6.0),
+                                    decoration: BoxDecoration(
+                                      color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
+                                      borderRadius: BorderRadius.circular(1.0),
+                                    ),
+                                  ),
+                                ),
+                                Transform.rotate(
+                                  angle: 1.1 + (_timerSeconds * 0.4),
+                                  alignment: Alignment.bottomCenter,
+                                  child: Container(
+                                    width: 1.8,
+                                    height: 8.0,
+                                    margin: const EdgeInsets.only(bottom: 8.0),
+                                    decoration: BoxDecoration(
+                                      color: _timerSeconds <= 3 ? const Color(0xFFFF3D00) : const Color(0xFFFF9100),
+                                      borderRadius: BorderRadius.circular(1.0),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
