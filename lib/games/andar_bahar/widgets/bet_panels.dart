@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Andar / Bahar side bet panel with win blink animation support.
-class SideBetPanel extends StatelessWidget {
+class SideBetPanel extends StatefulWidget {
   final String label;       // 'Andar' or 'Bahar'
   final double totalBet;
   final double userBet;
@@ -9,6 +9,7 @@ class SideBetPanel extends StatelessWidget {
   final bool isLeft;
   final bool isWinner;
   final Animation<double> blinkAnimation;
+  final bool hasMasterBet;
 
   const SideBetPanel({
     super.key,
@@ -19,14 +20,42 @@ class SideBetPanel extends StatelessWidget {
     required this.isLeft,
     required this.isWinner,
     required this.blinkAnimation,
+    this.hasMasterBet = false,
   });
 
+  @override
+  State<SideBetPanel> createState() => _SideBetPanelState();
+}
+
+class _SideBetPanelState extends State<SideBetPanel>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _glowCtrl;
+  late Animation<double> _glowAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _glowCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _glowAnim = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _glowCtrl.dispose();
+    super.dispose();
+  }
+
   BoxDecoration _getPanelDecoration(bool winner) {
-    final Color startColor = Color.lerp(Colors.black, baseColor, 0.45)!;
-    final Color endColor = Color.lerp(Colors.black, baseColor, 0.22)!;
+    final Color startColor = Color.lerp(Colors.black, widget.baseColor, 0.45)!;
+    final Color endColor = Color.lerp(Colors.black, widget.baseColor, 0.22)!;
 
     if (winner) {
-      final double val = blinkAnimation.value;
+      final double val = widget.blinkAnimation.value;
       return BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -38,7 +67,7 @@ class SideBetPanel extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(10.0),
         border: Border.all(
-          color: Color.lerp(baseColor, const Color(0xFFFFD700), val)!,
+          color: Color.lerp(widget.baseColor, const Color(0xFFFFD700), val)!,
           width: 1.5 + 2.0 * val,
         ),
         boxShadow: [
@@ -57,11 +86,10 @@ class SideBetPanel extends StatelessWidget {
         end: Alignment.bottomRight,
       ),
       borderRadius: BorderRadius.circular(10.0),
-      border: Border.all(color: baseColor, width: 1.5),
+      border: Border.all(color: widget.baseColor, width: 1.5),
       boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4.0)],
     );
   }
-
 
   Widget _buildContent() {
     return Stack(
@@ -75,7 +103,7 @@ class SideBetPanel extends StatelessWidget {
                   color: Color(0xFFFFD700), size: 10.0),
               const SizedBox(width: 2.0),
               Text(
-                '${totalBet.toInt()}',
+                '${widget.totalBet.toInt()}',
                 style: const TextStyle(
                     color: Colors.white,
                     fontSize: 8.5,
@@ -84,11 +112,10 @@ class SideBetPanel extends StatelessWidget {
             ],
           ),
         ),
-        // Can bet label removed
 
         Positioned(
-          left: isLeft ? 8.0 : null,
-          right: !isLeft ? 8.0 : null,
+          left: widget.isLeft ? 8.0 : null,
+          right: !widget.isLeft ? 8.0 : null,
           top: 26.0,
           child: const Text(
             '1.9',
@@ -100,18 +127,18 @@ class SideBetPanel extends StatelessWidget {
         ),
         Center(
           child: Text(
-            label,
+            widget.label,
             style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16.0,
                 fontWeight: FontWeight.bold),
           ),
         ),
-        if (userBet > 0)
+        if (widget.userBet > 0)
           Positioned(
             bottom: 4.0,
-            left: !isLeft ? 8.0 : null,
-            right: isLeft ? 8.0 : null,
+            left: !widget.isLeft ? 8.0 : null,
+            right: widget.isLeft ? 8.0 : null,
             child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 4.0, vertical: 1.0),
@@ -120,7 +147,7 @@ class SideBetPanel extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4.0),
               ),
               child: Text(
-                'Mine: ${userBet.toInt()}',
+                'Mine: ${widget.userBet.toInt()}',
                 style: const TextStyle(
                     color: Color(0xFFFFD700),
                     fontSize: 8.5,
@@ -128,12 +155,49 @@ class SideBetPanel extends StatelessWidget {
               ),
             ),
           ),
+
+        // Static dim star (always visible)
         Positioned(
           bottom: 4.0,
-          left: isLeft ? 8.0 : null,
-          right: !isLeft ? 8.0 : null,
-          child: Icon(Icons.star_border,
-              color: Colors.yellow.withValues(alpha: 0.4), size: 14.0),
+          left: widget.isLeft ? 8.0 : null,
+          right: !widget.isLeft ? 8.0 : null,
+          child: widget.hasMasterBet
+              ? AnimatedBuilder(
+                  animation: _glowAnim,
+                  builder: (context, _) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF6F00)
+                                .withValues(alpha: _glowAnim.value * 0.85),
+                            blurRadius: 10.0 * _glowAnim.value,
+                            spreadRadius: 3.0 * _glowAnim.value,
+                          ),
+                        ],
+                      ),
+                      child: ShaderMask(
+                        shaderCallback: (bounds) => LinearGradient(
+                          colors: [
+                            Color.lerp(const Color(0xFFFFB74D),
+                                const Color(0xFFFF3D00), _glowAnim.value)!,
+                            const Color(0xFFFF3D00),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ).createShader(bounds),
+                        child: Icon(
+                          Icons.star,
+                          size: 14.0 + 2.0 * _glowAnim.value,
+                          color: Colors.white,
+                        ),
+                      ),
+                    );
+                  },
+                )
+              : Icon(Icons.star_border,
+                  color: Colors.yellow.withValues(alpha: 0.4), size: 14.0),
         ),
       ],
     );
@@ -141,9 +205,9 @@ class SideBetPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isWinner) {
+    if (widget.isWinner) {
       return AnimatedBuilder(
-        animation: blinkAnimation,
+        animation: widget.blinkAnimation,
         builder: (context, child) {
           return Container(
             decoration: _getPanelDecoration(true),
@@ -164,13 +228,14 @@ class SideBetPanel extends StatelessWidget {
 }
 
 /// Tie bet panel with win blink animation support.
-class TieBetPanel extends StatelessWidget {
+class TieBetPanel extends StatefulWidget {
   final double totalBetTie;
   final double userBetTie;
   final bool isBetting;
   final bool isWinner;
   final Animation<double> blinkAnimation;
   final double height;
+  final bool hasMasterBet;
 
   const TieBetPanel({
     super.key,
@@ -180,12 +245,40 @@ class TieBetPanel extends StatelessWidget {
     required this.isWinner,
     required this.blinkAnimation,
     required this.height,
+    this.hasMasterBet = false,
   });
+
+  @override
+  State<TieBetPanel> createState() => _TieBetPanelState();
+}
+
+class _TieBetPanelState extends State<TieBetPanel>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _glowCtrl;
+  late Animation<double> _glowAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _glowCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _glowAnim = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _glowCtrl.dispose();
+    super.dispose();
+  }
 
   BoxDecoration _getDecoration(bool winner) {
     const Color tieBaseColor = Color(0xFF2E7D32);
     if (winner) {
-      final double val = blinkAnimation.value;
+      final double val = widget.blinkAnimation.value;
       return BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -236,7 +329,7 @@ class TieBetPanel extends StatelessWidget {
                   color: Color(0xFFFFD700), size: 10.0),
               const SizedBox(width: 2.0),
               Text(
-                '${totalBetTie.toInt()}',
+                '${widget.totalBetTie.toInt()}',
                 style: const TextStyle(
                     color: Colors.white,
                     fontSize: 8.5,
@@ -245,7 +338,49 @@ class TieBetPanel extends StatelessWidget {
             ],
           ),
         ),
-        // Can bet label removed
+
+        // Glowing star (top-right corner of Tie panel) — always present, glows when Master bet
+        Positioned(
+          top: 2.0,
+          right: 4.0,
+          child: widget.hasMasterBet
+              ? AnimatedBuilder(
+                  animation: _glowAnim,
+                  builder: (context, _) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF6F00)
+                                .withValues(alpha: _glowAnim.value * 0.85),
+                            blurRadius: 10.0 * _glowAnim.value,
+                            spreadRadius: 3.0 * _glowAnim.value,
+                          ),
+                        ],
+                      ),
+                      child: ShaderMask(
+                        shaderCallback: (bounds) => LinearGradient(
+                          colors: [
+                            Color.lerp(const Color(0xFFFFB74D),
+                                const Color(0xFFFF3D00), _glowAnim.value)!,
+                            const Color(0xFFFF3D00),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ).createShader(bounds),
+                        child: Icon(
+                          Icons.star,
+                          size: 13.0 + 2.0 * _glowAnim.value,
+                          color: Colors.white,
+                        ),
+                      ),
+                    );
+                  },
+                )
+              : Icon(Icons.star_border,
+                  color: Colors.yellow.withValues(alpha: 0.3), size: 13.0),
+        ),
 
         Center(
           child: Column(
@@ -266,7 +401,7 @@ class TieBetPanel extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.0),
               ),
-              if (isBetting)
+              if (widget.isBetting)
                 const Text(
                   'Start betting',
                   style: TextStyle(
@@ -291,13 +426,13 @@ class TieBetPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isWinner) {
+    if (widget.isWinner) {
       return AnimatedBuilder(
-        animation: blinkAnimation,
+        animation: widget.blinkAnimation,
         builder: (context, child) {
           return Container(
             width: double.infinity,
-            height: height * 0.16,
+            height: widget.height * 0.16,
             decoration: _getDecoration(true),
             padding:
                 const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
@@ -309,7 +444,7 @@ class TieBetPanel extends StatelessWidget {
     }
     return Container(
       width: double.infinity,
-      height: height * 0.16,
+      height: widget.height * 0.16,
       decoration: _getDecoration(false),
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
       child: _buildContent(),

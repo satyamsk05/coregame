@@ -57,6 +57,8 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
   double _userWinAmount = 0.0;
   int _userWinTrigger = 0;
   int _activeUsersCount = 45;
+  // Tracks which bet spots the Grand Master has placed a bet on this round
+  final Set<String> _masterBetSpots = {};
 
 
 
@@ -184,6 +186,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       _mockBetsBahar.clear();
       _mockBetsTie.clear();
       _tableChips.clear();
+      _masterBetSpots.clear();
 
 
 
@@ -322,6 +325,8 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
       }
 
       if (playerKey == 'R0') {
+        // Mark which spot Grand Master bet on (for glow star on panel)
+        _masterBetSpots.add(spot);
         // Profile center for Grand Master (right side, index 0)
         // Fractional coords matching Positioned(top: h*0.18, right: w*0.02)
         // Avatar is ~37px wide; screen ~390h → avatar center Y ≈ 0.18 + 18.5/h
@@ -1478,6 +1483,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
             isWinner: _gamePhase == 'winner' && _winnerName == 'Tie',
             blinkAnimation: _blinkController,
             height: h,
+            hasMasterBet: _masterBetSpots.contains('tie'),
           ),
         ),
         SizedBox(height: h * 0.02),
@@ -1497,6 +1503,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                     isWinner:
                         _gamePhase == 'winner' && _winnerName == 'Andar',
                     blinkAnimation: _blinkController,
+                    hasMasterBet: _masterBetSpots.contains('andar'),
                   ),
                 ),
               ),
@@ -1514,6 +1521,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                     isWinner:
                         _gamePhase == 'winner' && _winnerName == 'Bahar',
                     blinkAnimation: _blinkController,
+                    hasMasterBet: _masterBetSpots.contains('bahar'),
                   ),
                 ),
               ),
