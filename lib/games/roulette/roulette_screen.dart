@@ -468,46 +468,6 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
       padding: const EdgeInsets.all(8.0),
       child: Column(
         children: [
-          // Recent history list (compact style at the top of the wheel panel)
-          Container(
-            height: 28.0,
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            decoration: BoxDecoration(
-              color: Colors.black26,
-              borderRadius: BorderRadius.circular(6.0),
-            ),
-            child: Row(
-              children: [
-                const Text(
-                  'RECENT:',
-                  style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 8.0),
-                ),
-                const SizedBox(width: 6.0),
-                Expanded(
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _history.length,
-                    itemBuilder: (context, index) {
-                      final int val = _history[_history.length - 1 - index];
-                      final Color col = _getNumberColor(val);
-                      return Container(
-                        width: 18.0,
-                        height: 18.0,
-                        margin: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 5.0),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(color: col, shape: BoxShape.circle),
-                        child: Text(
-                          '$val',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 8.0),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8.0),
           // Spinner
           Expanded(
             child: Padding(
@@ -684,32 +644,6 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
             child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16.0),
           ),
         ),
-        const SizedBox(width: 8.0),
-
-        // Total Bet Box
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
-          decoration: BoxDecoration(
-            color: const Color(0x1F000000),
-            borderRadius: BorderRadius.circular(8.0),
-            border: Border.all(color: Colors.white12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'TOTAL BET',
-                style: TextStyle(color: Colors.grey, fontSize: 7.0, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 1.0),
-              Text(
-                '₹${_betAmount.toStringAsFixed(0)}',
-                style: const TextStyle(color: Color(0xFFFF5252), fontSize: 10.5, fontWeight: FontWeight.w900),
-              ),
-            ],
-          ),
-        ),
         
         const Spacer(),
         
@@ -734,55 +668,6 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
         ),
         
         const Spacer(),
-
-        // User Wallet balance
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-          decoration: BoxDecoration(
-            color: const Color(0x33000000),
-            borderRadius: BorderRadius.circular(8.0),
-            border: Border.all(color: Colors.white24),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.monetization_on, color: Color(0xFFFFD700), size: 14.0),
-              const SizedBox(width: 4.0),
-              Text(
-                '₹${widget.balance.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 11.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8.0),
-
-        // Trends Icon
-        Container(
-          padding: const EdgeInsets.all(6.0),
-          decoration: BoxDecoration(
-            color: const Color(0x33000000),
-            borderRadius: BorderRadius.circular(8.0),
-            border: Border.all(color: Colors.white12),
-          ),
-          child: const Icon(Icons.trending_up, color: Colors.white70, size: 16.0),
-        ),
-        const SizedBox(width: 8.0),
-
-        // Settings Icon
-        Container(
-          padding: const EdgeInsets.all(6.0),
-          decoration: BoxDecoration(
-            color: const Color(0x33000000),
-            borderRadius: BorderRadius.circular(8.0),
-            border: Border.all(color: Colors.white12),
-          ),
-          child: const Icon(Icons.settings, color: Colors.white70, size: 16.0),
-        ),
       ],
     );
   }
@@ -840,13 +725,58 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
   }
 
   Widget _buildInteractiveBoard() {
-    const double cellHeight = 28.0;
-    const double cellWidth = 32.0;
+    const double cellHeight = 32.0;
+    const double cellWidth = 36.0;
     
     return Column(
       mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const Spacer(),
+        // Recent results history bar (like Andar Bahar)
+        Container(
+          height: 30.0,
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          decoration: BoxDecoration(
+            color: Colors.black26,
+            borderRadius: BorderRadius.circular(6.0),
+          ),
+          child: Row(
+            children: [
+              const Text(
+                'LAST:',
+                style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 8.0),
+              ),
+              const SizedBox(width: 6.0),
+              Expanded(
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _history.length,
+                  itemBuilder: (context, index) {
+                    final int val = _history[_history.length - 1 - index];
+                    final Color col = _getNumberColor(val);
+                    return Container(
+                      width: 24.0,
+                      height: 22.0,
+                      margin: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 4.0),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: col,
+                        borderRadius: BorderRadius.circular(4.0),
+                        border: Border.all(color: Colors.white24, width: 0.5),
+                      ),
+                      child: Text(
+                        '$val',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 9.5),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4.0),
         Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -863,6 +793,7 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                   height: cellHeight * 3 + 4.0, // accounting for borders
                   onTap: () => _placeBet('number', '0'),
                   hasChip: _betType == 'number' && _betValue == '0',
+                  fontSize: 12.0,
                 ),
                 const SizedBox(width: 2.0),
                 
@@ -882,6 +813,7 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                             height: cellHeight,
                             onTap: () => _placeBet('number', '$num'),
                             hasChip: _betType == 'number' && _betValue == '$num',
+                            fontSize: 10.0,
                           ),
                         );
                       }),
@@ -899,6 +831,7 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                             height: cellHeight,
                             onTap: () => _placeBet('number', '$num'),
                             hasChip: _betType == 'number' && _betValue == '$num',
+                            fontSize: 10.0,
                           ),
                         );
                       }),
@@ -916,6 +849,7 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                             height: cellHeight,
                             onTap: () => _placeBet('number', '$num'),
                             hasChip: _betType == 'number' && _betValue == '$num',
+                            fontSize: 10.0,
                           ),
                         );
                       }),
@@ -934,7 +868,7 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                         color: const Color(0xFF1E2024),
                         width: cellWidth + 8.0,
                         height: cellHeight,
-                        fontSize: 7.5,
+                        fontSize: 8.0,
                         onTap: () => _placeBet('column', '1'),
                         hasChip: _betType == 'column' && _betValue == '1',
                       ),
@@ -946,7 +880,7 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                         color: const Color(0xFF1E2024),
                         width: cellWidth + 8.0,
                         height: cellHeight,
-                        fontSize: 7.5,
+                        fontSize: 8.0,
                         onTap: () => _placeBet('column', '2'),
                         hasChip: _betType == 'column' && _betValue == '2',
                       ),
@@ -958,7 +892,7 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                         color: const Color(0xFF1E2024),
                         width: cellWidth + 8.0,
                         height: cellHeight,
-                        fontSize: 7.5,
+                        fontSize: 8.0,
                         onTap: () => _placeBet('column', '3'),
                         hasChip: _betType == 'column' && _betValue == '3',
                       ),
@@ -1012,7 +946,7 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                   color: const Color(0xFF1E2024),
                   width: cellWidth * 2 + 2.0,
                   height: cellHeight,
-                  fontSize: 8.5,
+                  fontSize: 9.0,
                   onTap: () => _placeBet('half', '1'),
                   hasChip: _betType == 'half' && _betValue == '1',
                 ),
@@ -1022,7 +956,7 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                   color: const Color(0xFF1E2024),
                   width: cellWidth * 2 + 2.0,
                   height: cellHeight,
-                  fontSize: 8.5,
+                  fontSize: 9.0,
                   onTap: () => _placeBet('parity', 'even'),
                   hasChip: _betType == 'parity' && _betValue == 'even',
                 ),
@@ -1033,8 +967,8 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                   child: Transform.rotate(
                     angle: pi / 4,
                     child: Container(
-                      width: 10.0,
-                      height: 10.0,
+                      width: 11.0,
+                      height: 11.0,
                       color: const Color(0xFFFF5252),
                     ),
                   ),
@@ -1051,8 +985,8 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                   child: Transform.rotate(
                     angle: pi / 4,
                     child: Container(
-                      width: 10.0,
-                      height: 10.0,
+                      width: 11.0,
+                      height: 11.0,
                       color: const Color(0xFF15171C),
                     ),
                   ),
@@ -1069,7 +1003,7 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                   color: const Color(0xFF1E2024),
                   width: cellWidth * 2 + 2.0,
                   height: cellHeight,
-                  fontSize: 8.5,
+                  fontSize: 9.0,
                   onTap: () => _placeBet('parity', 'odd'),
                   hasChip: _betType == 'parity' && _betValue == 'odd',
                 ),
@@ -1079,7 +1013,7 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
                   color: const Color(0xFF1E2024),
                   width: cellWidth * 2 + 2.0,
                   height: cellHeight,
-                  fontSize: 8.5,
+                  fontSize: 9.0,
                   onTap: () => _placeBet('half', '2'),
                   hasChip: _betType == 'half' && _betValue == '2',
                 ),
