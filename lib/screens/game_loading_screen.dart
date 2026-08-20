@@ -101,6 +101,20 @@ const Map<String, _GameMeta> _gameMeta = {
     primary: Color(0xFF00D2FF),
     secondary: Color(0xFF7B2FF7),
   ),
+  'double': _GameMeta(
+    title: 'DOUBLE CAROUSEL',
+    subtitle: 'Bet on colors. Double your fortune.',
+    emoji: '🔴',
+    primary: Color(0xFFFE4541),
+    secondary: Color(0xFF24EE89),
+  ),
+  'ring_of_fortune': _GameMeta(
+    title: 'RING OF FORTUNE',
+    subtitle: 'Spin the wheel. Claim your destiny.',
+    emoji: '🎡',
+    primary: Color(0xFF24EE89),
+    secondary: Color(0xFF7B2FF7),
+  ),
 };
 
 _GameMeta _getMeta(String key) =>

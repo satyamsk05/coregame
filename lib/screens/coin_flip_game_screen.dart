@@ -637,21 +637,82 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
   }
 
   Widget _buildFlatQuickBetButton(String label, VoidCallback onTap) {
+    Color mainColor;
+    Color shadowColor;
+    Color textColor;
+
+    switch (label) {
+      case '10':
+        mainColor = const Color(0xFFFACC15);
+        shadowColor = const Color(0xFFCA8A04);
+        textColor = const Color(0xFF0F1115);
+        break;
+      case '100':
+        mainColor = const Color(0xFFF1F5F9);
+        shadowColor = const Color(0xFFCBD5E1);
+        textColor = const Color(0xFF0F1115);
+        break;
+      case '500':
+        mainColor = const Color(0xFF3B82F6);
+        shadowColor = const Color(0xFF1D4ED8);
+        textColor = Colors.white;
+        break;
+      case '1000':
+        mainColor = const Color(0xFFF97316);
+        shadowColor = const Color(0xFFC2410C);
+        textColor = Colors.white;
+        break;
+      default:
+        mainColor = const Color(0xFF2E3138);
+        shadowColor = Colors.black;
+        textColor = Colors.white;
+    }
+
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.only(right: 4.0),
         child: InkWell(
           onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10.0),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: const Color(0xFF2E3138),
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            child: Text(
-              label,
-              style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+          child: SizedBox(
+            height: 38.0,
+            child: Stack(
+              children: [
+                // Bottom bevel shadow layer
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 34.0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: shadowColor,
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                ),
+                // Top main colored layer
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 34.0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: mainColor,
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      label,
+                      style: GoogleFonts.outfit(
+                        color: textColor,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

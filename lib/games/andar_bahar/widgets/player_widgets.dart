@@ -445,6 +445,8 @@ class UserAvatarWidget extends StatefulWidget {
   final int betTrigger;
   final double winAmount;
   final int winTrigger;
+  final bool showBalance;
+  final bool showNickname;
 
   const UserAvatarWidget({
     super.key,
@@ -454,6 +456,8 @@ class UserAvatarWidget extends StatefulWidget {
     this.betTrigger = 0,
     this.winAmount = 0.0,
     this.winTrigger = 0,
+    this.showBalance = true,
+    this.showNickname = true,
   });
 
   @override
@@ -593,48 +597,51 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
                 ),
             ],
           ),
-          const SizedBox(width: 5.0),
-          
-          // User Name & Balance boxes
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 1.5),
-                decoration: BoxDecoration(
-                  color: const Color(0xCC171B21),
-                  borderRadius: BorderRadius.circular(5.0),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Text(
-                  widget.nickname ?? 'Satyamsk',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 8.3,
-                    fontWeight: FontWeight.bold,
+          if (widget.showNickname || widget.showBalance) ...[
+            const SizedBox(width: 5.0),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.showNickname)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xCC171B21),
+                      borderRadius: BorderRadius.circular(5.0),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Text(
+                      widget.nickname ?? 'Satyamsk',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8.3,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 2.0),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 1.5),
-                decoration: BoxDecoration(
-                  color: const Color(0xCC171B21),
-                  borderRadius: BorderRadius.circular(5.0),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Text(
-                  widget.balance.toStringAsFixed(0),
-                  style: const TextStyle(
-                    color: Color(0xFFFFD700),
-                    fontSize: 8.3,
-                    fontWeight: FontWeight.bold,
+                if (widget.showBalance) ...[
+                  const SizedBox(height: 2.0),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xCC171B21),
+                      borderRadius: BorderRadius.circular(5.0),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Text(
+                      widget.balance.toStringAsFixed(0),
+                      style: const TextStyle(
+                        color: Color(0xFFFFD700),
+                        fontSize: 8.3,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
-          ),
+                ],
+              ],
+            ),
+          ],
         ],
       ),
     );

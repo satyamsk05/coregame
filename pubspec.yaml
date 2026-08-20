@@ -71,6 +71,7 @@ flutter:
     - assets/chips/
     - assets/logos/
     - assets/icons/
+    - assets/Double/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -51,7 +51,7 @@ Do not modify these files unless requested, as they are not imported by the main
 
 ---
 
-## 3. The 12 Active Games
+## 3. The 13 Active Games
 
 1.  **Keno 12** (`keno`): Grid matrix card select & draw numbers game.
 2.  **Coin Flip** (`coin_flip`): Simple coin flip betting game with custom animations.
@@ -65,7 +65,8 @@ Do not modify these files unless requested, as they are not imported by the main
 10. **HiLo** (`hilo`): Guess higher/lower next playing card game.
 11. **Andar Bahar** (`andar_bahar`): Standard Indian table/cards matching game (fully modular layout).
 12. **Twist** (`twist`): Custom slot-machine card reels game.
-*Note: **Fruit Slash, Fast Parity, Perya Color Game, Double, Jade, and Ring of Fortune** are visible in the lobby as mocked game options but invoke a placeholder info popup instead of a game launch.*
+13. **Double** (`double`): Stake-style horizontal sliding slider carousel betting game.
+*Note: **Fruit Slash, Fast Parity, Perya Color Game, Jade, and Ring of Fortune** are visible in the lobby as mocked game options but invoke a placeholder info popup instead of a game launch.*
 
 ---
 
@@ -146,5 +147,27 @@ The app references multiple types of assets in [pubspec.yaml](file:///Users/saty
 36. **Twist Metallic Roulette Design**: Upgraded `lib/games/roulette/roulette_screen.dart` to match the Twist metallic design of `roulate.html`. Replaced the wooden rim/bowl with a dark metallic silver-grey shader rim and dark bowl. Added 24 golden outer "twist" ticks rotating with the wheel, 8 opposite-rotating curved semi-transparent gold/white bands inside the bowl, and 4 elegant opposite-rotating gold handles/spokes. Upgraded pocket gradients to premium metallic gold dividers and styled a gold pointer needle at the top.
 37. **Roulette Ball Physics Fix**: Fixed the ball animation in both `roulate.html` and the Flutter `_RouletteWheelPainter`. Ball now spins on the outer track during the first 60% of the animation, then smoothly drops inward using Hermite smoothstep easing to settle into the winning pocket center at `(numRingInner + numRingOuter) / 2` radius during the last 40%. Includes subtle bounce oscillation during settle and angle interpolation towards the pocket center. Ball size reduced to `side * 0.014`.
 38. **Roulette Auto-Countdown Timer (Like Andar Bahar)**: Converted roulette from a manual SPIN button to an automatic 15-second countdown game loop. Added `_gamePhase` ('betting' → 'spinning' → 'result' → loop), `_timerSeconds`, and `_gameTimer`. Betting phase runs 15 seconds with countdown; when timer hits 0, wheel auto-spins. After result display (3.8s delay), loop restarts. SPIN button replaced with an Andar Bahar-style countdown timer capsule widget (00:SS format with mini clock face, gold/red at 3s). Chips and clear bet are disabled (opacity 0.5) during spinning/result phases. Bets are placed during betting phase only. If no bet is placed, wheel still spins but no deduction/payout occurs.
-
-
+150. **Double Game Implementation**: Implemented a new Stake-style horizontal carousel slider betting game in `lib/games/double/double_screen.dart` with swapped columns layout (left betting column, right carousel wheel column). Inside the horizontal slider:
+    *   Cards are vertical rounded rectangles with a 5% width reduction (`_itemWidth = 76.0`, `BorderRadius.circular(8.0)`) enclosing a custom rounded-corner hexagon shape (`HexagonClipper` with quadratic bezier curves for soft corners) scaled up to `48x48` (50% larger).
+    *   The numbers inside the hexagons are rendered in a clean, bold **Roboto font style** (fontSize: `16.0`) perfectly framed inside the soft hexagons.
+    *   The green slot renders the premium high-fidelity green diamond gemstone image asset `assets/Double/Image (diamond).png` centered inside a `48x48` container (with image size scaled up to `38x38`) on a solid vibrant green background (`Color(0xFF24EE89)`).
+    *   The slider indicator is a simple centered vertical white line indicator.
+151. **Double Footer Profile Card & Suffix Controls**: 
+    *   The footer Row bundles the avatar, a stacked nickname (top, large, bold), and direct gold balance text `₹17.57` (bottom) inside a single **dark player info box** with `13px` rounded corners and a border (no nested capsule wrapper to avoid layout overflows).
+    *   The green "Bet" button's height (`72px`) and border-radius (`13px`) match the player info box, aligned on the same horizontal line.
+    *   The Amount input field on the left has suffix `-` and `+` buttons to halve and double the bet value.
+152. **Double Rules & Header**: 
+    *   Centred the clean `'DOUBLE'` brand text at the top header.
+    *   Added a help button (`?`) on the top-right corner that opens a scroll-safe (`SingleChildScrollView`) rules dialog containing step-by-step game instructions.
+    *   The Previous Rolls list in the footer displays rectangular card boxes with internal hexagons for Red/Black numbers, and a white diamond icon for Green rolls.
+153. **Ring of Fortune Game Implementation**: Created a new segmented circular fortune wheel game in `lib/games/ring_of_fortune/ring_of_fortune_screen.dart` with landscape split layout (left betting panel, right wheel panel) based on the Double game. Inside the screen:
+    *   **Circular Ring Wheel**: Painted using a CustomPainter dividing the circle into 30 alternating segments (15 Grey @1.98x, 10 Purple @2.97x, 4 Orange @5.94x, 1 Green @98x). Smooth rotation animation curves decelerate precisely to align the winning segment with the orange pointer at the bottom.
+    *   **Betting Console Layout**: Contains a global bet amount field, suggested quick-bet shortcuts, and color bet selectors allowing users to place bets on multiple colors simultaneously. Elements are tightly compressed (Amount bar height `30.0`, shortcuts height `24.0`, input row height `26.0`, text sizes `11.0`, vertical padding `2.0`) to fit the landscape layout without bottom overflow.
+    *   **3D Color Box Indicators**: Replaced simple color selection dots with blank solid 3D-bevel style rounded rectangle color boxes (width `32.0`, height `24.0`) matching the button mockup style.
+    *   **Footer Relocation**: The player profile info box and the green Bet button are located at the bottom of the Left Column panel (height `52.0`), freeing up the entire right panel height for the fortune wheel.
+154. **Coin Flip Quick Bet Buttons**: Updated quick bet buttons (`10`, `100`, `500`, `1000`) inside `lib/screens/coin_flip_game_screen.dart` to render as 3D-bevel style rounded rectangle colored boxes matching the button mockup:
+    *   `10`: Yellow (`#FACC15`)
+    *   `100`: Off-white (`#F1F5F9`)
+    *   `500`: Blue (`#3B82F6`)
+    *   `1000`: Orange (`#F97316`)
+    *   Bet amount labels are written in bold text on top of each colored button.
