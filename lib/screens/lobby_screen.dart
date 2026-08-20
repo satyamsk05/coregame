@@ -132,6 +132,26 @@ class _LobbyScreenState extends State<LobbyScreen> {
       'title': 'Twist',
       'image': 'assets/logos/twist_logo.png',
     },
+    {
+      'title': 'Fast Parity',
+      'image': 'assets/logos/fast_parity_logo.png',
+    },
+    {
+      'title': 'Perya Color Game',
+      'image': 'assets/logos/perya_color_game_logo.png',
+    },
+    {
+      'title': 'Double',
+      'image': 'assets/logos/double_logo.png',
+    },
+    {
+      'title': 'Jade',
+      'image': 'assets/logos/jade_logo.png',
+    },
+    {
+      'title': 'Ring of Fortune',
+      'image': 'assets/logos/ring_of_fortune_logo.png',
+    },
 
     {
       'title': 'Fruit Slash',
@@ -253,7 +273,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                   Center(
                                     child: ClipOval(
                                       child: Image.asset(
-                                        'assets/userprofile/user7.png',
+                                        _avatarPath,
                                         width: 36.0,
                                         height: 36.0,
                                         fit: BoxFit.cover,
@@ -262,17 +282,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                           backgroundColor: Colors.white,
                                           child: Icon(Icons.face, color: Colors.black, size: 20.0),
                                         ),
-                                      ),
-                                    ),
-                                  ),
-                                  Align(
-                                    alignment: Alignment.topRight,
-                                    child: Container(
-                                      width: 8.0,
-                                      height: 8.0,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF24EE89),
-                                        shape: BoxShape.circle,
                                       ),
                                     ),
                                   ),

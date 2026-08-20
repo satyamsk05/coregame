@@ -232,8 +232,8 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
     final bool isOtherPlayer = _random.nextDouble() < 0.40;
 
     if (isOtherPlayer) {
-      double startX = 0.95;
-      double startY = 0.92;
+      double startX = 0.92;
+      double startY = 0.90;
 
       setState(() {
         if (spot == '2-6') {
@@ -246,16 +246,23 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
           _betOn8to12 += betValue.toInt();
           _mockBets8to12['activeUsers'] = (_mockBets8to12['activeUsers'] ?? 0.0) + betValue;
         }
-
-        _triggerChipFlight(
-          spot: spot,
-          startX: startX,
-          startY: startY,
-          chipColor: ChipSelectorWidget.getChipColor(betValue.toInt()),
-          chipLabel: ChipSelectorWidget.getChipText(betValue.toInt()),
-          chipValue: betValue.toInt(),
-        );
       });
+
+      final int coinCount = _random.nextInt(6) + 5; // 5 to 10 coins burst
+      for (int i = 0; i < coinCount; i++) {
+        Future.delayed(Duration(milliseconds: i * 60), () {
+          if (!mounted) return;
+          _triggerChipFlight(
+            spot: spot,
+            startX: startX,
+            startY: startY,
+            chipColor: ChipSelectorWidget.getChipColor(betValue.toInt()),
+            chipLabel: ChipSelectorWidget.getChipText(betValue.toInt()),
+            chipValue: betValue.toInt(),
+            addToTable: (i == coinCount - 1),
+          );
+        });
+      }
       return;
     }
 
@@ -332,6 +339,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
     required Color chipColor,
     required String chipLabel,
     required int chipValue,
+    bool addToTable = true,
   }) {
     double endX = 0.5;
     double endY = 0.5;
@@ -358,6 +366,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
         duration: const Duration(milliseconds: 550),
       ),
       value: chipValue,
+      addToTable: addToTable,
     );
 
     setState(() => _flyingChips.add(newChip));
@@ -366,15 +375,18 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
       if (!mounted) return;
       setState(() {
         _flyingChips.remove(newChip);
-        _tableChips.add(TableChip(
-          x: newChip.endX,
-          y: newChip.endY,
-          color: newChip.color,
-          label: newChip.label,
-          value: newChip.value,
-          spot: spot,
-        ));
+        if (addToTable) {
+          _tableChips.add(TableChip(
+            x: newChip.endX,
+            y: newChip.endY,
+            color: newChip.color,
+            label: newChip.label,
+            value: newChip.value,
+            spot: spot,
+          ));
+        }
       });
+      newChip.controller.dispose();
     });
   }
 

@@ -272,7 +272,7 @@ class _MockPlayerWidgetState extends State<MockPlayerWidget>
               statusTitle,
               style: GoogleFonts.baloo2(
                 textStyle: const TextStyle(
-                  fontSize: 8.5,
+                  fontSize: 8.9,
                   fontWeight: FontWeight.w800,
                   fontStyle: FontStyle.italic,
                   height: 1.0,
@@ -304,8 +304,8 @@ class _MockPlayerWidgetState extends State<MockPlayerWidget>
             clipBehavior: Clip.none,
             children: [
               Container(
-                width: 37.0,
-                height: 37.0,
+                width: 38.85,
+                height: 38.85,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(9.0),
                   border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
@@ -326,13 +326,13 @@ class _MockPlayerWidgetState extends State<MockPlayerWidget>
                         ? Image.asset(
                             widget.avatarPath!,
                             fit: BoxFit.cover,
-                            width: 37.0,
-                            height: 37.0,
+                            width: 38.85,
+                            height: 38.85,
                           )
                         : Icon(
                             widget.isLeft ? Icons.person : Icons.person_3,
                             color: Colors.white70,
-                            size: 22.0,
+                            size: 23.1,
                           ),
                   ),
                 ),
@@ -342,14 +342,18 @@ class _MockPlayerWidgetState extends State<MockPlayerWidget>
               if (_showWinText)
                 Positioned.fill(
                   child: Center(
-                    child: AnimatedBuilder(
-                      animation: _winController,
-                      builder: (context, child) {
-                        return Opacity(
-                          opacity: _winOpacity.value,
-                          child: _buildWinText(_lastDisplayedWinAmount),
-                        );
-                      },
+                    child: OverflowBox(
+                      maxWidth: 150.0,
+                      maxHeight: 40.0,
+                      child: AnimatedBuilder(
+                        animation: _winController,
+                        builder: (context, child) {
+                          return Opacity(
+                            opacity: _winOpacity.value,
+                            child: _buildWinText(_lastDisplayedWinAmount),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -378,7 +382,7 @@ class _MockPlayerWidgetState extends State<MockPlayerWidget>
                         ).createShader(bounds),
                         child: const Icon(
                           Icons.star,
-                          size: 13.0,
+                          size: 13.65,
                           color: Colors.white,
                         ),
                       ),
@@ -402,7 +406,7 @@ class _MockPlayerWidgetState extends State<MockPlayerWidget>
               username,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 7.2,
+                fontSize: 7.56,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -422,7 +426,7 @@ class _MockPlayerWidgetState extends State<MockPlayerWidget>
               widget.balance.toStringAsFixed(0),
               style: const TextStyle(
                 color: Color(0xFFFFD700),
-                fontSize: 7.0,
+                fontSize: 7.35,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -533,10 +537,11 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
         children: [
           // User Avatar with gold border and win overlay
           Stack(
+            clipBehavior: Clip.none,
             children: [
               Container(
-                width: 38.0,
-                height: 38.0,
+                width: 39.9,
+                height: 39.9,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(9.0),
                   border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
@@ -557,13 +562,13 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
                         ? Image.asset(
                             widget.avatarPath!,
                             fit: BoxFit.cover,
-                            width: 38.0,
-                            height: 38.0,
+                            width: 39.9,
+                            height: 39.9,
                           )
                         : const Icon(
                             Icons.face,
                             color: Colors.white70,
-                            size: 23.0,
+                            size: 24.15,
                           ),
                   ),
                 ),
@@ -571,14 +576,18 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
               if (_showWinText)
                 Positioned.fill(
                   child: Center(
-                    child: AnimatedBuilder(
-                      animation: _winController,
-                      builder: (context, child) {
-                        return Opacity(
-                          opacity: _winOpacity.value,
-                          child: _buildWinText(_lastDisplayedWinAmount),
-                        );
-                      },
+                    child: OverflowBox(
+                      maxWidth: 150.0,
+                      maxHeight: 40.0,
+                      child: AnimatedBuilder(
+                        animation: _winController,
+                        builder: (context, child) {
+                          return Opacity(
+                            opacity: _winOpacity.value,
+                            child: _buildWinText(_lastDisplayedWinAmount),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -602,7 +611,7 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
                   widget.nickname ?? 'Satyamsk',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 7.9,
+                    fontSize: 8.3,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -619,7 +628,7 @@ class _UserAvatarWidgetState extends State<UserAvatarWidget>
                   widget.balance.toStringAsFixed(0),
                   style: const TextStyle(
                     color: Color(0xFFFFD700),
-                    fontSize: 7.9,
+                    fontSize: 8.3,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

@@ -243,8 +243,8 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
 
     if (isOtherPlayer) {
       // Matches the actual bottom-right corner position of the active users widget
-      const double startX = 0.98;
-      const double startY = 0.88;
+      const double startX = 0.92;
+      const double startY = 0.91;
 
       setState(() {
         if (spot == 'andar') {
@@ -257,16 +257,23 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
           _totalBetTie += betValue;
           _mockBetsTie['activeUsers'] = (_mockBetsTie['activeUsers'] ?? 0.0) + betValue;
         }
-
-        _triggerChipFlight(
-          spot: spot,
-          startX: startX,
-          startY: startY,
-          chipColor: ChipSelectorWidget.getChipColor(betValue.toInt()),
-          chipLabel: ChipSelectorWidget.getChipText(betValue.toInt()),
-          chipValue: betValue.toInt(),
-        );
       });
+
+      final int coinCount = _random.nextInt(6) + 5; // 5 to 10 coins burst
+      for (int i = 0; i < coinCount; i++) {
+        Future.delayed(Duration(milliseconds: i * 60), () {
+          if (!mounted) return;
+          _triggerChipFlight(
+            spot: spot,
+            startX: startX,
+            startY: startY,
+            chipColor: ChipSelectorWidget.getChipColor(betValue.toInt()),
+            chipLabel: ChipSelectorWidget.getChipText(betValue.toInt()),
+            chipValue: betValue.toInt(),
+            addToTable: (i == coinCount - 1),
+          );
+        });
+      }
       return;
     }
 
@@ -1116,7 +1123,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                                       : PokerChipWidget(
                                           value: chip.value,
                                           size: 18.0,
-                                          selected: true,
+                                          selected: false,
                                         ),
                                 ),
                               ],
