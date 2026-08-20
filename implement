@@ -1,0 +1,37 @@
+# Implementation Plan - Upgrade Ring of Fortune Betting Console
+
+We will upgrade the layout of the left betting console in **Ring of Fortune** to match the new mockup: replacing the color bet input rows with a 2x2 grid of option cards, adding structured headers, and enabling instant auto-betting on clicking any option card.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **New Betting Mechanics (Auto-Bet)**:
+> - Tapping any of the 4 option cards in the 2x2 grid will **instantly place a bet** of the current input amount (e.g. ₹10) on that color, automatically deducting it from the balance.
+> - Clicking the same card multiple times will add multiple bets (accumulating on that card).
+> - Active bet amounts will be displayed as a badge on the top-right of each option card.
+> - The bottom green **Bet** button will show the total active bet placed in this round, and tapping it (if no bets are placed yet) will place a default bet on Option 1.
+> - The **Reset** button will refund all placed bets in the current round back to the user's balance and reset the amount input.
+
+> [!NOTE]
+> **Layout Layout Order (Top to Bottom)**:
+> 1. **2x2 Grid of Option Buttons**: Large glossy cards with custom color themes (Blue, Purple, Orange, Green), ring icons, and labels.
+> 2. **SUGGEST AMOUNT Section**: Quick suggestion buttons (`+10`, `+100`, `+500`, `+1000`) with blue outline borders.
+> 3. **ENTER AMOUNT Section**: Compact input bar with standard controls (`₹`, input field, `-`, `+`, `Reset`).
+> 4. **Footer**: Relocated player info card and Bet status button.
+
+## Proposed Changes
+
+### Ring of Fortune Game Screen
+
+#### [MODIFY] [ring_of_fortune_screen.dart](file:///Users/satyamkumar/Desktop/coregame/lib/games/ring_of_fortune/ring_of_fortune_screen.dart)
+- Replace color text fields and controllers with the 2x2 grid of Option Buttons.
+- Implement the `_buildOptionCard` helper rendering 3D-bevel style cards with circular ring icons and multiplier badges (`x 1.98`, `x 2.97`, `x 5.94`, `x 98.00`).
+- Add active bet badges on option cards when clicked.
+- Implement `_handleOptionTap` to validate balance, deduct amount immediately, and record active bets in `_placedBets`.
+- Simplify `_triggerSpinPhase` to bypass the old controller collection logic since bets are already locked.
+- Update `_resetBets` to refund currently placed bets back to the user's balance.
+
+## Verification Plan
+
+### Automated Tests
+- Run `flutter analyze lib/games/ring_of_fortune/ring_of_fortune_screen.dart` to verify compilation.

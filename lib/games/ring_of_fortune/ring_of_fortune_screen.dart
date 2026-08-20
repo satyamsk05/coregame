@@ -55,15 +55,7 @@ class _RingOfFortuneGameScreenState extends State<RingOfFortuneGameScreen> with 
   late Animation<double> _spinAnimation;
 
   // Global settings
-  final TextEditingController _amountController = TextEditingController(text: '1.00');
-  
-  // Bet controllers for each of the 4 colors
-  final Map<String, TextEditingController> _betControllers = {
-    'grey': TextEditingController(text: '0'),
-    'purple': TextEditingController(text: '0'),
-    'orange': TextEditingController(text: '0'),
-    'green': TextEditingController(text: '0'),
-  };
+  final TextEditingController _amountController = TextEditingController(text: '10.00');
 
   // Game phases: 'betting' -> 'spinning' -> 'result'
   String _gamePhase = 'betting';
@@ -119,9 +111,6 @@ class _RingOfFortuneGameScreenState extends State<RingOfFortuneGameScreen> with 
     _gameTimer?.cancel();
     _countdownTimer?.cancel();
     _amountController.dispose();
-    for (var ctrl in _betControllers.values) {
-      ctrl.dispose();
-    }
     super.dispose();
   }
 
@@ -190,31 +179,33 @@ class _RingOfFortuneGameScreenState extends State<RingOfFortuneGameScreen> with 
     });
   }
 
-  void _triggerSpinPhase() {
-    // Collect bets
-    double totalBet = 0.0;
-    final Map<String, double> tempBets = {};
-    _betControllers.forEach((color, controller) {
-      final val = double.tryParse(controller.text) ?? 0.0;
-      tempBets[color] = val;
-      totalBet += val;
-    });
-
-    if (totalBet > widget.balance) {
-      // User placed more bets than balance, cap bets to balance proportionally or prompt error
+  void _handleOptionTap(String colorKey) {
+    if (_gamePhase != 'betting') return;
+    final betAmount = double.tryParse(_amountController.text) ?? 0.0;
+    if (betAmount <= 0) return;
+    if (betAmount > widget.balance) {
       showWinLoseToast(
         context,
         title: 'ERROR',
-        message: 'Insufficient balance to place bets!',
+        message: 'Insufficient balance!',
         isWin: false,
       );
-      _startNewBettingCycle();
       return;
     }
+    widget.onBalanceChanged(widget.balance - betAmount);
+    setState(() {
+      _placedBets[colorKey] = (_placedBets[colorKey] ?? 0.0) + betAmount;
+      _triggerUserBet++;
+    });
+    if (widget.soundOn) SoundManager.playClick();
+  }
+
+  void _triggerSpinPhase() {
+    // Bets are already locked in _placedBets via instant taps.
+    // Verify balance check was already performed during tapping.
+    double totalBet = _placedBets.values.fold(0.0, (sum, val) => sum + val);
 
     if (totalBet > 0) {
-      widget.onBalanceChanged(widget.balance - totalBet);
-      _placedBets.addAll(tempBets);
       setState(() {
         _triggerUserBet++;
       });
@@ -350,38 +341,24 @@ class _RingOfFortuneGameScreenState extends State<RingOfFortuneGameScreen> with 
     });
   }
 
-  void _applyMultiplierToColor(String color, double factor) {
-    if (_gamePhase != 'betting') return;
-    final ctrl = _betControllers[color]!;
-    double current = double.tryParse(ctrl.text) ?? 0.0;
-    double newValue = current * factor;
-    setState(() {
-      ctrl.text = newValue.round().toString();
-    });
-  }
-
-  void _incrementColorBet(String color, int delta) {
-    if (_gamePhase != 'betting') return;
-    final ctrl = _betControllers[color]!;
-    int current = int.tryParse(ctrl.text) ?? 0;
-    int newValue = math.max(0, current + delta);
-    setState(() {
-      ctrl.text = newValue.toString();
-    });
-  }
-
   void _placeBetFromGlobalAmount() {
     if (_gamePhase != 'betting') return;
+    double totalBet = _placedBets.values.fold(0.0, (sum, val) => sum + val);
+    if (totalBet <= 0) {
+      _handleOptionTap('grey');
+    }
     _triggerSpinPhase();
   }
 
   void _resetBets() {
     if (_gamePhase != 'betting') return;
+    double totalBet = _placedBets.values.fold(0.0, (sum, val) => sum + val);
+    if (totalBet > 0) {
+      widget.onBalanceChanged(widget.balance + totalBet);
+    }
     setState(() {
-      _betControllers.forEach((key, ctrl) {
-        ctrl.text = '0';
-      });
-      _amountController.text = '1.00';
+      _placedBets.updateAll((key, value) => 0.0);
+      _amountController.text = '10.00';
     });
   }
 
@@ -438,10 +415,12 @@ class _RingOfFortuneGameScreenState extends State<RingOfFortuneGameScreen> with 
                         ),
                         const SizedBox(height: 6.0),
                         Text(
-                          '1. Place your bet amounts in the color input fields during the 15-second betting countdown.\n'
-                          '2. Tap "Bet" to lock in your selections. You can place bets on multiple colors simultaneously.\n'
-                          '3. Once the timer hits 0, the wheel spins and settles on a random segment.\n'
-                          '4. Correct color bets receive their respective payouts automatically.',
+                          '1. Set the bet amount using the input field or SUGGEST AMOUNT quick buttons.\n'
+                          '2. Tap any Option card in the 2x2 grid to instantly place a bet of that amount on that color. Amount is deducted immediately from your balance. You may tap the same card multiple times to accumulate bets.\n'
+                          '3. Active bet amounts appear as gold badges on the top-right corner of each Option card.\n'
+                          '4. Tap the green "Bet" button (or wait for the timer) to spin the wheel. If no bets are placed, pressing "Bet" will place a default bet on Option 1.\n'
+                          '5. Use the "Reset" button at any time during betting to refund all currently placed bets back to your balance.\n'
+                          '6. Correct color bets receive their respective payouts automatically after the wheel settles.',
                           style: GoogleFonts.roboto(color: Colors.white70, fontSize: 12.0, height: 1.5),
                         ),
                       ],
@@ -555,161 +534,243 @@ class _RingOfFortuneGameScreenState extends State<RingOfFortuneGameScreen> with 
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // Global bet Amount setup bar
+                              // 1. 2x2 Grid of Option Cards
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                                padding: const EdgeInsets.all(6.0),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF1E222B),
                                   borderRadius: BorderRadius.circular(10.0),
                                   border: Border.all(color: Colors.white10),
                                 ),
-                                child: Row(
+                                child: Column(
                                   children: [
-                                    Text(
-                                      'Amount',
-                                      style: GoogleFonts.outfit(
-                                        color: Colors.white70,
-                                        fontSize: 13.0,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8.0),
-                                    Expanded(
-                                      child: Container(
-                                        height: 30.0,
-                                        padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF16181C),
-                                          borderRadius: BorderRadius.circular(6.0),
-                                        ),
-                                        alignment: Alignment.centerLeft,
-                                        child: Row(
-                                          children: [
-                                            const Text('₹', style: TextStyle(color: Color(0xFF24EE89), fontSize: 13.0, fontWeight: FontWeight.bold)),
-                                            const SizedBox(width: 4.0),
-                                            Expanded(
-                                              child: TextField(
-                                                controller: _amountController,
-                                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                                style: const TextStyle(color: Colors.white, fontSize: 13.0, fontWeight: FontWeight.bold),
-                                                decoration: const InputDecoration(
-                                                  isDense: true,
-                                                  border: InputBorder.none,
-                                                  contentPadding: EdgeInsets.zero,
-                                                ),
-                                                enabled: interactionEnabled,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8.0),
-                                    // Suffix increment/decrement buttons
                                     Row(
                                       children: [
-                                        Bounceable(
-                                          onTap: () => _incrementGlobalAmount(-10.0),
-                                          child: Container(
-                                            width: 26.0,
-                                            height: 26.0,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white10,
-                                              borderRadius: BorderRadius.circular(6.0),
-                                            ),
-                                            child: const Icon(Icons.remove, color: Colors.white, size: 14.0),
+                                        Expanded(
+                                          child: _buildOptionCard(
+                                            colorKey: 'grey',
+                                            mainColor: const Color(0xFF2563EB),
+                                            shadowColor: const Color(0xFF1D4ED8),
+                                            ringColor: const Color(0xFFBFDBFE),
+                                            label: 'Option 1',
+                                            multiplier: '1.98',
+                                            enabled: interactionEnabled,
                                           ),
                                         ),
-                                        const SizedBox(width: 4.0),
-                                        Bounceable(
-                                          onTap: () => _incrementGlobalAmount(10.0),
-                                          child: Container(
-                                            width: 26.0,
-                                            height: 26.0,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white10,
-                                              borderRadius: BorderRadius.circular(6.0),
-                                            ),
-                                            child: const Icon(Icons.add, color: Colors.white, size: 14.0),
+                                        const SizedBox(width: 6.0),
+                                        Expanded(
+                                          child: _buildOptionCard(
+                                            colorKey: 'purple',
+                                            mainColor: const Color(0xFF9333EA),
+                                            shadowColor: const Color(0xFF7E22CE),
+                                            ringColor: const Color(0xFFE9D5FF),
+                                            label: 'Option 2',
+                                            multiplier: '2.97',
+                                            enabled: interactionEnabled,
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(width: 8.0),
-                                    GestureDetector(
-                                      onTap: _resetBets,
-                                      child: Text(
-                                        'Reset',
-                                        style: GoogleFonts.outfit(
-                                          color: const Color(0xFF24EE89),
-                                          fontSize: 12.0,
-                                          fontWeight: FontWeight.bold,
+                                    const SizedBox(height: 6.0),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _buildOptionCard(
+                                            colorKey: 'orange',
+                                            mainColor: const Color(0xFFF97316),
+                                            shadowColor: const Color(0xFFEA580C),
+                                            ringColor: const Color(0xFFFED7AA),
+                                            label: 'Option 3',
+                                            multiplier: '5.94',
+                                            enabled: interactionEnabled,
+                                          ),
                                         ),
-                                      ),
+                                        const SizedBox(width: 6.0),
+                                        Expanded(
+                                          child: _buildOptionCard(
+                                            colorKey: 'green',
+                                            mainColor: const Color(0xFF24EE89),
+                                            shadowColor: const Color(0xFF0FAD5C),
+                                            ringColor: const Color(0xFFBBF7D0),
+                                            label: 'Option 4',
+                                            multiplier: '98.00',
+                                            enabled: interactionEnabled,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ),
 
-                              const SizedBox(height: 4.0),
+                              const SizedBox(height: 5.0),
 
-                              // Quick Bet shortcuts suggestions
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [10, 100, 500, 1000].map((val) {
-                                  return Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                                      child: Bounceable(
-                                        onTap: () => _adjustGlobalAmount(val.toDouble()),
-                                        child: Container(
-                                          height: 24.0,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF1E222B),
-                                            borderRadius: BorderRadius.circular(6.0),
-                                            border: Border.all(color: Colors.white10),
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            '+$val',
-                                            style: GoogleFonts.roboto(
-                                              color: Colors.white70,
-                                              fontSize: 11.0,
-                                              fontWeight: FontWeight.bold,
+                              // 2. SUGGEST AMOUNT Section
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 1.0),
+                                    child: Text(
+                                      'SUGGEST AMOUNT',
+                                      style: GoogleFonts.outfit(
+                                        color: Colors.white54,
+                                        fontSize: 9.0,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.7,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3.0),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [10, 100, 500, 1000].map((val) {
+                                      return Expanded(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                                          child: Bounceable(
+                                            onTap: () => _adjustGlobalAmount(val.toDouble()),
+                                            child: Container(
+                                              height: 25.0,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF1E222B).withValues(alpha: 0.6),
+                                                borderRadius: BorderRadius.circular(6.0),
+                                                border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.55), width: 1.2),
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: Text(
+                                                '+$val',
+                                                style: GoogleFonts.roboto(
+                                                  color: const Color(0xFF93C5FD),
+                                                  fontSize: 11.0,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
                                           ),
                                         ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 5.0),
+
+                              // 3. ENTER AMOUNT Section
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 1.0),
+                                    child: Text(
+                                      'ENTER AMOUNT',
+                                      style: GoogleFonts.outfit(
+                                        color: Colors.white54,
+                                        fontSize: 9.0,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.7,
                                       ),
                                     ),
-                                  );
-                                }).toList(),
+                                  ),
+                                  const SizedBox(height: 3.0),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 3.0),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF1E222B),
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      border: Border.all(color: Colors.white10),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 22.0,
+                                          height: 24.0,
+                                          alignment: Alignment.center,
+                                          child: const Text(
+                                            '₹',
+                                            style: TextStyle(color: Color(0xFF24EE89), fontSize: 13.0, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 2.0),
+                                        Expanded(
+                                          child: Container(
+                                            height: 26.0,
+                                            padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF16181C),
+                                              borderRadius: BorderRadius.circular(5.0),
+                                            ),
+                                            alignment: Alignment.centerLeft,
+                                            child: TextField(
+                                              controller: _amountController,
+                                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                              style: const TextStyle(color: Colors.white, fontSize: 13.0, fontWeight: FontWeight.bold),
+                                              decoration: const InputDecoration(
+                                                isDense: true,
+                                                border: InputBorder.none,
+                                                contentPadding: EdgeInsets.zero,
+                                              ),
+                                              enabled: interactionEnabled,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 5.0),
+                                        Bounceable(
+                                          onTap: () => _incrementGlobalAmount(-10.0),
+                                          child: Container(
+                                            width: 24.0,
+                                            height: 24.0,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white10,
+                                              borderRadius: BorderRadius.circular(5.0),
+                                            ),
+                                            child: const Icon(Icons.remove, color: Colors.white, size: 13.0),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 3.0),
+                                        Bounceable(
+                                          onTap: () => _incrementGlobalAmount(10.0),
+                                          child: Container(
+                                            width: 24.0,
+                                            height: 24.0,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white10,
+                                              borderRadius: BorderRadius.circular(5.0),
+                                            ),
+                                            child: const Icon(Icons.add, color: Colors.white, size: 13.0),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 5.0),
+                                        Bounceable(
+                                          onTap: _resetBets,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 3.0),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF24EE89).withValues(alpha: 0.12),
+                                              borderRadius: BorderRadius.circular(5.0),
+                                              border: Border.all(color: const Color(0xFF24EE89).withValues(alpha: 0.4), width: 0.8),
+                                            ),
+                                            child: Text(
+                                              'Reset',
+                                              style: GoogleFonts.outfit(
+                                                color: const Color(0xFF24EE89),
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
 
+                              const Spacer(),
                               const SizedBox(height: 4.0),
 
-                              // Color rows selections list
-                              Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.all(8.0),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1E222B),
-                                    borderRadius: BorderRadius.circular(10.0),
-                                    border: Border.all(color: Colors.white10),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      _buildColorBetRow('grey', const Color(0xFF3E434E), interactionEnabled),
-                                      _buildColorBetRow('purple', const Color(0xFF7E22CE), interactionEnabled),
-                                      _buildColorBetRow('orange', const Color(0xFFEA580C), interactionEnabled),
-                                      _buildColorBetRow('green', const Color(0xFF24EE89), interactionEnabled),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 6.0),
-
-                              // Profile Card and Bet Button row inside Left Column!
+                              // 4. Footer: Profile Card and Bet Button row inside Left Column!
                               Row(
                                 children: [
                                   // Unified Player Info Box
@@ -770,21 +831,53 @@ class _RingOfFortuneGameScreenState extends State<RingOfFortuneGameScreen> with 
                                       opacity: interactionEnabled ? 1.0 : 0.5,
                                       child: Bounceable(
                                         onTap: interactionEnabled ? _placeBetFromGlobalAmount : null,
-                                        child: Container(
-                                          height: 52.0,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF24EE89),
-                                            borderRadius: BorderRadius.circular(10.0),
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            _gamePhase == 'betting' ? 'Bet' : 'Rolling...',
-                                            style: GoogleFonts.outfit(
-                                              color: const Color(0xFF0F1115),
-                                              fontSize: 16.0,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
+                                        child: Builder(
+                                          builder: (context) {
+                                            final totalActiveBet = _placedBets.values.fold<double>(0.0, (sum, v) => sum + v);
+                                            return Container(
+                                              height: 52.0,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF24EE89),
+                                                borderRadius: BorderRadius.circular(10.0),
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: _gamePhase == 'betting'
+                                                  ? Column(
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      children: [
+                                                        Text(
+                                                          totalActiveBet > 0 ? 'BET  ₹${totalActiveBet.toStringAsFixed(2)}' : 'Bet',
+                                                          style: GoogleFonts.outfit(
+                                                            color: const Color(0xFF0F1115),
+                                                            fontSize: 15.0,
+                                                            fontWeight: FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                        if (totalActiveBet > 0)
+                                                          Padding(
+                                                            padding: const EdgeInsets.only(top: 1.0),
+                                                            child: Text(
+                                                              'TAP TO SPIN',
+                                                              style: GoogleFonts.outfit(
+                                                                color: const Color(0xFF0F1115).withValues(alpha: 0.6),
+                                                                fontSize: 8.0,
+                                                                fontWeight: FontWeight.w900,
+                                                                letterSpacing: 0.6,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                      ],
+                                                    )
+                                                  : Text(
+                                                      'Rolling...',
+                                                      style: GoogleFonts.outfit(
+                                                        color: const Color(0xFF0F1115),
+                                                        fontSize: 16.0,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                            );
+                                          },
                                         ),
                                       ),
                                     ),
@@ -965,183 +1058,164 @@ class _RingOfFortuneGameScreenState extends State<RingOfFortuneGameScreen> with 
     );
   }
 
-  Widget _build3DColorIndicator(String colorKey) {
-    Color mainColor;
-    Color shadowColor;
+  Widget _buildOptionCard({
+    required String colorKey,
+    required Color mainColor,
+    required Color shadowColor,
+    required Color ringColor,
+    required String label,
+    required String multiplier,
+    required bool enabled,
+  }) {
+    final activeBet = _placedBets[colorKey] ?? 0.0;
+    final hasActiveBet = activeBet > 0;
 
-    switch (colorKey) {
-      case 'grey':
-        mainColor = const Color(0xFF555B68);
-        shadowColor = const Color(0xFF33373E);
-        break;
-      case 'purple':
-        mainColor = const Color(0xFF9333EA);
-        shadowColor = const Color(0xFF6B21A8);
-        break;
-      case 'orange':
-        mainColor = const Color(0xFFF97316);
-        shadowColor = const Color(0xFFC2410C);
-        break;
-      case 'green':
-        mainColor = const Color(0xFF24EE89);
-        shadowColor = const Color(0xFF0FAD5C);
-        break;
-      default:
-        mainColor = Colors.grey;
-        shadowColor = Colors.black;
-    }
-
-    return SizedBox(
-      width: 32.0,
-      height: 24.0,
-      child: Stack(
-        children: [
-          // Bottom shadow/bevel layer
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 21.0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: shadowColor,
-                borderRadius: BorderRadius.circular(5.0),
-              ),
-            ),
-          ),
-          // Top main colored button layer
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 21.0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: mainColor,
-                borderRadius: BorderRadius.circular(5.0),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildColorBetRow(String colorKey, Color colorTheme, bool enabled) {
-    final ctrl = _betControllers[colorKey]!;
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),
-      child: Row(
-        children: [
-          // 3D Bevel Color Multiplier Indicator
-          _build3DColorIndicator(colorKey),
-          const SizedBox(width: 8.0),
-
-          // Numeric Bet Input Container
-          Expanded(
-            child: Container(
-              height: 26.0,
-              padding: const EdgeInsets.symmetric(horizontal: 6.0),
-              decoration: BoxDecoration(
-                color: const Color(0xFF16181C),
-                borderRadius: BorderRadius.circular(6.0),
-              ),
-              alignment: Alignment.center,
-              child: TextField(
-                controller: ctrl,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white, fontSize: 11.0, fontWeight: FontWeight.bold),
-                decoration: const InputDecoration(
-                  isDense: true,
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                ),
-                enabled: enabled,
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 6.0),
-
-          // Helper shortcuts 1/2 and 2x
-          Row(
+    return Bounceable(
+      onTap: enabled ? () => _handleOptionTap(colorKey) : null,
+      child: Opacity(
+        opacity: enabled ? 1.0 : 0.55,
+        child: SizedBox(
+          height: 72.0,
+          child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              Bounceable(
-                onTap: () => _applyMultiplierToColor(colorKey, 0.5),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                top: 3.0,
                 child: Container(
-                  width: 24.0,
-                  height: 24.0,
                   decoration: BoxDecoration(
-                    color: Colors.white10,
-                    borderRadius: BorderRadius.circular(5.0),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '1/2',
-                    style: GoogleFonts.roboto(color: Colors.white70, fontSize: 9.0, fontWeight: FontWeight.bold),
+                    color: shadowColor,
+                    borderRadius: BorderRadius.circular(10.0),
+                    border: Border.all(color: Colors.black26, width: 0.5),
                   ),
                 ),
               ),
-              const SizedBox(width: 4.0),
-              Bounceable(
-                onTap: () => _applyMultiplierToColor(colorKey, 2.0),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 3.0,
                 child: Container(
-                  width: 24.0,
-                  height: 24.0,
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
                   decoration: BoxDecoration(
-                    color: Colors.white10,
-                    borderRadius: BorderRadius.circular(5.0),
+                    color: mainColor,
+                    borderRadius: BorderRadius.circular(10.0),
+                    border: Border.all(color: Colors.white12, width: 0.8),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        mainColor.withValues(alpha: 1.0),
+                        mainColor.withValues(alpha: 0.88),
+                      ],
+                    ),
                   ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '2x',
-                    style: GoogleFonts.roboto(color: Colors.white70, fontSize: 9.0, fontWeight: FontWeight.bold),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42.0,
+                        height: 42.0,
+                        alignment: Alignment.center,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 40.0,
+                              height: 40.0,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: ringColor.withValues(alpha: 0.22),
+                                border: Border.all(color: ringColor, width: 2.5),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: ringColor.withValues(alpha: 0.45),
+                                    blurRadius: 6.0,
+                                    spreadRadius: 1.0,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: 24.0,
+                              height: 24.0,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: ringColor.withValues(alpha: 0.35),
+                                border: Border.all(color: ringColor.withValues(alpha: 0.9), width: 1.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6.0),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              label,
+                              style: GoogleFonts.outfit(
+                                color: Colors.white,
+                                fontSize: 13.0,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                            const SizedBox(height: 2.0),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 1.0),
+                              decoration: BoxDecoration(
+                                color: Colors.black38,
+                                borderRadius: BorderRadius.circular(4.0),
+                              ),
+                              child: Text(
+                                'x $multiplier',
+                                style: GoogleFonts.roboto(
+                                  color: const Color(0xFFFFF8A5),
+                                  fontSize: 10.0,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(width: 4.0),
-
-              // Up/Down Arrows
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Bounceable(
-                    onTap: () => _incrementColorBet(colorKey, 10),
-                    child: Container(
-                      width: 18.0,
-                      height: 11.5,
-                      decoration: const BoxDecoration(
-                        color: Colors.white10,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(2.0),
-                          topRight: Radius.circular(2.0),
-                        ),
+              if (hasActiveBet)
+                Positioned(
+                  top: -6.0,
+                  right: -4.0,
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 28.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFD700),
+                      borderRadius: BorderRadius.circular(8.0),
+                      border: Border.all(color: const Color(0xFFB8860B), width: 1.2),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black38, blurRadius: 3.0, offset: Offset(0, 2)),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '₹${activeBet.toStringAsFixed(activeBet == activeBet.roundToDouble() ? 0 : 2)}',
+                      style: GoogleFonts.roboto(
+                        color: const Color(0xFF1A120B),
+                        fontSize: 9.0,
+                        fontWeight: FontWeight.w900,
                       ),
-                      child: const Icon(Icons.arrow_drop_up, color: Colors.white70, size: 12.0),
                     ),
                   ),
-                  const SizedBox(height: 1.0),
-                  Bounceable(
-                    onTap: () => _incrementColorBet(colorKey, -10),
-                    child: Container(
-                      width: 18.0,
-                      height: 11.5,
-                      decoration: const BoxDecoration(
-                        color: Colors.white10,
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(2.0),
-                          bottomRight: Radius.circular(2.0),
-                        ),
-                      ),
-                      child: const Icon(Icons.arrow_drop_down, color: Colors.white70, size: 12.0),
-                    ),
-                  ),
-                ],
-              ),
+                ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
