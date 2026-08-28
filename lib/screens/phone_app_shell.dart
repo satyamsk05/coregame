@@ -58,10 +58,52 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
   String _nickname = 'superhit';
   String _avatarPath = 'assets/userprofile/user7.png';
 
+  bool _imagesPreloaded = false;
+
   @override
   void initState() {
     super.initState();
     _loadState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_imagesPreloaded) {
+      _preloadImages();
+      _imagesPreloaded = true;
+    }
+  }
+
+  void _preloadImages() {
+    final images = [
+      'assets/7updown_bg.png',
+      'assets/ABbg.png',
+      'assets/tower_legend.png',
+      'assets/Double/doublebg.png',
+      'assets/images/background.png',
+      'assets/avatar.png',
+      'assets/logos/tower_legend_logo.png',
+      // User Profile Images
+      'assets/userprofile/user1.png',
+      'assets/userprofile/user2.png',
+      'assets/userprofile/user3.png',
+      'assets/userprofile/user4.png',
+      'assets/userprofile/user5.png',
+      'assets/userprofile/user6.png',
+      'assets/userprofile/user7.png',
+      // DP Banners
+      'assets/dpbanner/IMG_20260821_135148.png',
+      'assets/dpbanner/IMG_20260821_135204.png',
+      'assets/dpbanner/IMG_20260821_135223.png',
+      'assets/dpbanner/IMG_20260821_135255.png',
+      'assets/dpbanner/IMG_20260821_135316.png',
+      'assets/dpbanner/IMG_20260821_135338.png',
+    ];
+
+    for (final path in images) {
+      precacheImage(AssetImage(path), context).catchError((_) {});
+    }
   }
 
   Future<void> _loadState() async {
