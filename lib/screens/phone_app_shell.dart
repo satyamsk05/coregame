@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../shared/widgets/phone_mockup_wrapper.dart';
 import '../utils/sound_manager.dart';
 
@@ -60,7 +61,82 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
   @override
   void initState() {
     super.initState();
-    SoundManager.soundOn = _soundOn;
+    _loadState();
+  }
+
+  Future<void> _loadState() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+      if (isLoggedIn) {
+        _currentScreen = 'lobby';
+      }
+      _balance = prefs.getDouble('balance') ?? 17.57;
+      _vipLevel = prefs.getInt('vipLevel') ?? 1;
+      _totalDeposited = prefs.getDouble('totalDeposited') ?? 100.00;
+      _soundOn = prefs.getBool('soundOn') ?? true;
+      _musicOn = prefs.getBool('musicOn') ?? true;
+      _isBankAdded = prefs.getBool('isBankAdded') ?? true;
+      _bankHolderName = prefs.getString('bankHolderName') ?? 'SUPER HIT';
+      _bankPhoneNumber = prefs.getString('bankPhoneNumber') ?? '0917088800480';
+      _bankName = prefs.getString('bankName') ?? 'KOTAK MAHINDRA BANK';
+      _bankAccountNumber = prefs.getString('bankAccountNumber') ?? '6055376770';
+      _activeGateway = prefs.getString('activeGateway') ?? 'UmPay';
+      _nickname = prefs.getString('nickname') ?? 'superhit';
+      _avatarPath = prefs.getString('avatarPath') ?? 'assets/userprofile/user7.png';
+      
+      SoundManager.soundOn = _soundOn;
+    });
+  }
+
+  Future<void> _saveBool(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+  }
+
+  Future<void> _saveDouble(String key, double value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(key, value);
+  }
+
+  Future<void> _saveInt(String key, int value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(key, value);
+  }
+
+  Future<void> _saveString(String key, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, value);
+  }
+
+  void _updateBalance(double val) {
+    setState(() => _balance = val);
+    _saveDouble('balance', val);
+  }
+
+  void _updateVipLevel(int val) {
+    setState(() => _vipLevel = val);
+    _saveInt('vipLevel', val);
+  }
+
+  void _updateTotalDeposited(double val) {
+    setState(() => _totalDeposited = val);
+    _saveDouble('totalDeposited', val);
+  }
+
+  void _updateNickname(String val) {
+    setState(() => _nickname = val);
+    _saveString('nickname', val);
+  }
+
+  void _updateAvatarPath(String val) {
+    setState(() => _avatarPath = val);
+    _saveString('avatarPath', val);
+  }
+
+  void _updateActiveGateway(String val) {
+    setState(() => _activeGateway = val);
+    _saveString('activeGateway', val);
   }
 
   @override
@@ -77,6 +153,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           onLoginSuccess: () {
             SoundManager.playClick();
             setState(() => _currentScreen = 'lobby');
+            _saveBool('isLoggedIn', true);
           },
         );
         break;
@@ -105,11 +182,12 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           activeGateway: _activeGateway,
           nickname: _nickname,
           avatarPath: _avatarPath,
-          onNicknameChanged: (val) => setState(() => _nickname = val),
-          onAvatarChanged: (val) => setState(() => _avatarPath = val),
+          onNicknameChanged: _updateNickname,
+          onAvatarChanged: _updateAvatarPath,
           onLogoutPressed: () {
             SoundManager.playClick();
             setState(() => _currentScreen = 'welcome');
+            _saveBool('isLoggedIn', false);
           },
           onDepositPressed: () {
             SoundManager.playClick();
@@ -122,16 +200,20 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
               _currentScreen = 'loading';
             });
           },
-          onBalanceChanged: (val) => setState(() => _balance = val),
-          onVipLevelChanged: (val) => setState(() => _vipLevel = val),
-          onTotalDepositedChanged: (val) => setState(() => _totalDeposited = val),
+          onBalanceChanged: _updateBalance,
+          onVipLevelChanged: _updateVipLevel,
+          onTotalDepositedChanged: _updateTotalDeposited,
           onSoundToggled: (val) {
             setState(() => _soundOn = val);
             SoundManager.soundOn = val;
             SoundManager.playClick();
+            _saveBool('soundOn', val);
           },
-          onMusicToggled: (val) => setState(() => _musicOn = val),
-          onActiveGatewayChanged: (val) => setState(() => _activeGateway = val),
+          onMusicToggled: (val) {
+            setState(() => _musicOn = val);
+            _saveBool('musicOn', val);
+          },
+          onActiveGatewayChanged: _updateActiveGateway,
           onBankDetailsChanged: (isAdded, holder, phone, bank, acc) {
             setState(() {
               _isBankAdded = isAdded;
@@ -140,6 +222,11 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
               _bankName = bank;
               _bankAccountNumber = acc;
             });
+            _saveBool('isBankAdded', isAdded);
+            _saveString('bankHolderName', holder);
+            _saveString('bankPhoneNumber', phone);
+            _saveString('bankName', bank);
+            _saveString('bankAccountNumber', acc);
           },
         );
         break;
@@ -150,10 +237,10 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           totalDeposited: _totalDeposited,
           vipLevel: _vipLevel,
           activeGateway: _activeGateway,
-          onBalanceChanged: (val) => setState(() => _balance = val),
-          onTotalDepositedChanged: (val) => setState(() => _totalDeposited = val),
-          onVipLevelChanged: (val) => setState(() => _vipLevel = val),
-          onActiveGatewayChanged: (val) => setState(() => _activeGateway = val),
+          onBalanceChanged: _updateBalance,
+          onTotalDepositedChanged: _updateTotalDeposited,
+          onVipLevelChanged: _updateVipLevel,
+          onActiveGatewayChanged: _updateActiveGateway,
           onBackPressed: () {
             SoundManager.playClick();
             setState(() => _currentScreen = 'lobby');
@@ -166,7 +253,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
@@ -176,7 +263,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
@@ -186,7 +273,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
@@ -196,7 +283,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
@@ -206,7 +293,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
           nickname: _nickname,
           avatarPath: _avatarPath,
@@ -218,7 +305,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
@@ -228,7 +315,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
@@ -240,7 +327,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           musicOn: _musicOn,
           nickname: _nickname,
           avatarPath: _avatarPath,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
@@ -252,7 +339,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           musicOn: _musicOn,
           nickname: _nickname,
           avatarPath: _avatarPath,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
@@ -262,7 +349,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
@@ -272,7 +359,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
@@ -282,7 +369,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           balance: _balance,
           soundOn: _soundOn,
           musicOn: _musicOn,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
@@ -294,7 +381,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           musicOn: _musicOn,
           nickname: _nickname,
           avatarPath: _avatarPath,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
@@ -307,7 +394,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           nickname: _nickname,
           avatarPath: _avatarPath,
           vipLevel: _vipLevel,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
@@ -319,7 +406,7 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           musicOn: _musicOn,
           nickname: _nickname,
           avatarPath: _avatarPath,
-          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBalanceChanged: _updateBalance,
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );
         break;
