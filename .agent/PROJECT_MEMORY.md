@@ -185,5 +185,7 @@ The app references multiple types of assets in [pubspec.yaml](file:///Users/saty
     *   **Android**: Added a display capability mode query in `MainActivity.kt` to dynamically update the window's layout parameters (`preferredDisplayModeId` and `preferredRefreshRate`) to the highest available rate.
     *   **iOS**: Configured `CADisableMinimumFrameDurationOnPhone` to `true` in `Info.plist` to enable full Apple ProMotion 120Hz rendering support.
 165. **SharedPreferences Local State Persistence**: Integrated local storage database synchronization using the `shared_preferences` package. On app launch, the system automatically loads the user's login session (`isLoggedIn`), global double balance (`balance`), VIP level, nickname, selected avatar choice, sound settings, and bank details. Any in-game balance modifications or profile settings updates automatically sync back to local storage in real-time, preventing state loss on app close/restart.
+166. **Image Asset Preloading**: Added background asset caching logic inside `didChangeDependencies()` of `phone_app_shell.dart`. On start, the app runs `precacheImage` for all heavy game board PNGs, avatars, and DP banner frames to preload them into the Flutter frame memory, avoiding lags, white frames, or layout pop-ins during runtime transitions.
+
 
 
