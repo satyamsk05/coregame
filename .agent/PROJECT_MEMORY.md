@@ -182,5 +182,8 @@ The app references multiple types of assets in [pubspec.yaml](file:///Users/saty
 161. **7 Up Down Top Bar Redesign**: Made the top navigation bar background completely transparent and styled all top header buttons as circular golden gradient buttons with dark brown icons for contrast.
 162. **Avoid Unnecessary Full-Project Scans (Use Graphify)**: For any request or command, do not perform full-project directory tree scans or unnecessary analyses. Use Graphify (`graphify-out/graph.json` and `graphify query/explain`) to locate files and understand relationships, modifying and reading only the specific files relevant to the target task.
 163. **Tower Legend Game Integration**: Integrated a new 9-row by 4-column linear risk-climbing game screen in `lib/games/tower_legend/tower_legend_screen.dart`. Added "Tower Legend" metadata and category filtering ('Hot' and 'Slots') in `lobby_screen.dart`, routing to the screen in `phone_app_shell.dart`, and utilized a custom-generated game logo asset `assets/logos/tower_legend_logo.png`.
+164. **120Hz High Refresh Rate Support**: Added native operating system configurations to request high-refresh-rate rendering (120Hz/90Hz) dynamically:
+    *   **Android**: Added a display capability mode query in `MainActivity.kt` to dynamically update the window's layout parameters (`preferredDisplayModeId` and `preferredRefreshRate`) to the highest available rate.
+    *   **iOS**: Configured `CADisableMinimumFrameDurationOnPhone` to `true` in `Info.plist` to enable full Apple ProMotion 120Hz rendering support.
 
 
