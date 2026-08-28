@@ -426,7 +426,7 @@ class _GameLoadingScreenState extends State<GameLoadingScreen>
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFDCE1E6).withOpacity(0.20),
+                      color: const Color(0xFFDCE1E6).withValues(alpha: 0.20),
                       blurRadius: 30.0,
                       spreadRadius: 2.0,
                     ),
@@ -450,7 +450,7 @@ class _GameLoadingScreenState extends State<GameLoadingScreen>
               child: ClipPath(
                 clipper: FarMountainClipper(),
                 child: Container(
-                  color: const Color(0xFF4A515C).withOpacity(0.8),
+                  color: const Color(0xFF4A515C).withValues(alpha: 0.8),
                 ),
               ),
             ),
@@ -591,7 +591,7 @@ class _GameLoadingScreenState extends State<GameLoadingScreen>
             textAlign: TextAlign.center,
             style: GoogleFonts.roboto(
               textStyle: TextStyle(
-                color: const Color(0xFFC9D1D9).withOpacity(0.9),
+                color: const Color(0xFFC9D1D9).withValues(alpha: 0.9),
                 letterSpacing: 3.0,
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
@@ -801,7 +801,7 @@ class _GameLoadingScreenState extends State<GameLoadingScreen>
             textAlign: TextAlign.center,
             style: GoogleFonts.robotoMono(
               textStyle: TextStyle(
-                color: const Color(0xFF8B96A3).withOpacity(0.85),
+                color: const Color(0xFF8B96A3).withValues(alpha: 0.85),
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 2.0,
@@ -828,7 +828,7 @@ class _StarfieldPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(s.x * size.width, s.y * size.height),
         s.size,
-        paint..color = Colors.white.withOpacity(s.alpha),
+        paint..color = Colors.white.withValues(alpha: s.alpha),
       );
     }
   }

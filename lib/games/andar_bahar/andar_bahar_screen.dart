@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../shared/widgets/bounceable.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import '../../utils/sound_manager.dart';
@@ -968,7 +967,7 @@ class _AndarBaharGameScreenState extends State<AndarBaharGameScreen>
                     decoration: BoxDecoration(
                       color: const Color(0x99000000),
                       borderRadius: BorderRadius.circular(12.0),
-                      border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.3), width: 1.0),
+                      border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.3), width: 1.0),
                       boxShadow: const [
                         BoxShadow(color: Colors.black38, blurRadius: 4.0, offset: Offset(0.0, 2.0))
                       ],

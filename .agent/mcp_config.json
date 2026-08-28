@@ -1,15 +1,7 @@
 {
   "mcpServers": {
-    "figma": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "figma-developer-mcp",
-        "--stdio"
-      ],
-      "env": {
-        "FIGMA_API_KEY": "YOUR_FIGMA_API_KEY_HERE"
-      }
+    "penpot": {
+      "url": "https://design.penpot.app/mcp/stream?userToken=eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJBMjU2R0NNIn0.h53D5_wnBLna_4EbLA8mqzeOy5rrNMUw-a9vMV4goaqLu4gqCz7jjg.C5dCMe8_8Zdz1DAn.R95z8R7wc0xjO8xTmT9bD1lbEYDDqXjaapixzALI4ffXbE3laiJfdbfDAtTNWKU8MCnnWmy9I-89yfuc41u-Um5bAAhadB6cLi1FRPM00yrajUa4dpZrHAjf4YuaT-CUSU0cqqomUyO6tRZit5Hi_qEgg05FNc6rrMuyG7SfUga62jbiJjpdfIXvNi25wlf_VwzN8OFxCdY9.Sq2mU_qme4X9bUZ22Ms49Q"
     }
   }
 }

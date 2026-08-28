@@ -23,12 +23,12 @@ class WinOverlayCard extends StatelessWidget {
       width: 190.0,
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E2024).withOpacity(0.96),
+        color: const Color(0xFF1E2024).withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(color: const Color(0xFF2C2F36), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.6),
+            color: Colors.black.withValues(alpha: 0.6),
             blurRadius: 18.0,
             spreadRadius: 2.0,
           ),

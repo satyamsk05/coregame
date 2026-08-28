@@ -45,4 +45,5 @@ app.*.map.json
 /android/app/release
 .agents/mcp_config.json
 *.mp4
-
+node_modules/
+graphify-out/

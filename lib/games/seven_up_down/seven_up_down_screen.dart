@@ -8,6 +8,7 @@ import '../andar_bahar/widgets/player_widgets.dart';
 import '../andar_bahar/widgets/chip_widgets.dart';
 import '../andar_bahar/models/chip_models.dart';
 import '../../utils/sound_manager.dart';
+import '../../shared/widgets/game_ui_templates.dart';
 
 
 
@@ -21,7 +22,7 @@ class SevenUpDownGameScreen extends StatefulWidget {
   final String avatarPath;
 
   const SevenUpDownGameScreen({
-    Key? key,
+    super.key,
     required this.balance,
     required this.soundOn,
     required this.musicOn,
@@ -29,7 +30,7 @@ class SevenUpDownGameScreen extends StatefulWidget {
     required this.onBackPressed,
     required this.nickname,
     required this.avatarPath,
-  }) : super(key: key);
+  });
 
   @override
   State<SevenUpDownGameScreen> createState() => _SevenUpDownGameScreenState();
@@ -88,9 +89,9 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
   int _triggerElitePlayer = 0;
 
   // Mock player bets tracking maps
-  Map<String, double> _mockBets2to6 = {};
-  Map<String, double> _mockBets7 = {};
-  Map<String, double> _mockBets8to12 = {};
+  final Map<String, double> _mockBets2to6 = {};
+  final Map<String, double> _mockBets7 = {};
+  final Map<String, double> _mockBets8to12 = {};
 
   // Mock player win variables
   double _billionaireWinAmount = 0.0;
@@ -857,312 +858,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
                   child: _buildTopHeader(),
                 ),
 
-                // 2. Left mock players column
-                Positioned(
-                  top: h * 0.20,
-                  left: w * 0.02,
-                  child: Column(
-                    children: [
-                      MockPlayerWidget(
-                        name: 'Billionaire',
-                        balance: _billionaireBalance,
-                        isLeft: true,
-                        iconData: Icons.diamond,
-                        color: const Color(0xFFE040FB),
-                        showNameTag: false,
-                        avatarPath: 'assets/userprofile/user1.png',
-                        betTrigger: _triggerBillionaire,
-                        winAmount: _billionaireWinAmount,
-                        winTrigger: _billionaireWinTrigger,
-                      ),
-                      SizedBox(height: h * 0.045),
-                      MockPlayerWidget(
-                        name: 'Richie',
-                        balance: _richieBalance,
-                        isLeft: true,
-                        iconData: Icons.monetization_on,
-                        color: const Color(0xFFFF5252),
-                        showNameTag: false,
-                        avatarPath: 'assets/userprofile/user2.png',
-                        betTrigger: _triggerRichie,
-                        winAmount: _richieWinAmount,
-                        winTrigger: _richieWinTrigger,
-                      ),
-                      SizedBox(height: h * 0.045),
-                      MockPlayerWidget(
-                        name: 'High Roller',
-                        balance: _highRollerBalance,
-                        isLeft: true,
-                        iconData: Icons.star,
-                        color: const Color(0xFFFFD740),
-                        showNameTag: false,
-                        avatarPath: 'assets/userprofile/user3.png',
-                        betTrigger: _triggerHighRoller,
-                        winAmount: _highRollerWinAmount,
-                        winTrigger: _highRollerWinTrigger,
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 3. Right mock players column
-                Positioned(
-                  top: h * 0.20,
-                  right: w * 0.02,
-                  child: Column(
-                    children: [
-                      MockPlayerWidget(
-                        name: 'Master',
-                        balance: _masterBalance,
-                        isLeft: false,
-                        iconData: Icons.workspace_premium,
-                        color: const Color(0xFF69F0AE),
-                        showNameTag: false,
-                        avatarPath: 'assets/userprofile/user4.png',
-                        betTrigger: _triggerMaster,
-                        winAmount: _masterWinAmount,
-                        winTrigger: _masterWinTrigger,
-                      ),
-                      SizedBox(height: h * 0.045),
-                      MockPlayerWidget(
-                        name: 'Pro King',
-                        balance: _proKingBalance,
-                        isLeft: false,
-                        iconData: Icons.bolt,
-                        color: const Color(0xFF26C6DA),
-                        showNameTag: false,
-                        avatarPath: 'assets/userprofile/user5.png',
-                        betTrigger: _triggerProKing,
-                        winAmount: _proKingWinAmount,
-                        winTrigger: _proKingWinTrigger,
-                      ),
-                      SizedBox(height: h * 0.045),
-                      MockPlayerWidget(
-                        name: 'Elite Player',
-                        balance: _elitePlayerBalance,
-                        isLeft: false,
-                        iconData: Icons.auto_awesome,
-                        color: const Color(0xFF00B0FF),
-                        showNameTag: false,
-                        avatarPath: 'assets/userprofile/user6.png',
-                        betTrigger: _triggerElitePlayer,
-                        winAmount: _elitePlayerWinAmount,
-                        winTrigger: _elitePlayerWinTrigger,
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 4. Bottom User (Bottom Left)
-                Positioned(
-                  bottom: h * 0.05,
-                  left: w * 0.02,
-                  child: UserAvatarWidget(
-                    balance: widget.balance,
-                    avatarPath: widget.avatarPath,
-                    nickname: widget.nickname,
-                    betTrigger: _triggerUser,
-                    winAmount: _userWinAmount,
-                    winTrigger: _userWinTrigger,
-                  ),
-                ),
-
-                // 4b. Bottom Active Users Count (Bottom Right)
-                Positioned(
-                  bottom: h * 0.05,
-                  right: w * 0.02,
-                  child: GestureDetector(
-                    onTap: _showActiveUsersDialog,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-                      decoration: BoxDecoration(
-                        color: const Color(0x99000000),
-                        borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.3), width: 1.0),
-                        boxShadow: const [
-                          BoxShadow(color: Colors.black38, blurRadius: 4.0, offset: Offset(0.0, 2.0))
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.people_alt_rounded,
-                            color: Color(0xFF00E5FF),
-                            size: 20.0,
-                          ),
-                          const SizedBox(width: 8.0),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text(
-                                'ONLINE',
-                                style: TextStyle(
-                                  color: Color(0xFF00E676),
-                                  fontSize: 7.0,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                              Text(
-                                '$_activeUsersCount',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11.0,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // 5. Central Gameplay / Betting Area
-                Positioned(
-                  top: h * 0.16,
-                  left: w * 0.16,
-                  right: w * 0.16,
-                  bottom: h * 0.18,
-                  child: _buildGameBoard(),
-                ),
-
-                // 7. Chip Selector
-                Positioned(
-                  bottom: h * 0.03,
-                  left: w * 0.32,
-                  right: w * 0.32,
-                  child: ChipSelectorWidget(
-                    selectedChipValue: _selectedChipValue,
-                    height: h,
-                    onChipSelected: (val) {
-                      setState(() => _selectedChipValue = val);
-                      SoundManager.playClick();
-                    },
-                  ),
-                ),
-
-                // 8. Static Table Chips
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: Stack(
-                      children: _tableChips.map((chip) {
-                        return Positioned(
-                          left: w * chip.x - 12.0,
-                          top: h * chip.y - 12.0,
-                          child: PokerChipWidget(
-                            value: chip.value,
-                            size: 24.0,
-                            selected: false,
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
-
-                // 8b. Flying Chips Overlay
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: Stack(
-                      children: _flyingChips.map((chip) {
-                        return Positioned.fill(
-                          child: AnimatedBuilder(
-                            animation: chip.controller,
-                            builder: (context, child) {
-                              final double t = chip.controller.value;
-                              final double currentX =
-                                  chip.startX + (chip.endX - chip.startX) * t;
-                              final double currentY =
-                                  chip.startY + (chip.endY - chip.startY) * t;
-                              return Stack(
-                                children: [
-                                  Positioned(
-                                    left: currentX * w - 12.0,
-                                    top: currentY * h - 12.0,
-                                    child: PokerChipWidget(
-                                      value: chip.value,
-                                      size: 24.0,
-                                      selected: false,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
-
-                // 10. Lottie 10-sec countdown
-                if (!_isRolling &&
-                    _timerSeconds <= 10 &&
-                    _timerSeconds > 3)
-                  Positioned(
-                    left: w * 0.66,
-                    top: h * 0.04,
-                    child: IgnorePointer(
-                      child: SizedBox(
-                        width: 130.0,
-                        height: 52.0,
-                        child: Lottie.asset(
-                          'assets/10_second_countdown_timer.json',
-                          repeat: false,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                // 11. Lottie last-3-sec countdown (and dealing/winner loop phase)
-                if ((!_isRolling && _timerSeconds <= 3 && _timerSeconds > 0) ||
-                    _isRolling)
-                  Positioned(
-                    left: w * 0.66,
-                    top: h * 0.04,
-                    child: IgnorePointer(
-                      child: SizedBox(
-                        width: 130.0,
-                        height: 52.0,
-                        child: Lottie.asset(
-                          'assets/10_second_countdown_timer_react_end_loop.json',
-                          repeat: true,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                // 12. Center Lottie 3-sec warning animation
-                if (!_isRolling &&
-                    _timerSeconds <= 3 &&
-                    _timerSeconds > 0)
-                  Align(
-                    alignment: Alignment.center,
-                    child: IgnorePointer(
-                      child: SizedBox(
-                        width: 140.0,
-                        height: 140.0,
-                        child: Lottie.asset(
-                          'assets/count_down_red_and_grey_3_to_1.json',
-                          repeat: false,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                // 13. Win/Lose Overlay Card centered in playfield
-                if (_showOutcomeCard)
-                  Center(
-                    child: WinOverlayCard(
-                      multiplier: _lastWinMultiplier,
-                      winAmount: _lastWinAmount,
-                      isWin: _lastOutcomeWin,
-                    ),
-                  ),
+                // 2. Centered Game Logo removed
               ],
             ),
           );
@@ -1171,40 +867,75 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
     );
   }
 
+  Widget _buildTopIconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    double size = 16.0,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(7.0),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFD700), Color(0xFFFFA000)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 4.0,
+              offset: const Offset(0.0, 2.0),
+            ),
+          ],
+        ),
+        child: Icon(
+          icon,
+          color: const Color(0xFF3E2723),
+          size: size,
+        ),
+      ),
+    );
+  }
+
   Widget _buildTopHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
-      color: const Color(0xFF07021C),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      color: Colors.transparent,
       child: Row(
         children: [
           // Back Button
-          GestureDetector(
+          _buildTopIconButton(
+            icon: Icons.arrow_back_ios_new,
             onTap: widget.onBackPressed,
-            child: Container(
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: const Color(0x33000000),
-                borderRadius: BorderRadius.circular(8.0),
-                border: Border.all(color: Colors.white24),
-              ),
-              child: const Icon(Icons.arrow_back_ios_new,
-                  color: Colors.white, size: 16.0),
-            ),
+            size: 12.0,
           ),
-          const SizedBox(width: 16.0),
+          const SizedBox(width: 12.0),
 
           // Statistics/Trend Icon
-          Container(
-            padding: const EdgeInsets.all(6.0),
-            decoration: const BoxDecoration(color: Color(0xFF2C256B), shape: BoxShape.circle),
-            child: const Icon(Icons.trending_up, color: Colors.white, size: 16.0),
+          _buildTopIconButton(
+            icon: Icons.trending_up,
+            onTap: () {},
+            size: 14.0,
           ),
           const Spacer(),
 
-          // Info and Settings Icon
-          const Icon(Icons.info_outline, color: Colors.grey, size: 20.0),
+          // Info Icon
+          _buildTopIconButton(
+            icon: Icons.info_outline,
+            onTap: () {},
+            size: 14.0,
+          ),
           const SizedBox(width: 12.0),
-          const Icon(Icons.settings, color: Colors.grey, size: 20.0),
+
+          // Settings Icon
+          _buildTopIconButton(
+            icon: Icons.settings,
+            onTap: () {},
+            size: 14.0,
+          ),
         ],
       ),
     );
@@ -1233,7 +964,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
           decoration: BoxDecoration(
             color: badgeColor,
             borderRadius: BorderRadius.circular(2.0),
-            border: Border.all(color: Colors.white.withOpacity(0.15), width: 0.5),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 0.5),
           ),
           child: Text(
             '$val',
@@ -1296,19 +1027,19 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.eco, color: const Color(0xFF00C853).withOpacity(0.3), size: 14.0),
+                              Icon(Icons.eco, color: const Color(0xFF00C853).withValues(alpha: 0.3), size: 14.0),
                               const SizedBox(width: 4.0),
                               Text(
                                 '7 UP DOWN',
                                 style: GoogleFonts.inter(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withValues(alpha: 0.2),
                                   fontSize: 16.0,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.5,
                                 ),
                               ),
                               const SizedBox(width: 4.0),
-                              Icon(Icons.eco, color: const Color(0xFF00C853).withOpacity(0.3), size: 14.0),
+                              Icon(Icons.eco, color: const Color(0xFF00C853).withValues(alpha: 0.3), size: 14.0),
                             ],
                           ),
                           const Spacer(),
@@ -1478,7 +1209,7 @@ class _SevenUpDownGameScreenState extends State<SevenUpDownGameScreen> with Tick
         decoration: BoxDecoration(
           color: color ?? const Color(0xFF1E2024),
           borderRadius: BorderRadius.circular(4.0),
-          border: Border.all(color: color?.withOpacity(0.5) ?? const Color(0xFF2C2F36), width: 1.0),
+          border: Border.all(color: color?.withValues(alpha: 0.5) ?? const Color(0xFF2C2F36), width: 1.0),
         ),
         child: Text(
           label,
@@ -1640,11 +1371,10 @@ class _SevenUpDownBetPanelState extends State<SevenUpDownBetPanel>
   }
 
   BoxDecoration _getPanelDecoration(bool winner) {
-    final Color startColor = Color.lerp(Colors.black, widget.baseColor, 0.45)!;
-    final Color endColor = Color.lerp(Colors.black, widget.baseColor, 0.22)!;
-
     if (winner) {
       final double val = widget.blinkAnimation.value;
+      final Color startColor = Color.lerp(Colors.black, widget.baseColor, 0.45)!;
+      final Color endColor = Color.lerp(Colors.black, widget.baseColor, 0.22)!;
       return BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -1668,15 +1398,17 @@ class _SevenUpDownBetPanelState extends State<SevenUpDownBetPanel>
         ],
       );
     }
+    final hasBet = widget.userBet > 0 || widget.totalBet > 0;
     return BoxDecoration(
-      gradient: LinearGradient(
-        colors: [startColor, endColor],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
+      color: hasBet ? widget.baseColor.withValues(alpha: 0.15) : Colors.transparent,
       borderRadius: BorderRadius.circular(10.0),
-      border: Border.all(color: widget.baseColor, width: 1.5),
-      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4.0)],
+      border: Border.all(
+        color: hasBet ? widget.baseColor.withValues(alpha: 0.5) : widget.baseColor.withValues(alpha: 0.2),
+        width: 1.5,
+      ),
+      boxShadow: hasBet
+          ? [BoxShadow(color: widget.baseColor.withValues(alpha: 0.2), blurRadius: 6.0)]
+          : null,
     );
   }
 

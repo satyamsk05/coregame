@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../utils/sound_manager.dart';
 import '../shared/widgets/bounceable.dart';
 
 class DepositScreen extends StatefulWidget {
@@ -409,7 +408,7 @@ class _DepositScreenState extends State<DepositScreen> {
                                         borderRadius: BorderRadius.circular(6.0),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: const Color(0xFF24EE89).withOpacity(0.2),
+                                            color: const Color(0xFF24EE89).withValues(alpha: 0.2),
                                             blurRadius: 8.0,
                                             offset: const Offset(0, 2),
                                           )

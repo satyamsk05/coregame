@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../shared/widgets/bounceable.dart';
-import '../../shared/widgets/win_lose_toast.dart';
 import '../../shared/widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../shared/widgets/night_forest_background.dart';
@@ -32,7 +30,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
   final _betController = TextEditingController(text: '10');
   
   bool _isPlaying = false;
-  bool _isAutoMode = false;
+  final bool _isAutoMode = false;
   bool _isHeadsSelected = true; // true = Heads (Gold), false = Tails (Silver)
   
   int _streak = 0;
@@ -569,7 +567,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
                 borderRadius: BorderRadius.circular(12.0),
                 boxShadow: [
                   BoxShadow(
-                    color: (_isPlaying ? const Color(0xFF311B92) : const Color(0xFF00C853)).withOpacity(0.3),
+                    color: (_isPlaying ? const Color(0xFF311B92) : const Color(0xFF00C853)).withValues(alpha: 0.3),
                     blurRadius: 6.0,
                     offset: const Offset(0, 3),
                   ),
@@ -762,9 +760,9 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
       width: 75.0,
       height: 120.0,
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2F36).withOpacity(0.9),
+        color: const Color(0xFF2C2F36).withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.5),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
       ),
       padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),
       child: Column(
@@ -822,7 +820,7 @@ class _CoinFlipGameScreenState extends State<CoinFlipGameScreen> with SingleTick
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     blurRadius: 12.0 * scaleVal,
                     offset: Offset(0, 8 * scaleVal),
                   ),

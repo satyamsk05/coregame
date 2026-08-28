@@ -63,6 +63,7 @@ flutter:
 
   assets:
     - assets/
+    - assets/images/
     - assets/twist/
     - assets/coinflip/
     - assets/mines/
@@ -72,6 +73,7 @@ flutter:
     - assets/logos/
     - assets/icons/
     - assets/Double/
+    - assets/dpbanner/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

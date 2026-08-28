@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../shared/widgets/bounceable.dart';
-import '../../shared/widgets/win_lose_toast.dart';
 import '../../shared/widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../shared/widgets/animated_game_background.dart';
@@ -724,7 +722,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                               activeTrackColor: const Color(0xFF00C853),
                               inactiveTrackColor: const Color(0xFF2C2F36),
                               thumbColor: Colors.white,
-                              overlayColor: const Color(0xFF00C853).withOpacity(0.2),
+                              overlayColor: const Color(0xFF00C853).withValues(alpha: 0.2),
                               trackHeight: 4.0,
                               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7.0),
                             ),
@@ -927,7 +925,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
           margin: const EdgeInsets.symmetric(horizontal: 3.0),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: const Color(0xFF2C2F36).withOpacity(0.5),
+            color: const Color(0xFF2C2F36).withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(10.0),
           ),
           child: Text(
@@ -978,9 +976,9 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
   Widget _buildPlinkoPlayfield() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0C0728).withOpacity(0.9),
+        color: const Color(0xFF0C0728).withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: const Color(0xFF9E84FF).withOpacity(0.4), width: 1.5),
+        border: Border.all(color: const Color(0xFF9E84FF).withValues(alpha: 0.4), width: 1.5),
       ),
       child: Stack(
         children: [
@@ -1015,7 +1013,7 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                   scale: 0.8,
                   child: Switch(
                     value: _hyperMode,
-                    activeColor: const Color(0xFF00C853),
+                    activeThumbColor: const Color(0xFF00C853),
                     onChanged: (val) {
                       setState(() => _hyperMode = val);
                     },
@@ -1036,12 +1034,12 @@ class _PlinkoGameScreenState extends State<PlinkoGameScreen> with SingleTickerPr
                 decoration: BoxDecoration(
                   color: val > 1.5
                       ? const Color(0xFF00C853)
-                      : (val < 1.0 ? const Color(0xFF6B7280).withOpacity(0.3) : const Color(0xFFFFD700).withOpacity(0.3)),
+                      : (val < 1.0 ? const Color(0xFF6B7280).withValues(alpha: 0.3) : const Color(0xFFFFD700).withValues(alpha: 0.3)),
                   borderRadius: BorderRadius.circular(4.0),
                   border: Border.all(
                     color: val > 1.5
                         ? const Color(0xFF00E676)
-                        : (val < 1.0 ? Colors.grey.withOpacity(0.5) : const Color(0xFFFFD700)),
+                        : (val < 1.0 ? Colors.grey.withValues(alpha: 0.5) : const Color(0xFFFFD700)),
                     width: 0.8
                   ),
                 ),
@@ -1149,7 +1147,7 @@ class _PlinkoBoardPainter extends CustomPainter {
         const Radius.circular(8.0),
       );
       final Paint shadowPaint = Paint()
-        ..color = Colors.black.withOpacity(0.8)
+        ..color = Colors.black.withValues(alpha: 0.8)
         ..style = PaintingStyle.fill;
       canvas.drawRRect(shadowBin, shadowPaint);
 
@@ -1228,7 +1226,7 @@ class _PlinkoBoardPainter extends CustomPainter {
     // 2. Paint Peg board (only if not hyperMode)
     if (!hyperMode) {
       final Paint pegGlowPaint = Paint()
-        ..color = const Color(0xFF9E84FF).withOpacity(0.4)
+        ..color = const Color(0xFF9E84FF).withValues(alpha: 0.4)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
 
       for (int r = 0; r < rowCount; r++) {
@@ -1248,7 +1246,7 @@ class _PlinkoBoardPainter extends CustomPainter {
           // Draw hit highlight
           if (hitIntensity > 0) {
             final Paint hitPaint = Paint()
-              ..color = const Color(0xFF00E5FF).withOpacity(hitIntensity * 0.8) // Glowing cyan
+              ..color = const Color(0xFF00E5FF).withValues(alpha: hitIntensity * 0.8) // Glowing cyan
               ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
             canvas.drawCircle(Offset(px, py), 10.0 + 6.0 * hitIntensity, hitPaint);
           }
@@ -1289,7 +1287,7 @@ class _PlinkoBoardPainter extends CustomPainter {
           
           // Draw ball glow (matching proportional scale)
           final Paint ballGlowPaint = Paint()
-            ..color = const Color(0xFFFFEB3B).withOpacity(0.45)
+            ..color = const Color(0xFFFFEB3B).withValues(alpha: 0.45)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
           canvas.drawCircle(Offset(bxScreen, byScreen), 8.0, ballGlowPaint);
           
@@ -1298,7 +1296,7 @@ class _PlinkoBoardPainter extends CustomPainter {
           
           // Highlight active trail
           final Paint trailPaint = Paint()
-            ..color = const Color(0xFFFFEB3B).withOpacity(0.15)
+            ..color = const Color(0xFFFFEB3B).withValues(alpha: 0.15)
             ..style = PaintingStyle.fill;
           canvas.drawCircle(Offset(bxScreen, byScreen), 10.0, trailPaint);
         }

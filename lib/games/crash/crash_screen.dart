@@ -1,10 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../shared/widgets/bounceable.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../utils/sound_manager.dart';
-import '../../shared/widgets/win_overlay_card.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Data model
@@ -177,8 +175,9 @@ class _CrashGameScreenState extends State<CrashGameScreen>
 
   void _beginFlight() {
     final double r = _rng.nextDouble();
-    if (r < 0.08)       _crashPoint = 1.00 + _rng.nextDouble() * 0.10;
-    else if (r < 0.60)  _crashPoint = 1.10 + _rng.nextDouble() * 1.40;
+    if (r < 0.08) {
+      _crashPoint = 1.00 + _rng.nextDouble() * 0.10;
+    } else if (r < 0.60)  _crashPoint = 1.10 + _rng.nextDouble() * 1.40;
     else if (r < 0.88)  _crashPoint = 2.50 + _rng.nextDouble() * 7.50;
     else if (r < 0.97)  _crashPoint = 10.0 + _rng.nextDouble() * 40.0;
     else                _crashPoint = 50.0 + _rng.nextDouble() * 449.0;
@@ -305,13 +304,13 @@ class _CrashGameScreenState extends State<CrashGameScreen>
                     Expanded(
                       child: AnimatedBuilder(
                         animation: _flashCtrl,
-                        builder: (_, __) {
+                        builder: (_, _) {
                           return Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isCrashed
-                                    ? const Color(0xFFFF4560).withOpacity(0.4 * (1 - _flashCtrl.value))
+                                    ? const Color(0xFFFF4560).withValues(alpha: 0.4 * (1 - _flashCtrl.value))
                                     : const Color(0xFF1A2033),
                                 width: 1.2,
                               ),
@@ -380,7 +379,7 @@ class _CrashGameScreenState extends State<CrashGameScreen>
             Text('STARTING IN',
                 style: GoogleFonts.robotoMono(
                     textStyle: TextStyle(
-                        color: Colors.white.withOpacity(0.45),
+                        color: Colors.white.withValues(alpha: 0.45),
                         fontSize: 10, fontWeight: FontWeight.bold,
                         letterSpacing: 1.5))),
             const SizedBox(height: 4),
@@ -391,7 +390,7 @@ class _CrashGameScreenState extends State<CrashGameScreen>
                         fontSize: 56, fontWeight: FontWeight.w900))),
             Text('seconds',
                 style: TextStyle(
-                    color: Colors.white.withOpacity(0.35), fontSize: 10)),
+                    color: Colors.white.withValues(alpha: 0.35), fontSize: 10)),
           ],
         );
 
@@ -407,14 +406,14 @@ class _CrashGameScreenState extends State<CrashGameScreen>
                           color: accent,
                           fontSize: 58, fontWeight: FontWeight.w900,
                           shadows: [
-                            Shadow(color: accent.withOpacity(0.6), blurRadius: 18),
+                            Shadow(color: accent.withValues(alpha: 0.6), blurRadius: 18),
                           ]))),
               if (_cashedOut)
                 Container(
                   margin: const EdgeInsets.only(top: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF00E396).withOpacity(0.15),
+                    color: const Color(0xFF00E396).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: const Color(0xFF00E396), width: 1),
                   ),
@@ -494,9 +493,9 @@ class _TopBar extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: const Color(0xFF00D2FF).withOpacity(0.12),
+              color: const Color(0xFF00D2FF).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: const Color(0xFF00D2FF).withOpacity(0.3)),
+              border: Border.all(color: const Color(0xFF00D2FF).withValues(alpha: 0.3)),
             ),
             child: const Text('999×',
                 style: TextStyle(color: Color(0xFF00D2FF), fontSize: 10,
@@ -509,7 +508,7 @@ class _TopBar extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFF141825),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: accentColor.withOpacity(0.3), width: 1),
+              border: Border.all(color: accentColor.withValues(alpha: 0.3), width: 1),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -567,9 +566,9 @@ class _HistoryBar extends StatelessWidget {
                   margin: const EdgeInsets.only(right: 5, top: 4, bottom: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: BoxDecoration(
-                    color: c.withOpacity(0.10),
+                    color: c.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: c.withOpacity(0.5), width: 0.8),
+                    border: Border.all(color: c.withValues(alpha: 0.5), width: 0.8),
                   ),
                   alignment: Alignment.center,
                   child: Text('${v.toStringAsFixed(2)}×',
@@ -780,7 +779,7 @@ class _AutoCashout extends StatelessWidget {
               Switch(
                 value: enabled,
                 onChanged: onToggle,
-                activeColor: const Color(0xFF00D2FF),
+                activeThumbColor: const Color(0xFF00D2FF),
                 activeTrackColor: const Color(0xFF0C2232),
                 inactiveThumbColor: Colors.grey.shade600,
                 inactiveTrackColor: const Color(0xFF141825),
@@ -880,9 +879,9 @@ class _ActionBtn extends StatelessWidget {
           height: 48,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.10),
+            color: color.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.35), width: 1.2),
+            border: Border.all(color: color.withValues(alpha: 0.35), width: 1.2),
           ),
           child: Text(lbl,
               style: TextStyle(color: color, fontSize: 13,
@@ -966,7 +965,7 @@ class _ChartPainter extends CustomPainter {
       canvas.drawPath(fillPath,
           Paint()
             ..shader = LinearGradient(
-              colors: [accentColor.withOpacity(0.22), Colors.transparent],
+              colors: [accentColor.withValues(alpha: 0.22), Colors.transparent],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ).createShader(Rect.fromLTRB(gL, gT, gR, gB))
@@ -984,7 +983,7 @@ class _ChartPainter extends CustomPainter {
       if (!isCrashed) {
         for (final r in [18.0, 10.0]) {
           canvas.drawCircle(tip, r,
-              Paint()..color = accentColor.withOpacity(r == 18 ? 0.10 : 0.20));
+              Paint()..color = accentColor.withValues(alpha: r == 18 ? 0.10 : 0.20));
         }
       }
       canvas.drawCircle(tip, 5.5, Paint()..color = accentColor);
@@ -997,7 +996,7 @@ class _ChartPainter extends CustomPainter {
           Offset(px, py),
           p.sz * gW,
           Paint()
-            ..color = accentColor.withOpacity(p.alpha * 0.8)
+            ..color = accentColor.withValues(alpha: p.alpha * 0.8)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
         );
       }
@@ -1040,12 +1039,12 @@ class WinOverlayCard extends StatelessWidget {
       width: 190.0,
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E2024).withOpacity(0.96),
+        color: const Color(0xFF1E2024).withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(color: const Color(0xFF2C2F36), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.55),
+            color: Colors.black.withValues(alpha: 0.55),
             blurRadius: 18.0,
             spreadRadius: 2.0,
           ),

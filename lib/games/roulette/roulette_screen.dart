@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import '../../shared/widgets/bounceable.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../utils/sound_helper.dart';
 import '../../shared/widgets/win_overlay_card.dart';
@@ -1074,7 +1073,7 @@ class _RouletteGameScreenState extends State<RouletteGameScreen> with SingleTick
               ),
             ),
           );
-        }).toList(),
+        }),
         
         const Icon(Icons.chevron_right, color: Colors.grey, size: 20.0),
         const Spacer(),

@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../shared/widgets/bounceable.dart';
-import '../../shared/widgets/win_lose_toast.dart';
 import '../../shared/widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../shared/widgets/animated_game_background.dart';
@@ -518,7 +517,7 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
                       activeTrackColor: const Color(0xFF00C853),
                       inactiveTrackColor: const Color(0xFF181A1F),
                       thumbColor: Colors.white,
-                      overlayColor: const Color(0xFF00C853).withOpacity(0.2),
+                      overlayColor: const Color(0xFF00C853).withValues(alpha: 0.2),
                       trackHeight: 4.0,
                       thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7.0),
                     ),
@@ -564,7 +563,7 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
                   borderRadius: BorderRadius.circular(8.0),
                   boxShadow: [
                     BoxShadow(
-                      color: (_isPlaying ? const Color(0xFF311B92) : const Color(0xFF00C853)).withOpacity(0.3),
+                      color: (_isPlaying ? const Color(0xFF311B92) : const Color(0xFF00C853)).withValues(alpha: 0.3),
                       blurRadius: 6.0,
                       offset: const Offset(0, 3),
                     ),
@@ -899,7 +898,7 @@ class _MinesGameScreenState extends State<MinesGameScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E2024).withOpacity(0.9),
+                        color: const Color(0xFF1E2024).withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(16.0),
                       ),
                       child: RichText(
@@ -999,7 +998,7 @@ class _MinesTileWidgetState extends State<MinesTileWidget> {
         border: Border.all(color: const Color(0xFF42454E), width: 1.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.35),
+            color: Colors.black.withValues(alpha: 0.35),
             offset: const Offset(0, 2),
             blurRadius: 2.0,
           ),
@@ -1034,7 +1033,7 @@ class _MinesTileWidgetState extends State<MinesTileWidget> {
           boxShadow: isExploded
               ? [
                   BoxShadow(
-                    color: const Color(0xFFD50000).withOpacity(0.6),
+                    color: const Color(0xFFD50000).withValues(alpha: 0.6),
                     blurRadius: 8.0,
                     spreadRadius: 1.0,
                   )
@@ -1066,10 +1065,10 @@ class _MinesTileWidgetState extends State<MinesTileWidget> {
             ],
           ),
           borderRadius: BorderRadius.circular(8.0),
-          border: Border.all(color: const Color(0xFFB388FF).withOpacity(0.5), width: 1.0),
+          border: Border.all(color: const Color(0xFFB388FF).withValues(alpha: 0.5), width: 1.0),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF8C34FF).withOpacity(0.4),
+              color: const Color(0xFF8C34FF).withValues(alpha: 0.4),
               blurRadius: 6.0,
               offset: const Offset(0, 2),
             ),
@@ -1083,7 +1082,7 @@ class _MinesTileWidgetState extends State<MinesTileWidget> {
               // Custom painted highly detailed 3D Diamond Vector
               const Positioned.fill(
                 child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: EdgeInsets.all(8.0),
                   child: CustomPaint(
                     painter: DiamondPainter(),
                   ),
@@ -1096,7 +1095,7 @@ class _MinesTileWidgetState extends State<MinesTileWidget> {
                 child: Icon(
                   Icons.star,
                   size: 10.0,
-                  color: Colors.white.withOpacity(0.85),
+                  color: Colors.white.withValues(alpha: 0.85),
                 ),
               ),
             ],
@@ -1135,11 +1134,11 @@ class DiamondPainter extends CustomPainter {
     }
 
     // Gradient faceting overlays (varying opacity levels)
-    final Color cTable = Colors.white.withOpacity(0.55);
-    final Color cLight1 = Colors.white.withOpacity(0.35);
-    final Color cLight2 = Colors.white.withOpacity(0.2);
-    final Color cDark1 = Colors.black.withOpacity(0.15);
-    final Color cDark2 = Colors.black.withOpacity(0.28);
+    final Color cTable = Colors.white.withValues(alpha: 0.55);
+    final Color cLight1 = Colors.white.withValues(alpha: 0.35);
+    final Color cLight2 = Colors.white.withValues(alpha: 0.2);
+    final Color cDark1 = Colors.black.withValues(alpha: 0.15);
+    final Color cDark2 = Colors.black.withValues(alpha: 0.28);
 
     // Facet rendering
     drawFacet([pTopLeft, pTopRight, pCenter], cTable);

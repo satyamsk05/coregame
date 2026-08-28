@@ -99,13 +99,13 @@ class PhoneMockupWrapper extends StatelessWidget {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.7),
+                              color: Colors.black.withValues(alpha: 0.7),
                               blurRadius: 40.0,
                               spreadRadius: 2.0,
                               offset: const Offset(0, 20),
                             ),
                             BoxShadow(
-                              color: const Color(0xFF00C853).withOpacity(0.05), // Soft green glow reflecting app style
+                              color: const Color(0xFF00C853).withValues(alpha: 0.05), // Soft green glow reflecting app style
                               blurRadius: 60.0,
                               spreadRadius: 5.0,
                             ),
@@ -183,8 +183,8 @@ class PhoneMockupWrapper extends StatelessWidget {
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                       colors: [
-                                        Colors.white.withOpacity(0.06),
-                                        Colors.white.withOpacity(0.01),
+                                        Colors.white.withValues(alpha: 0.06),
+                                        Colors.white.withValues(alpha: 0.01),
                                         Colors.transparent,
                                       ],
                                       stops: const [0.0, 0.35, 1.0],

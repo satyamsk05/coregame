@@ -165,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
             // Dark tint overlay for readability
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.18),
+                color: Colors.black.withValues(alpha: 0.18),
               ),
             ),
             
@@ -188,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: const Color(0x301E2024), // Highly transparent dark slate
                             borderRadius: BorderRadius.circular(20.0),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.15),
+                              color: Colors.white.withValues(alpha: 0.15),
                               width: 1.5,
                             ),
                           ),
@@ -243,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             borderRadius: BorderRadius.circular(10.0),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: const Color(0xFF24EE89).withOpacity(0.3),
+                                                color: const Color(0xFF24EE89).withValues(alpha: 0.3),
                                                 blurRadius: 8.0,
                                                 offset: const Offset(0, 2),
                                               )

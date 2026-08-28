@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../widgets/win_lose_toast.dart';
 import '../widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -66,7 +65,7 @@ class _LimboGameScreenState extends State<LimboGameScreen>
   final _stopLossController = TextEditingController(text: '0');
   
   String _selectedStrategy = 'Martingale'; // Martingale, Paroli
-  double _strategyMultiplier = 2.0;
+  final double _strategyMultiplier = 2.0;
 
   final FocusNode _targetFocusNode = FocusNode();
   final FocusNode _winChanceFocusNode = FocusNode();

@@ -7,6 +7,7 @@ import '../../shared/widgets/win_overlay_card.dart';
 import '../../shared/widgets/win_lose_toast.dart';
 import '../../utils/sound_manager.dart';
 import '../andar_bahar/widgets/player_widgets.dart';
+import '../andar_bahar/widgets/chip_widgets.dart';
 import '../../shared/widgets/night_forest_background.dart';
 
 class FortuneWheelSegment {
@@ -54,8 +55,20 @@ class _RingOfFortuneGameScreenState extends State<RingOfFortuneGameScreen> with 
   late final AnimationController _spinController;
   late Animation<double> _spinAnimation;
 
-  // Global settings
-  final TextEditingController _amountController = TextEditingController(text: '10.00');
+  // Selected chip value
+  int _selectedChipValue = 10;
+
+  // Mock player data for sidebars
+  final List<Map<String, dynamic>> _leftPlayers = [
+    {'name': 'Billionaire', 'balance': 83450.0, 'avatar': 'assets/userprofile/user1.png'},
+    {'name': 'Richie', 'balance': 24450.0, 'avatar': 'assets/userprofile/user2.png'},
+    {'name': 'High Roller', 'balance': 9730.0, 'avatar': 'assets/userprofile/user3.png'},
+  ];
+  final List<Map<String, dynamic>> _rightPlayers = [
+    {'name': 'Master', 'balance': 5350.0, 'avatar': 'assets/userprofile/user4.png'},
+    {'name': 'Pro King', 'balance': 12790.0, 'avatar': 'assets/userprofile/user5.png'},
+    {'name': 'Elite Player', 'balance': 7500.0, 'avatar': 'assets/userprofile/user6.png'},
+  ];
 
   // Game phases: 'betting' -> 'spinning' -> 'result'
   String _gamePhase = 'betting';
@@ -110,7 +123,6 @@ class _RingOfFortuneGameScreenState extends State<RingOfFortuneGameScreen> with 
     _spinController.dispose();
     _gameTimer?.cancel();
     _countdownTimer?.cancel();
-    _amountController.dispose();
     super.dispose();
   }
 
@@ -181,7 +193,7 @@ class _RingOfFortuneGameScreenState extends State<RingOfFortuneGameScreen> with 
 
   void _handleOptionTap(String colorKey) {
     if (_gamePhase != 'betting') return;
-    final betAmount = double.tryParse(_amountController.text) ?? 0.0;
+    final betAmount = _selectedChipValue.toDouble();
     if (betAmount <= 0) return;
     if (betAmount > widget.balance) {
       showWinLoseToast(
@@ -325,31 +337,6 @@ class _RingOfFortuneGameScreenState extends State<RingOfFortuneGameScreen> with 
     });
   }
 
-  void _adjustGlobalAmount(double amount) {
-    if (_gamePhase != 'betting') return;
-    setState(() {
-      _amountController.text = amount.toStringAsFixed(2);
-    });
-  }
-
-  void _incrementGlobalAmount(double delta) {
-    if (_gamePhase != 'betting') return;
-    double current = double.tryParse(_amountController.text) ?? 1.0;
-    double newValue = math.max(0.1, current + delta);
-    setState(() {
-      _amountController.text = newValue.toStringAsFixed(2);
-    });
-  }
-
-  void _placeBetFromGlobalAmount() {
-    if (_gamePhase != 'betting') return;
-    double totalBet = _placedBets.values.fold(0.0, (sum, val) => sum + val);
-    if (totalBet <= 0) {
-      _handleOptionTap('grey');
-    }
-    _triggerSpinPhase();
-  }
-
   void _resetBets() {
     if (_gamePhase != 'betting') return;
     double totalBet = _placedBets.values.fold(0.0, (sum, val) => sum + val);
@@ -358,7 +345,6 @@ class _RingOfFortuneGameScreenState extends State<RingOfFortuneGameScreen> with 
     }
     setState(() {
       _placedBets.updateAll((key, value) => 0.0);
-      _amountController.text = '10.00';
     });
   }
 
@@ -463,565 +449,592 @@ class _RingOfFortuneGameScreenState extends State<RingOfFortuneGameScreen> with 
 
     return Scaffold(
       body: Stack(
+        fit: StackFit.expand,
         children: [
           const NightForestBackground(),
+          Container(color: Colors.black.withValues(alpha: 0.15)),
 
           SafeArea(
-            child: Column(
-              children: [
-                // Top Header Row
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Back Button
-                      Bounceable(
-                        onTap: () {
-                          if (widget.soundOn) SoundManager.playClick();
-                          widget.onBackPressed();
-                        },
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final double w = constraints.maxWidth;
+                final double sidebarW = (w * 0.1365).clamp(92.4, 120.75);
+
+                return Stack(
+                  children: [
+                    // Back button (top-left)
+                    Positioned(
+                      top: 6.0, left: 8.0,
+                      child: GestureDetector(
+                        onTap: isSpinning ? null : widget.onBackPressed,
                         child: Container(
-                          width: 40.0,
-                          height: 40.0,
+                          padding: const EdgeInsets.all(8.0),
                           decoration: BoxDecoration(
-                            color: Colors.white10,
+                            color: const Color(0x33000000),
                             borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: Colors.white24),
                           ),
-                          child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20.0),
+                          child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16.0),
                         ),
                       ),
+                    ),
 
-                      // App Game Brand Label
-                      Text(
-                        'RING OF FORTUNE',
-                        style: GoogleFonts.outfit(
-                          textStyle: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22.0,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
+                    // Title center top
+                    Positioned(
+                      top: 10.0, left: 100.0, right: 100.0,
+                      child: Center(
+                        child: Text(
+                          'RING OF FORTUNE',
+                          style: GoogleFonts.outfit(
+                            textStyle: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18.0,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
                           ),
                         ),
                       ),
+                    ),
 
-                      // Rules Help Button
-                      Bounceable(
+                    // Help button (top-right)
+                    Positioned(
+                      top: 6.0, right: 8.0,
+                      child: GestureDetector(
                         onTap: _showRulesDialog,
                         child: Container(
-                          width: 40.0,
-                          height: 40.0,
+                          padding: const EdgeInsets.all(8.0),
                           decoration: BoxDecoration(
-                            color: Colors.white10,
+                            color: const Color(0x33000000),
                             borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: Colors.white24),
                           ),
-                          child: const Icon(Icons.help_outline, color: Colors.white, size: 22.0),
+                          child: const Icon(Icons.help_outline, color: Colors.white, size: 16.0),
                         ),
                       ),
-                    ],
-                  ),
-                ),
+                    ),
 
-                // Main Game Split Columns Layout
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                    child: Row(
-                      children: [
-                        // Left Betting Console panel
-                        Expanded(
-                          flex: 4,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // 1. 2x2 Grid of Option Cards
-                              Container(
-                                padding: const EdgeInsets.all(6.0),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1E222B),
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  border: Border.all(color: Colors.white10),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: _buildOptionCard(
-                                            colorKey: 'grey',
-                                            mainColor: const Color(0xFF2563EB),
-                                            shadowColor: const Color(0xFF1D4ED8),
-                                            ringColor: const Color(0xFFBFDBFE),
-                                            label: 'Option 1',
-                                            multiplier: '1.98',
-                                            enabled: interactionEnabled,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6.0),
-                                        Expanded(
-                                          child: _buildOptionCard(
-                                            colorKey: 'purple',
-                                            mainColor: const Color(0xFF9333EA),
-                                            shadowColor: const Color(0xFF7E22CE),
-                                            ringColor: const Color(0xFFE9D5FF),
-                                            label: 'Option 2',
-                                            multiplier: '2.97',
-                                            enabled: interactionEnabled,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6.0),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: _buildOptionCard(
-                                            colorKey: 'orange',
-                                            mainColor: const Color(0xFFF97316),
-                                            shadowColor: const Color(0xFFEA580C),
-                                            ringColor: const Color(0xFFFED7AA),
-                                            label: 'Option 3',
-                                            multiplier: '5.94',
-                                            enabled: interactionEnabled,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6.0),
-                                        Expanded(
-                                          child: _buildOptionCard(
-                                            colorKey: 'green',
-                                            mainColor: const Color(0xFF24EE89),
-                                            shadowColor: const Color(0xFF0FAD5C),
-                                            ringColor: const Color(0xFFBBF7D0),
-                                            label: 'Option 4',
-                                            multiplier: '98.00',
-                                            enabled: interactionEnabled,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
+                    // Left sidebar
+                    Positioned(
+                      left: 6.0, top: 42.0, bottom: 6.0, width: sidebarW,
+                      child: _buildSidebar(_leftPlayers, true),
+                    ),
+                    // Right sidebar
+                    Positioned(
+                      right: 6.0, top: 42.0, bottom: 6.0, width: sidebarW,
+                      child: _buildSidebar(_rightPlayers, false),
+                    ),
 
-                              const SizedBox(height: 5.0),
+                    // Center Content Column
+                    Positioned(
+                      left: sidebarW + 12.0,
+                      right: sidebarW + 12.0,
+                      top: 38.0,
+                      bottom: 4.0,
+                      child: Column(
+                        children: [
+                          // Previous Rolls
+                          _buildPreviousRollsHistory(),
+                          const SizedBox(height: 4.0),
 
-                              // 2. SUGGEST AMOUNT Section
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 1.0),
-                                    child: Text(
-                                      'SUGGEST AMOUNT',
-                                      style: GoogleFonts.outfit(
-                                        color: Colors.white54,
-                                        fontSize: 9.0,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.7,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3.0),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [10, 100, 500, 1000].map((val) {
-                                      return Expanded(
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                                          child: Bounceable(
-                                            onTap: () => _adjustGlobalAmount(val.toDouble()),
-                                            child: Container(
-                                              height: 25.0,
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFF1E222B).withValues(alpha: 0.6),
-                                                borderRadius: BorderRadius.circular(6.0),
-                                                border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.55), width: 1.2),
-                                              ),
-                                              alignment: Alignment.center,
-                                              child: Text(
-                                                '+$val',
-                                                style: GoogleFonts.roboto(
-                                                  color: const Color(0xFF93C5FD),
-                                                  fontSize: 11.0,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ],
-                              ),
+                          // State / Countdown text
+                          Center(
+                            child: Text(
+                              _gamePhase == 'betting'
+                                  ? 'Rolling In ${_timerSeconds.toStringAsFixed(1)}s'
+                                  : (_gamePhase == 'spinning' ? 'Spinning...' : (_winningSegment != null ? '${_winningSegment!.color.toUpperCase()} ${_winningSegment!.multiplier}x Won!' : '')),
+                              style: GoogleFonts.roboto(textStyle: TextStyle(
+                                color: _gamePhase == 'result' && _winningSegment?.color == 'green' ? const Color(0xFF24EE89) : Colors.white,
+                                fontSize: 13.0, fontWeight: FontWeight.w900, letterSpacing: 0.5,
+                              )),
+                            ),
+                          ),
+                          const SizedBox(height: 4.0),
 
-                              const SizedBox(height: 5.0),
-
-                              // 3. ENTER AMOUNT Section
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 1.0),
-                                    child: Text(
-                                      'ENTER AMOUNT',
-                                      style: GoogleFonts.outfit(
-                                        color: Colors.white54,
-                                        fontSize: 9.0,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.7,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3.0),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 3.0),
+                          // Wheel and Option Cards
+                          Expanded(
+                            child: Row(
+                              children: [
+                                // Left part of center: Segmented Fortune Wheel
+                                Expanded(
+                                  flex: 5,
+                                  child: Container(
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF1E222B),
-                                      borderRadius: BorderRadius.circular(8.0),
+                                      color: const Color(0xFF1E222B).withValues(alpha: 0.35),
+                                      borderRadius: BorderRadius.circular(10.0),
                                       border: Border.all(color: Colors.white10),
                                     ),
-                                    child: Row(
+                                    alignment: Alignment.center,
+                                    child: Stack(
+                                      alignment: Alignment.center,
                                       children: [
-                                        Container(
-                                          width: 22.0,
-                                          height: 24.0,
-                                          alignment: Alignment.center,
-                                          child: const Text(
-                                            '₹',
-                                            style: TextStyle(color: Color(0xFF24EE89), fontSize: 13.0, fontWeight: FontWeight.bold),
+                                        // The segmented wheel CustomPaint
+                                        AspectRatio(
+                                          aspectRatio: 1.0,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(12.0),
+                                            child: CustomPaint(
+                                              painter: FortuneWheelPainter(
+                                                segments: _segments,
+                                                currentRotationAngle: _rotationAngle,
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                        const SizedBox(width: 2.0),
-                                        Expanded(
+                                        // Center outcome display capsule info
+                                        Container(
+                                          width: 80.0,
+                                          height: 38.0,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF1F222B),
+                                            borderRadius: BorderRadius.circular(6.0),
+                                            border: Border.all(color: Colors.white10),
+                                            boxShadow: const [
+                                              BoxShadow(color: Colors.black45, blurRadius: 4.0, offset: Offset(0, 2)),
+                                            ],
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              if (interactionEnabled) ...[
+                                                Text(
+                                                  'ROLLING',
+                                                  style: GoogleFonts.outfit(color: Colors.white54, fontSize: 6.5, fontWeight: FontWeight.bold),
+                                                ),
+                                                Text(
+                                                  '${_timerSeconds.toStringAsFixed(0)}s',
+                                                  style: GoogleFonts.roboto(color: const Color(0xFF24EE89), fontSize: 10.0, fontWeight: FontWeight.bold),
+                                                ),
+                                              ] else if (isSpinning) ...[
+                                                Text(
+                                                  'SPINNING',
+                                                  style: GoogleFonts.outfit(color: Colors.white54, fontSize: 6.5, fontWeight: FontWeight.bold),
+                                                ),
+                                                const SizedBox(
+                                                  width: 10.0,
+                                                  height: 10.0,
+                                                  child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF7E22CE)),
+                                                ),
+                                              ] else if (isResult) ...[
+                                                Text(
+                                                  'OUTCOME',
+                                                  style: GoogleFonts.outfit(color: Colors.white54, fontSize: 6.5, fontWeight: FontWeight.bold),
+                                                ),
+                                                Container(
+                                                  width: 11.0,
+                                                  height: 11.0,
+                                                  decoration: BoxDecoration(
+                                                    color: _winningSegment?.actualColor ?? Colors.grey,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                        // Pointer pointing UP at the bottom center of the wheel
+                                        Positioned(
+                                          bottom: 2.0,
                                           child: Container(
-                                            height: 26.0,
-                                            padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFF16181C),
-                                              borderRadius: BorderRadius.circular(5.0),
+                                            width: 14.0,
+                                            height: 14.0,
+                                            decoration: const BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Color(0xFFFF5252),
+                                              boxShadow: [
+                                                BoxShadow(color: Colors.black38, blurRadius: 2.0, offset: Offset(0, 1)),
+                                              ],
                                             ),
-                                            alignment: Alignment.centerLeft,
-                                            child: TextField(
-                                              controller: _amountController,
-                                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                              style: const TextStyle(color: Colors.white, fontSize: 13.0, fontWeight: FontWeight.bold),
-                                              decoration: const InputDecoration(
-                                                isDense: true,
-                                                border: InputBorder.none,
-                                                contentPadding: EdgeInsets.zero,
-                                              ),
+                                            alignment: Alignment.center,
+                                            child: const Icon(Icons.arrow_upward, color: Colors.white, size: 9.0),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8.0),
+
+                                // Right part of center: Grid of 4 option cards
+                                Expanded(
+                                  flex: 6,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildOptionCard(
+                                              colorKey: 'grey',
+                                              mainColor: const Color(0xFF3E434E),
+                                              shadowColor: const Color(0xFF2B2F37),
+                                              ringColor: const Color(0xFF9CA3AF),
+                                              label: 'Grey',
+                                              multiplier: '1.98',
                                               enabled: interactionEnabled,
                                             ),
                                           ),
-                                        ),
-                                        const SizedBox(width: 5.0),
-                                        Bounceable(
-                                          onTap: () => _incrementGlobalAmount(-10.0),
-                                          child: Container(
-                                            width: 24.0,
-                                            height: 24.0,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white10,
-                                              borderRadius: BorderRadius.circular(5.0),
-                                            ),
-                                            child: const Icon(Icons.remove, color: Colors.white, size: 13.0),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 3.0),
-                                        Bounceable(
-                                          onTap: () => _incrementGlobalAmount(10.0),
-                                          child: Container(
-                                            width: 24.0,
-                                            height: 24.0,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white10,
-                                              borderRadius: BorderRadius.circular(5.0),
-                                            ),
-                                            child: const Icon(Icons.add, color: Colors.white, size: 13.0),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 5.0),
-                                        Bounceable(
-                                          onTap: _resetBets,
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 3.0),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFF24EE89).withValues(alpha: 0.12),
-                                              borderRadius: BorderRadius.circular(5.0),
-                                              border: Border.all(color: const Color(0xFF24EE89).withValues(alpha: 0.4), width: 0.8),
-                                            ),
-                                            child: Text(
-                                              'Reset',
-                                              style: GoogleFonts.outfit(
-                                                color: const Color(0xFF24EE89),
-                                                fontSize: 10.5,
-                                                fontWeight: FontWeight.bold,
-                                              ),
+                                          const SizedBox(width: 6.0),
+                                          Expanded(
+                                            child: _buildOptionCard(
+                                              colorKey: 'purple',
+                                              mainColor: const Color(0xFF7E22CE),
+                                              shadowColor: const Color(0xFF5B179A),
+                                              ringColor: const Color(0xFFD8B4FE),
+                                              label: 'Purple',
+                                              multiplier: '2.97',
+                                              enabled: interactionEnabled,
                                             ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              const Spacer(),
-                              const SizedBox(height: 4.0),
-
-                              // 4. Footer: Profile Card and Bet Button row inside Left Column!
-                              Row(
-                                children: [
-                                  // Unified Player Info Box
-                                  Container(
-                                    height: 52.0,
-                                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF0F1115),
-                                      borderRadius: BorderRadius.circular(10.0),
-                                      border: Border.all(color: Colors.white10, width: 1.0),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        UserAvatarWidget(
-                                          balance: widget.balance,
-                                          avatarPath: widget.avatarPath,
-                                          nickname: widget.nickname,
-                                          betTrigger: _triggerUserBet,
-                                          winAmount: _winAmount,
-                                          winTrigger: _triggerUserWin,
-                                          showBalance: false,
-                                          showNickname: false,
-                                        ),
-                                        const SizedBox(width: 6.0),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              widget.nickname,
-                                              style: GoogleFonts.roboto(
-                                                textStyle: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 11.0,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2.0),
-                                            Text(
-                                              '₹${widget.balance.toStringAsFixed(2)}',
-                                              style: const TextStyle(
-                                                color: Color(0xFFFFD700),
-                                                fontSize: 11.0,
-                                                fontWeight: FontWeight.w900,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6.0),
-                                  // Large green Bet button taking remaining space
-                                  Expanded(
-                                    child: Opacity(
-                                      opacity: interactionEnabled ? 1.0 : 0.5,
-                                      child: Bounceable(
-                                        onTap: interactionEnabled ? _placeBetFromGlobalAmount : null,
-                                        child: Builder(
-                                          builder: (context) {
-                                            final totalActiveBet = _placedBets.values.fold<double>(0.0, (sum, v) => sum + v);
-                                            return Container(
-                                              height: 52.0,
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFF24EE89),
-                                                borderRadius: BorderRadius.circular(10.0),
-                                              ),
-                                              alignment: Alignment.center,
-                                              child: _gamePhase == 'betting'
-                                                  ? Column(
-                                                      mainAxisAlignment: MainAxisAlignment.center,
-                                                      children: [
-                                                        Text(
-                                                          totalActiveBet > 0 ? 'BET  ₹${totalActiveBet.toStringAsFixed(2)}' : 'Bet',
-                                                          style: GoogleFonts.outfit(
-                                                            color: const Color(0xFF0F1115),
-                                                            fontSize: 15.0,
-                                                            fontWeight: FontWeight.bold,
-                                                          ),
-                                                        ),
-                                                        if (totalActiveBet > 0)
-                                                          Padding(
-                                                            padding: const EdgeInsets.only(top: 1.0),
-                                                            child: Text(
-                                                              'TAP TO SPIN',
-                                                              style: GoogleFonts.outfit(
-                                                                color: const Color(0xFF0F1115).withValues(alpha: 0.6),
-                                                                fontSize: 8.0,
-                                                                fontWeight: FontWeight.w900,
-                                                                letterSpacing: 0.6,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                      ],
-                                                    )
-                                                  : Text(
-                                                      'Rolling...',
-                                                      style: GoogleFonts.outfit(
-                                                        color: const Color(0xFF0F1115),
-                                                        fontSize: 16.0,
-                                                        fontWeight: FontWeight.bold,
-                                                      ),
-                                                    ),
-                                            );
-                                          },
-                                        ),
+                                        ],
                                       ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(width: 16.0),
-
-                        // Right Fortune Wheel panel
-                        Expanded(
-                          flex: 5,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Multiplier tags history at the top of the wheel panel
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  _buildMultiplierTag('1.98x', const Color(0xFF3E434E)),
-                                  _buildMultiplierTag('2.97x', const Color(0xFF7E22CE)),
-                                  _buildMultiplierTag('5.94x', const Color(0xFFEA580C)),
-                                  _buildMultiplierTag('98x', const Color(0xFF24EE89)),
-                                ],
-                              ),
-
-                              const SizedBox(height: 8.0),
-
-                              // Wheel container area
-                              Expanded(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1E222B).withValues(alpha: 0.5),
-                                    borderRadius: BorderRadius.circular(12.0),
-                                    border: Border.all(color: Colors.white10),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      // The segments wheel
-                                      AspectRatio(
-                                        aspectRatio: 1.0,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(20.0),
-                                          child: CustomPaint(
-                                            painter: FortuneWheelPainter(
-                                              segments: _segments,
-                                              currentRotationAngle: _rotationAngle,
+                                      const SizedBox(height: 6.0),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildOptionCard(
+                                              colorKey: 'orange',
+                                              mainColor: const Color(0xFFEA580C),
+                                              shadowColor: const Color(0xFFB43E06),
+                                              ringColor: const Color(0xFFFDBA74),
+                                              label: 'Orange',
+                                              multiplier: '5.94',
+                                              enabled: interactionEnabled,
                                             ),
                                           ),
-                                        ),
-                                      ),
-
-                                      // Center display capsule info
-                                      Container(
-                                        width: 120.0,
-                                        height: 50.0,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF1F222B),
-                                          borderRadius: BorderRadius.circular(8.0),
-                                          border: Border.all(color: Colors.white10),
-                                          boxShadow: const [
-                                            BoxShadow(
-                                              color: Colors.black45,
-                                              blurRadius: 8.0,
-                                              offset: Offset(0, 4),
+                                          const SizedBox(width: 6.0),
+                                          Expanded(
+                                            child: _buildOptionCard(
+                                              colorKey: 'green',
+                                              mainColor: const Color(0xFF24EE89),
+                                              shadowColor: const Color(0xFF0FAD5C),
+                                              ringColor: const Color(0xFF86EFAC),
+                                              label: 'Green',
+                                              multiplier: '98.00',
+                                              enabled: interactionEnabled,
                                             ),
-                                          ],
-                                        ),
-                                        alignment: Alignment.center,
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            if (interactionEnabled) ...[
-                                              Text(
-                                                'ROLLING IN',
-                                                style: GoogleFonts.outfit(color: Colors.white70, fontSize: 8.0, fontWeight: FontWeight.bold),
-                                              ),
-                                              Text(
-                                                '${_timerSeconds.toStringAsFixed(1)}s',
-                                                style: GoogleFonts.roboto(color: const Color(0xFF24EE89), fontSize: 13.0, fontWeight: FontWeight.bold),
-                                              ),
-                                            ] else if (isSpinning) ...[
-                                              Text(
-                                                'SPINNING',
-                                                style: GoogleFonts.outfit(color: Colors.white70, fontSize: 8.0, fontWeight: FontWeight.bold),
-                                              ),
-                                              const SizedBox(
-                                                width: 12.0,
-                                                height: 12.0,
-                                                child: CircularProgressIndicator(strokeWidth: 2.0, color: Color(0xFF7E22CE)),
-                                              ),
-                                            ] else if (isResult) ...[
-                                              Text(
-                                                'OUTCOME',
-                                                style: GoogleFonts.outfit(color: Colors.white70, fontSize: 8.0, fontWeight: FontWeight.bold),
-                                              ),
-                                              Container(
-                                                width: 14.0,
-                                                height: 14.0,
-                                                decoration: BoxDecoration(
-                                                  color: _winningSegment?.actualColor ?? Colors.grey,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      ),
-
-                                      // Orange Pointer pointing UP at the bottom center of the wheel
-                                      Positioned(
-                                        bottom: 4.0,
-                                        child: Container(
-                                          width: 18.0,
-                                          height: 18.0,
-                                          alignment: Alignment.center,
-                                          child: const Icon(
-                                            Icons.arrow_drop_up,
-                                            color: Color(0xFFEA580C),
-                                            size: 26.0,
                                           ),
-                                        ),
+                                        ],
                                       ),
                                     ],
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 6.0),
+
+                          // Centered bottom bar
+                          _buildBottomBar(),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           ),
         ],
       ),
+    );
+  }
+
+  // ── Sidebar Player with DP Banner ──
+  Widget _buildSidebarPlayer(Map<String, dynamic> p, String bannerPath) {
+    final String name = p['name'] as String;
+    final double balance = p['balance'] as double;
+    final String avatar = p['avatar'] as String;
+
+    String username = name.toLowerCase();
+    if (name == 'Billionaire') username = "name304250";
+    else if (name == 'Richie') username = "kFOJx";
+    else if (name == 'High Roller') username = "name136668";
+    else if (name == 'Master') username = "proMaster99";
+    else if (name == 'Pro King') username = "kingSlot88";
+    else if (name == 'Elite Player') username = "eliteGamer";
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Avatar + Banner Stack
+          Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 35.3,
+                height: 35.3,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: Colors.black38, blurRadius: 2.0, offset: Offset(0, 1)),
+                  ],
+                ),
+                child: ClipOval(
+                  child: Image.asset(avatar, fit: BoxFit.cover),
+                ),
+              ),
+              Image.asset(
+                bannerPath,
+                width: 48.5,
+                height: 48.5,
+                fit: BoxFit.contain,
+              ),
+              if (name == 'Master')
+                Positioned(
+                  top: -6.0,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(color: Colors.black45, blurRadius: 2.0, offset: Offset(0, 1.0))
+                      ],
+                    ),
+                    child: ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        colors: [Color(0xFFFFB74D), Color(0xFFFF3D00)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ).createShader(bounds),
+                      child: const Icon(
+                        Icons.star,
+                        size: 12.6,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 2.0),
+          // Nickname below the banner
+          Text(
+            username,
+            style: GoogleFonts.roboto(
+              textStyle: const TextStyle(
+                color: Colors.white70,
+                fontSize: 7.9,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 1.0),
+          // Balance below the nickname
+          Text(
+            '₹${balance.toStringAsFixed(0)}',
+            style: const TextStyle(
+              color: Color(0xFFFFD700),
+              fontSize: 7.4,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Sidebar Widget ──
+  Widget _buildSidebar(List<Map<String, dynamic>> players, bool isLeft) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: const Color(0x3323272C), width: 0.8),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: players.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final p = entry.value;
+
+          // Map to correct banner image
+          String bannerPath = 'assets/dpbanner/IMG_20260821_135148.png';
+          if (isLeft) {
+            if (idx == 0) bannerPath = 'assets/dpbanner/IMG_20260821_135148.png';
+            else if (idx == 1) bannerPath = 'assets/dpbanner/IMG_20260821_135204.png';
+            else if (idx == 2) bannerPath = 'assets/dpbanner/IMG_20260821_135223.png';
+          } else {
+            if (idx == 0) bannerPath = 'assets/dpbanner/IMG_20260821_135255.png';
+            else if (idx == 1) bannerPath = 'assets/dpbanner/IMG_20260821_135316.png';
+            else if (idx == 2) bannerPath = 'assets/dpbanner/IMG_20260821_135338.png';
+          }
+
+          return _buildSidebarPlayer(p, bannerPath);
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildPreviousRollsHistory() {
+    return SizedBox(
+      height: 24.0,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'History:',
+            style: GoogleFonts.roboto(
+              textStyle: const TextStyle(color: Colors.white54, fontSize: 9.0, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 6.0),
+          ..._previousRolls.map((color) {
+            Color dotColor;
+            if (color == 'green') dotColor = const Color(0xFF24EE89);
+            else if (color == 'orange') dotColor = const Color(0xFFEA580C);
+            else if (color == 'purple') dotColor = const Color(0xFF7E22CE);
+            else dotColor = const Color(0xFF3E434E);
+
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2.0),
+              width: 10.0,
+              height: 10.0,
+              decoration: BoxDecoration(
+                color: dotColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white24, width: 0.8),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // ── Game-Style Profile (Andar Bahar style with DP Banner) ──
+  Widget _buildGameProfile() {
+    final String userBanner = 'assets/dpbanner/IMG_20260821_135148.png';
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Avatar + Banner Stack
+        Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            // Inner Avatar
+            Container(
+              width: 35.7,
+              height: 35.7,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(color: Colors.black26, blurRadius: 2.0, offset: Offset(0, 1)),
+                ],
+              ),
+              child: ClipOval(
+                child: Image.asset(widget.avatarPath, fit: BoxFit.cover),
+              ),
+            ),
+            // Outer DP Banner Frame
+            Image.asset(
+              userBanner,
+              width: 50.4,
+              height: 50.4,
+              fit: BoxFit.contain,
+            ),
+            // Online indicator dot
+            Positioned(
+              right: 2.0, top: 2.0,
+              child: Container(
+                width: 8.0, height: 8.0,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF00E676),
+                  border: Border.all(color: Colors.black, width: 1.0),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(width: 6.0),
+        // Nickname + Balance to the right side
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              widget.nickname,
+              style: GoogleFonts.roboto(
+                textStyle: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 2.0),
+            // Balance tag
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 1.0),
+              decoration: BoxDecoration(
+                color: const Color(0x4D000000),
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              child: Text(
+                '₹${widget.balance.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  color: Color(0xFFFFD700),
+                  fontSize: 9.0,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // ── Bottom Bar: Player Info + Chip Selector ──
+  Widget _buildBottomBar() {
+    final bool interactionEnabled = _gamePhase == 'betting';
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Profile section (left side, game-style like Andar Bahar)
+        _buildGameProfile(),
+        const SizedBox(width: 8.0),
+        // Chips container (no background)
+        IgnorePointer(
+          ignoring: !interactionEnabled,
+          child: Opacity(
+            opacity: interactionEnabled ? 1.0 : 0.5,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [10, 50, 100, 500, 1000].expand((val) {
+                  final isSelected = _selectedChipValue == val;
+                  return [
+                    GestureDetector(
+                      onTap: () {
+                        if (widget.soundOn) SoundManager.playClick();
+                        setState(() => _selectedChipValue = val);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        transform: Matrix4.translationValues(0.0, isSelected ? -6.0 : 0.0, 0.0),
+                        child: Transform.scale(
+                          scale: isSelected ? 1.12 : 1.0,
+                          child: PokerChipWidget(value: val, selected: isSelected, size: 33.0),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4.0),
+                  ];
+                }).toList()..removeLast(),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

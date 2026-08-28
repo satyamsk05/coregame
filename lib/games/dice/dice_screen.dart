@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../shared/widgets/bounceable.dart';
-import '../../shared/widgets/win_lose_toast.dart';
 import '../../shared/widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:core_game/utils/sound_helper.dart';
@@ -71,7 +70,7 @@ class _DiceGameScreenState extends State<DiceGameScreen>
   final _stopLossController = TextEditingController(text: '0');
   
   String _selectedStrategy = 'Martingale'; // Martingale, Paroli
-  double _strategyMultiplier = 2.0;
+  final double _strategyMultiplier = 2.0;
 
   final FocusNode _payoutFocusNode = FocusNode();
   final FocusNode _targetFocusNode = FocusNode();
@@ -1127,7 +1126,7 @@ class _DiceGameScreenState extends State<DiceGameScreen>
               Positioned(
                 top: height * 0.28,
                 child: Text(
-                  _isPlaying ? '...' : '${_rollResult.toStringAsFixed(2)}',
+                  _isPlaying ? '...' : _rollResult.toStringAsFixed(2),
                   style: GoogleFonts.montserrat(
                     textStyle: TextStyle(
                       fontSize: 48.0,

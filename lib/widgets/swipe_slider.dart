@@ -53,7 +53,7 @@ class _SwipeSliderState extends State<SwipeSlider> {
                 width: _dragPosition + handleSize / 2 + 5.0,
                 height: double.infinity,
                 decoration: BoxDecoration(
-                  color: widget.activeColor.withOpacity(0.2),
+                  color: widget.activeColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12.0),
                 ),
               ),
@@ -108,7 +108,7 @@ class _SwipeSliderState extends State<SwipeSlider> {
                       border: Border.all(color: Colors.black, width: 2.5),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           offset: const Offset(0, 3),
                         ),
                       ],

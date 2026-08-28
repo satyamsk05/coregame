@@ -52,7 +52,7 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
   final _stopLossController = TextEditingController(text: '0');
   
   String _selectedStrategy = 'Martingale'; // Martingale, Paroli
-  double _strategyMultiplier = 2.0;
+  final double _strategyMultiplier = 2.0;
 
   int _hitsCount = 0;
   double _winAmount = 0.0;
@@ -496,7 +496,7 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
                         border: Border.all(color: Colors.white, width: 3.0),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.6),
+                            color: Colors.black.withValues(alpha: 0.6),
                             blurRadius: 20.0,
                             offset: const Offset(0, 10),
                           ),
@@ -636,7 +636,7 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
       width: 280.0,
       padding: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1B30).withOpacity(0.9),
+        color: const Color(0xFF1E1B30).withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: const Color(0xFF3F356B), width: 1.5),
       ),
@@ -797,7 +797,7 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
                             padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 3.5),
                             margin: const EdgeInsets.only(bottom: 2.0),
                             decoration: BoxDecoration(
-                              color: isHighlighted ? const Color(0xFF00C853).withOpacity(0.3) : Colors.transparent,
+                              color: isHighlighted ? const Color(0xFF00C853).withValues(alpha: 0.3) : Colors.transparent,
                               borderRadius: BorderRadius.circular(4.0),
                               border: isHighlighted ? Border.all(color: const Color(0xFF00C853), width: 1.0) : null,
                             ),
@@ -1132,7 +1132,7 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
               Container(
                 padding: const EdgeInsets.all(6.0),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF160E45).withOpacity(0.6),
+                  color: const Color(0xFF160E45).withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(16.0),
                   border: Border.all(color: const Color(0xFF9E84FF), width: 1.2),
                 ),
@@ -1247,7 +1247,7 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
           borderRadius: BorderRadius.circular(16.0),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
               blurRadius: 4.0,
               offset: const Offset(0, 2),
             ),
@@ -1283,7 +1283,7 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
           boxShadow: [
             if (!_isDrawing)
               BoxShadow(
-                color: color.withOpacity(0.4),
+                color: color.withValues(alpha: 0.4),
                 blurRadius: 4.0,
                 offset: const Offset(0, 2),
               ),
@@ -1313,7 +1313,7 @@ class _KenoGameScreenState extends State<KenoGameScreen> with SingleTickerProvid
           boxShadow: [
             if (isEnabled)
               BoxShadow(
-                color: const Color(0xFF00C853).withOpacity(0.4),
+                color: const Color(0xFF00C853).withValues(alpha: 0.4),
                 blurRadius: 6.0,
                 offset: const Offset(0, 3),
               ),
@@ -1449,8 +1449,8 @@ class _KenoNumberButtonState extends State<_KenoNumberButton> {
         textColor = Colors.black;
         break;
       case _KenoCellState.drawnMiss:
-        topColor = const Color(0xFFFF5252).withOpacity(0.4);
-        bottomColor = const Color(0xFFB71C1C).withOpacity(0.4);
+        topColor = const Color(0xFFFF5252).withValues(alpha: 0.4);
+        bottomColor = const Color(0xFFB71C1C).withValues(alpha: 0.4);
         textColor = Colors.white70;
         break;
       case _KenoCellState.hit:
@@ -1460,7 +1460,7 @@ class _KenoNumberButtonState extends State<_KenoNumberButton> {
         break;
       case _KenoCellState.normal:
       default:
-        topColor = const Color(0xFF160E45).withOpacity(0.6);
+        topColor = const Color(0xFF160E45).withValues(alpha: 0.6);
         bottomColor = const Color(0xFF0D0630);
         textColor = Colors.white70;
         break;
@@ -1476,7 +1476,7 @@ class _KenoNumberButtonState extends State<_KenoNumberButton> {
         widget.onTap();
       },
       onTapCancel: () => setState(() => _isPressed = false),
-      child: Container(
+      child: SizedBox(
         height: 24.0,
         child: Stack(
           clipBehavior: Clip.none,

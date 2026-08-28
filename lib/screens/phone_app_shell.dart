@@ -29,6 +29,7 @@ import '../games/crash/crash_screen.dart';
 import '../games/twist/twist_screen.dart';
 import '../games/double/double_screen.dart';
 import '../games/ring_of_fortune/ring_of_fortune_screen.dart';
+import '../games/tower_legend/tower_legend_screen.dart';
 
 class PhoneAppShell extends StatefulWidget {
   const PhoneAppShell({super.key});
@@ -306,6 +307,18 @@ class _PhoneAppShellState extends State<PhoneAppShell> {
           nickname: _nickname,
           avatarPath: _avatarPath,
           vipLevel: _vipLevel,
+          onBalanceChanged: (val) => setState(() => _balance = val),
+          onBackPressed: () => setState(() => _currentScreen = 'lobby'),
+        );
+        break;
+      case 'tower_legend':
+        screenWidget = TowerLegendScreen(
+          key: const ValueKey('tower_legend'),
+          balance: _balance,
+          soundOn: _soundOn,
+          musicOn: _musicOn,
+          nickname: _nickname,
+          avatarPath: _avatarPath,
           onBalanceChanged: (val) => setState(() => _balance = val),
           onBackPressed: () => setState(() => _currentScreen = 'lobby'),
         );

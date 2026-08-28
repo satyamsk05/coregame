@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../shared/widgets/bounceable.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../shared/widgets/win_overlay_card.dart';
@@ -188,7 +187,9 @@ class _TwistGameScreenState extends State<TwistGameScreen>
     });
 
     setState(() {
-      for (int i = 0; i < 3; i++) _activeSegments[i] = newSegs[i];
+      for (int i = 0; i < 3; i++) {
+        _activeSegments[i] = newSegs[i];
+      }
     });
   }
 
@@ -316,7 +317,7 @@ class _TwistGameScreenState extends State<TwistGameScreen>
           ),
           const SizedBox(width: 8.0),
           Image.asset('assets/logos/twist_logo.png', width: 24.0, height: 24.0,
-              errorBuilder: (_, e, __) =>
+              errorBuilder: (_, e, _) =>
                   const Icon(Icons.rotate_right, color: Color(0xFF9B59B6), size: 22.0)),
           const SizedBox(width: 6.0),
           Text('TWIST',
@@ -431,7 +432,7 @@ class _TwistGameScreenState extends State<TwistGameScreen>
       height: 64.0,
       child: Image.asset('assets/twist/ring_inner.png',
           fit: BoxFit.contain,
-          errorBuilder: (_, e, __) => const Icon(Icons.diamond, color: Color(0xFF00C853), size: 40.0)),
+          errorBuilder: (_, e, _) => const Icon(Icons.diamond, color: Color(0xFF00C853), size: 40.0)),
     );
   }
 
@@ -497,7 +498,7 @@ class _TwistGameScreenState extends State<TwistGameScreen>
           padding: const EdgeInsets.only(bottom: 4.0),
           child: Row(children: [
             Image.asset(g.$1, width: 16.0, height: 16.0,
-                errorBuilder: (_, e, __) => Icon(Icons.circle, color: g.$3, size: 14.0)),
+                errorBuilder: (_, e, _) => Icon(Icons.circle, color: g.$3, size: 14.0)),
             const SizedBox(width: 6.0),
             Text(g.$2,
                 style: TextStyle(color: g.$3, fontSize: 9.5, fontWeight: FontWeight.w700)),

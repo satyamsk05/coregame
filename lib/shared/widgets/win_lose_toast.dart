@@ -116,10 +116,10 @@ class _WinLoseToastState extends State<_WinLoseToast>
                 decoration: BoxDecoration(
                   color: bg,
                   borderRadius: BorderRadius.circular(16.0),
-                  border: Border.all(color: primary.withOpacity(0.5), width: 1.5),
+                  border: Border.all(color: primary.withValues(alpha: 0.5), width: 1.5),
                   boxShadow: [
                     BoxShadow(
-                      color: primary.withOpacity(0.28),
+                      color: primary.withValues(alpha: 0.28),
                       blurRadius: 24.0,
                       spreadRadius: 2.0,
                     ),
@@ -134,8 +134,8 @@ class _WinLoseToastState extends State<_WinLoseToast>
                       height: 44.0,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: primary.withOpacity(0.15),
-                        border: Border.all(color: primary.withOpacity(0.4), width: 1.2),
+                        color: primary.withValues(alpha: 0.15),
+                        border: Border.all(color: primary.withValues(alpha: 0.4), width: 1.2),
                       ),
                       child: Icon(
                         widget.isWin ? Icons.emoji_events_rounded : Icons.close_rounded,
@@ -166,7 +166,7 @@ class _WinLoseToastState extends State<_WinLoseToast>
                       textAlign: TextAlign.center,
                       style: GoogleFonts.roboto(
                         textStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.75),
+                          color: Colors.white.withValues(alpha: 0.75),
                           fontSize: 11.0,
                           height: 1.4,
                         ),

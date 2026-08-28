@@ -152,6 +152,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
       'title': 'Ring of Fortune',
       'image': 'assets/logos/ring_of_fortune_logo.png',
     },
+    {
+      'title': 'Tower Legend',
+      'image': 'assets/logos/tower_legend_logo.png',
+    },
 
     {
       'title': 'Fruit Slash',
@@ -584,26 +588,26 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   ),
                 ),
 
-                // 5.5 Category Sidebar (Screenshot 1)
+                // 5.5 Category Sidebar (Screenshot 1) - Removed
+                // Positioned(
+                //   top: 62.0,
+                //   bottom: 50.0,
+                //   left: 0.0,
+                //   width: 195.0,
+                //   child: Align(
+                //     alignment: Alignment.bottomCenter,
+                //     child: SizedBox(
+                //       height: gridHeight,
+                //       child: _buildCategorySidebar(),
+                //     ),
+                //   ),
+                // ),
+
+                // 6. Horizontal Game Cards List (2x2 Grid Layout) - Spans Full Width
                 Positioned(
                   top: 62.0,
                   bottom: 50.0,
                   left: 0.0,
-                  width: 195.0,
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: SizedBox(
-                      height: gridHeight,
-                      child: _buildCategorySidebar(),
-                    ),
-                  ),
-                ),
-
-                // 6. Horizontal Game Cards List (2x2 Grid Layout)
-                Positioned(
-                  top: 62.0,
-                  bottom: 50.0,
-                  left: 202.0,
                   right: 0.0,
                   child: Align(
                     alignment: Alignment.bottomLeft,
@@ -617,13 +621,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             }
                             if (_selectedCategory == 'All') return true; // 'New Releases' shows all
                             if (_selectedCategory == 'Hot') {
-                              return ['Keno 12', 'Coin Flip', 'Limbo Rocket', 'Classic Dice', 'Mines', 'Twist'].contains(game['title']);
+                              return ['Keno 12', 'Coin Flip', 'Limbo Rocket', 'Classic Dice', 'Mines', 'Twist', 'Tower Legend'].contains(game['title']);
                             }
                             if (_selectedCategory == 'Poker') {
                               return ['HiLo', 'Fruit Slash', 'Andar Bahar'].contains(game['title']);
                             }
                             if (_selectedCategory == 'Slots') {
-                              return ['Roulette Rush', 'Crash', 'Plinko', '7 Up Down', 'Twist'].contains(game['title']);
+                              return ['Roulette Rush', 'Crash', 'Plinko', '7 Up Down', 'Twist', 'Tower Legend'].contains(game['title']);
                             }
                             return true;
                           }).toList();
@@ -683,6 +687,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                       widget.onPlayGame('double');
                                     } else if (game['title'] == 'Ring of Fortune') {
                                       widget.onPlayGame('ring_of_fortune');
+                                    } else if (game['title'] == 'Tower Legend') {
+                                      widget.onPlayGame('tower_legend');
                                     } else {
                                       _showInfoDialog(game['title']!, 'Launching ${game['title']}! Place your bets to win big.');
                                     }
@@ -1029,7 +1035,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             border: Border.all(color: const Color(0xFF2E3135), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.4),
+                color: Colors.black.withValues(alpha: 0.4),
                 blurRadius: 12.0,
                 offset: const Offset(0, 6),
               ),
@@ -1184,7 +1190,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                               border: Border.all(color: const Color(0xFF2E3135), width: 2.0),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
+                                  color: Colors.black.withValues(alpha: 0.2),
                                   blurRadius: 8.0,
                                 ),
                               ],
@@ -1406,7 +1412,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: const Color(0xFFFFD700).withOpacity(0.3),
+                          color: const Color(0xFFFFD700).withValues(alpha: 0.3),
                           blurRadius: 6.0,
                           spreadRadius: 1.0,
                         )
@@ -1486,7 +1492,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             border: Border.all(color: const Color(0xFF2E3135), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.4),
+                color: Colors.black.withValues(alpha: 0.4),
                 blurRadius: 12.0,
                 offset: const Offset(0, 6),
               ),
@@ -1875,7 +1881,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                                   borderRadius: BorderRadius.circular(6.0),
                                                   boxShadow: [
                                                     BoxShadow(
-                                                      color: const Color(0xFF00C853).withOpacity(0.2),
+                                                      color: const Color(0xFF00C853).withValues(alpha: 0.2),
                                                       blurRadius: 8.0,
                                                       offset: const Offset(0, 2),
                                                     )
@@ -1996,8 +2002,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
                       decoration: BoxDecoration(
                         color: isSuccess 
-                            ? const Color(0xFF00C853).withOpacity(0.12)
-                            : const Color(0xFFFFAB00).withOpacity(0.12),
+                            ? const Color(0xFF00C853).withValues(alpha: 0.12)
+                            : const Color(0xFFFFAB00).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(4.0),
                         border: Border.all(
                           color: isSuccess ? const Color(0xFF00C853) : const Color(0xFFFFAB00), 
@@ -2321,7 +2327,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
           border: Border.all(color: const Color(0xFF2E3135), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 4.0,
               offset: const Offset(0, 4),
             )
@@ -2338,9 +2344,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
             Container(
               padding: const EdgeInsets.all(4.0),
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.12),
+                color: iconColor.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
-                border: Border.all(color: iconColor.withOpacity(0.3), width: 1.0),
+                border: Border.all(color: iconColor.withValues(alpha: 0.3), width: 1.0),
               ),
               child: Icon(icon, color: iconColor, size: 18.0),
             ),
@@ -2383,7 +2389,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       ? []
                       : [
                           BoxShadow(
-                            color: buttonColor.withOpacity(0.3),
+                            color: buttonColor.withValues(alpha: 0.3),
                             blurRadius: 4.0,
                             offset: const Offset(0, 2),
                           )
@@ -2428,7 +2434,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             border: Border.all(color: const Color(0xFF2E3135), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.4),
+                color: Colors.black.withValues(alpha: 0.4),
                 blurRadius: 12.0,
                 offset: const Offset(0, 6),
               ),
@@ -2703,7 +2709,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             builder: (context, setModalState) => SwitchListTile(
               dense: true,
               value: _soundOn,
-              activeColor: const Color(0xFF00C853),
+              activeThumbColor: const Color(0xFF00C853),
               title: const Text('SOUND EFFECTS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11.0)),
               secondary: const Icon(Icons.volume_up, color: Colors.white, size: 20),
               onChanged: (val) {
@@ -2716,7 +2722,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             builder: (context, setModalState) => SwitchListTile(
               dense: true,
               value: _musicOn,
-              activeColor: const Color(0xFF00C853),
+              activeThumbColor: const Color(0xFF00C853),
               title: const Text('MUSIC TRACKS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11.0)),
               secondary: const Icon(Icons.music_note, color: Colors.white, size: 20),
               onChanged: (val) {
@@ -2931,7 +2937,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
           borderRadius: BorderRadius.circular(12.0),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
               blurRadius: 4.0,
               offset: const Offset(0, 2),
             ),
@@ -2960,7 +2966,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
           borderRadius: BorderRadius.circular(15.0),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.4),
+              color: color.withValues(alpha: 0.4),
               blurRadius: 6.0,
               offset: const Offset(0, 3),
             ),

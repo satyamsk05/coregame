@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/game_button.dart';
-import '../widgets/animated_character.dart';
 import '../widgets/bounceable.dart';
 import '../shared/widgets/night_forest_background.dart';
 import '../utils/sound_helper.dart';
@@ -64,7 +62,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             // Dark tint overlay for readability
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.18),
+                color: Colors.black.withValues(alpha: 0.18),
               ),
             ),
 
@@ -109,7 +107,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 borderRadius: BorderRadius.circular(40),
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFFFFA726).withOpacity(0.15),
+                    const Color(0xFFFFA726).withValues(alpha: 0.15),
                     Colors.transparent,
                   ],
                 ),
@@ -177,7 +175,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             borderRadius: BorderRadius.circular(2),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFFFA726).withOpacity(0.5),
+                color: const Color(0xFFFFA726).withValues(alpha: 0.5),
                 blurRadius: 8.0,
               ),
             ],
@@ -188,7 +186,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           'PLAY · WIN · REPEAT',
           style: GoogleFonts.robotoMono(
             textStyle: TextStyle(
-              color: Colors.white.withOpacity(0.45),
+              color: Colors.white.withValues(alpha: 0.45),
               fontSize: 9.5,
               letterSpacing: 2.5,
               fontWeight: FontWeight.bold,
@@ -243,7 +241,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             colors: [Color(0xFF1A2033), Color(0xFF252A40)],
           ),
           glowColor: const Color(0xFF00D2FF),
-          border: Border.all(color: const Color(0xFF00D2FF).withOpacity(0.35), width: 1.2),
+          border: Border.all(color: const Color(0xFF00D2FF).withValues(alpha: 0.35), width: 1.2),
           onTap: () {
             stopWelcomeMusic();
             if (widget.onSkipPressed != null) {
@@ -276,7 +274,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     onSoundToggled: (_) {},
                     onMusicToggled: (_) {},
                     onActiveGatewayChanged: (_) {},
-                    onBankDetailsChanged: (_, __, ___, ____, _____) {},
+                    onBankDetailsChanged: (_, _, _, _, _) {},
                     onDepositPressed: () {},
                   ),
                 ),
@@ -307,7 +305,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           border: border,
           boxShadow: [
             BoxShadow(
-              color: glowColor.withOpacity(0.30),
+              color: glowColor.withValues(alpha: 0.30),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),

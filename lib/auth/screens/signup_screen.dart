@@ -226,7 +226,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     border: Border.all(color: const Color(0xFFD0D0D0), width: 3.0),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         offset: const Offset(0, 8),
                         blurRadius: 16.0,
                       ),

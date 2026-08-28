@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../widgets/win_lose_toast.dart';
 import '../widgets/win_overlay_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/animated_game_background.dart';
@@ -105,8 +104,8 @@ class TrianglePainter extends CustomPainter {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        strokeColor.withOpacity(0.35),
-        strokeColor.withOpacity(0.08),
+        strokeColor.withValues(alpha: 0.35),
+        strokeColor.withValues(alpha: 0.08),
       ],
     );
     final fillPaint = Paint()
@@ -697,7 +696,7 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
                 borderRadius: BorderRadius.circular(6.0),
                 boxShadow: [
                   BoxShadow(
-                    color: (_isPlaying ? const Color(0xFFFFC107) : const Color(0xFF00C853)).withOpacity(0.3),
+                    color: (_isPlaying ? const Color(0xFFFFC107) : const Color(0xFF00C853)).withValues(alpha: 0.3),
                     blurRadius: 6.0,
                     offset: const Offset(0, 3),
                   ),
@@ -1124,7 +1123,7 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
         border: Border.all(color: const Color(0xFFD0D5DD), width: isMini ? 1.0 : 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: isMini ? 2.0 : 6.0,
             offset: const Offset(0, 3),
           ),
@@ -1202,10 +1201,10 @@ class _HiLoGameScreenState extends State<HiLoGameScreen> {
         decoration: BoxDecoration(
           color: const Color(0xFF2C2F36),
           borderRadius: BorderRadius.circular(10.0),
-          border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.0),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.0),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 4.0,
             ),
           ],
